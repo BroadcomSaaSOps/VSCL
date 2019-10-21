@@ -1,1 +1,0 @@
-../VSCL-local.sh
