@@ -1,1 +1,1 @@
-E:/Software/McAfee/EEDK/Development/VSCL/VSCL-local.sh
+../VSCL-local.sh
