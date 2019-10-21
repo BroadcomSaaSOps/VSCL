@@ -5,14 +5,15 @@
 # Purpose:	Uninstall the McAfee VirusScan Command Line Scanner v6.1.0
 #			from SaaS Linux PPM App servers
 # Creator:	Nick Taylor, Sr. Engineer, CA SaaS Ops
-# Date:		26-OCT-2017
-# Version:	1.1
+# Date:		21-OCT-2019
+# Version:	1.2
 # PreReqs:	Linux
 #			CA PPM Application Server
 #			VSCL antivirus scanner installed
 #			unzip, tar, gunzip, yes, gclib > 2.7 utilities in OS
-#=============================================================================
-# Params:	NONE
+# Params:   none
+# Switches: none
+# Imports:  none
 #=============================================================================
 
 #=============================================================================

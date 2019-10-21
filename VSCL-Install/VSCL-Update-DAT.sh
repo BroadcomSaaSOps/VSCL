@@ -6,24 +6,27 @@
 #                       Scanner 6.1.3 on SaaS Linux PPM App servers from EPO
 # Creator:      Nick Taylor, Pr. Engineer, Broadcom SaaS Ops
 # Original:     Copyright (c) 2009 McAfee, Inc. All Rights Reserved.
-# Date:         18-OCT-2019
-# Version:      1.5
+# Date:         21-OCT-2019
+# Version:      1.2
 # PreReqs:      Linux
 #               CA PPM Application Server
 #               VSCL antivirus scanner installed
 #               Latest VSCL DAT .ZIP file
 #               unzip, tar, gunzip, gclib > 2.7 utilities in OS,
 #               awk, echo, cut, ls, printf, wget
-#=============================================================================
 # Params:       none
-#=============================================================================
 # Switches:     -d:  download current DATs and exit
 #               -l:  leave any files extracted intact at exit
+# Imports:      ./VSCL-local.sh
 #=============================================================================
 
 #=============================================================================
 # VARIABLES
 #=============================================================================
+
+#  Imports
+#-----------------------------------------
+. ./VSCL-local.sh
 
 # Defaults: Do not modify
 #-----------------------------------------
@@ -51,12 +54,6 @@ done
 # name and path of this script
 SCRIPT_NAME=$(basename "$0")
 SCRIPT_PATH=$(dirname "$0")
-
-# name of the Commercial site where script is running ("AU1","DEMUN","SC5","AVAN")
-SITE_NAME="SC5"
-
-# McAfee repo server
-EPO_SERVER="MCAFEE01"
 
 # name of the repo file with current DAT version
 VERSION_FILE="avvdat.ini"

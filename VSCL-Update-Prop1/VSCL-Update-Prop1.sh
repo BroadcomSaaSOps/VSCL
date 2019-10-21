@@ -15,14 +15,18 @@
 #               Latest VSCL DAT .ZIP file
 #               unzip, tar, gunzip, gclib > 2.7 utilities in OS,
 #               awk, echo, cut, ls, printf
-#=============================================================================
 # Params:       none
+# Switches:     -d:  download current DATs and exit
+#               -l:  leave any files extracted intact at exit
+# Imports:      none
 #=============================================================================
 
 #=============================================================================
 # VARIABLES
 #=============================================================================
 
+# Defaults: Do not modify
+#-----------------------------------------
 unset DEBUG_IT SCRIPT_NAME UVSCAN_EXE UVSCAN_DIR MACONFIG_PATH CMDAGENT_PATH CURRENT_DAT DEBUG_LOG
 
 # Globals

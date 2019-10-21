@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
-Generated: 10/22/2019 3:51:16 AM
+Generated: 10/21/2019 10:39:56 AM
 EEDK.exe
--Build:"E:\Software\McAfee\EEDK\Builds" -File:"E:\Software\McAfee\EEDK\Development\VSCL\VSCL-Update-DAT\VSCL-Update-DAT.sh" -ProdName:"VSCLUDAT" -ProdID:"1200" -ProdVer:"1.2.0.0" -ProdDesc:"VSCL - Update DATs (VSCLUDAT)" -Install:"./VSCL-Update-DAT.sh" -Reboot:"3010" -Platform:"LINUX" 
+-Build:"E:\Software\McAfee\EEDK\Builds" -Folder:"E:\Software\McAfee\EEDK\Development\VSCL\VSCL-Update-DAT" -ProdName:"VSCLUDAT" -ProdID:"1200" -ProdVer:"1.2.0.0" -ProdDesc:"VSCL - Update DATs (VSCLUDAT)" -Install:"./VSCL-Update-DAT.sh" -Reboot:"3010" -Platform:"LINUX" 
 -->
 <ePO.Endpoint.Deployment.Kit.Settings>
-  <File>true</File>
-  <Folder>false</Folder>
-  <SourcePackages>E:\Software\McAfee\EEDK\Development\VSCL\VSCL-Update-DAT\VSCL-Update-DAT.sh</SourcePackages>
+  <File>false</File>
+  <Folder>true</Folder>
+  <SourcePackages>E:\Software\McAfee\EEDK\Development\VSCL\VSCL-Update-DAT</SourcePackages>
   <BuildFolder>E:\Software\McAfee\EEDK\Builds</BuildFolder>
   <ProductName>VSCLUDAT</ProductName>
   <ProductID>1200</ProductID>

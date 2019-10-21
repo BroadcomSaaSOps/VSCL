@@ -5,15 +5,16 @@
 # Purpose:	Update the DAT files for the McAfee VirusScan Command Line 
 #			Scanner 6.1.0 on SaaS Linux PPM App servers
 # Creator:	Nick Taylor, Sr. Engineer, CA SaaS Ops
-# Date:		22-May-2017
-# Version:	1.1
+# Date:		21-Oct-2019
+# Version:	1.2
 # PreReqs:	Linux
 #			CA PPM Application Server
 #			VSCL antivirus scanner installed
 #			Latest VSCL DAT .ZIP file
 #			unzip, tar, gunzip, gclib > 2.7 utilities in OS
-#=============================================================================
 # Params:	$1 = VSCL DAT .ZIP file
+# Switches: none
+# Imports:  none
 #=============================================================================
 
 #=============================================================================

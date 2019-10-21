@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
-Generated: 10/22/2019 3:45:41 AM
+Generated: 10/21/2019 10:41:07 AM
 EEDK.exe
--Build:"E:\Software\McAfee\EEDK\Builds" -File:"E:\Software\McAfee\EEDK\Development\VSCL\VSCL-Update-Prop1\VSCL-Update-Prop1.sh" -ProdName:"VSCL_UP1" -ProdID:"1200" -ProdVer:"1.2.0.0" -ProdDesc:"VSCL - Update Custom Property 1 (VSCL_UP1)" -Install:"./VSCL-Update-Prop1.sh" -Reboot:"3010" -Platform:"LINUX" 
+-Build:"E:\Software\McAfee\EEDK\Builds" -Folder:"E:\Software\McAfee\EEDK\Development\VSCL\VSCL-Update-Prop1" -ProdName:"VSCL_UP1" -ProdID:"1200" -ProdVer:"1.2.0.0" -ProdDesc:"VSCL - Update Custom Property 1 (VSCL_UP1)" -Install:"./VSCL-Update-Prop1.sh" -Reboot:"3010" -Platform:"LINUX" 
 -->
 <ePO.Endpoint.Deployment.Kit.Settings>
-  <File>true</File>
-  <Folder>false</Folder>
-  <SourcePackages>E:\Software\McAfee\EEDK\Development\VSCL\VSCL-Update-Prop1\VSCL-Update-Prop1.sh</SourcePackages>
+  <File>false</File>
+  <Folder>true</Folder>
+  <SourcePackages>E:\Software\McAfee\EEDK\Development\VSCL\VSCL-Update-Prop1</SourcePackages>
   <BuildFolder>E:\Software\McAfee\EEDK\Builds</BuildFolder>
   <ProductName>VSCL_UP1</ProductName>
   <ProductID>1200</ProductID>
