@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#
 #=============================================================================
 # NAME:		VSCL-Install.sh
 # Purpose:	Installer for McAfee VirusScan Command Line Scanner 6.1.3 on 
