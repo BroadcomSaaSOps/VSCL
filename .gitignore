@@ -1,8 +1,6 @@
-
 VSCL-Install/avvdat-9388.zip
 EEDK.log
 *.bak
 VSCL-local.sh
-
-*.bak
 VSCL-Install/VSCL-local.sh
+VSCL-Install/VSCL-Update-DAT.sh
