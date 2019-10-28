@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#
 #=============================================================================
 # NAME:         VSCL-Update-DAT.sh
 # Purpose:      Update the DAT files for the McAfee VirusScan Command Line

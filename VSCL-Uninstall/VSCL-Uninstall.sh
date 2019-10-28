@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#
 #=============================================================================
 # NAME:		UNINSTALL-VSCL.SH
 # Purpose:	Uninstall the McAfee VirusScan Command Line Scanner v6.1.0
