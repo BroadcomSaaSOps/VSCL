@@ -1,5 +1,5 @@
 #!/bin/bash
-#
+
 #=============================================================================
 # NAME:         VSCL-local.sh
 # Purpose:      Set variables custom to the local EPO server
