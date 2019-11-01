@@ -1,9 +1,9 @@
 # McAfee VirusScan Command Line scripts for deployment from McAfee EPO to support the command-line scanner functionality of PPM
 
 ## Purpose
-The McAfee VirusScan Command Line (VSCL) tool is not natively supported as an ePolicy Orchestrator (EPO) managed software package.  This set of scripts is used in combination with the free community EPO Enterprise Deployment Kit (EEDK) tool to create EPO-compatible packages.  These packages can be deployed manually to mimic the remote installation and management functionality of fully-supported EPO packages.
+The McAfee VirusScan Command Line (VSCL) tool is required for the correct functioning of the PPM application hosted by Broadcom SaaS. Unfortunately, while it is a member of the McAfee suite of tools, is not natively supported as an ePolicy Orchestrator (EPO) managed software package.  This set of scripts is used in combination with the free community EPO Enterprise Deployment Kit (EEDK) tool to create EPO-compatible packages.  These packages can be deployed manually to mimic the remote installation and management functionality of packages designed to work with EPO.
 
-EPO is deployed in several datacenters globally which are managed by Broadcom SaaS Ops:
+EPO is deployed independently to several "sites" in On-Premise mode.  Each site is a global datacenter managed by Broadcom SaaS Ops and is referenced by a site code:
 - AU1  (Sydney, Australia)
 - DEMUN  (Munich, Germany)
 - SC5  (San Diego, CA, USA)
@@ -11,22 +11,35 @@ EPO is deployed in several datacenters globally which are managed by Broadcom Sa
 
 ## Workflow
 
-### Preparatory steps performed once for each Datacenter
-1. Install the Git command line tool (https://git-scm.com/downloads) or Github Desktop (https://desktop.github.com/) to the McAfee EPO server.
-2. Clone [this repository](https://github.com/tayni03/VSCL).
-3. Create the file `<root/>VSCL-local.sh` MANUALLY in the local repository and symlink it into the appropriate subdirectories (directions below).
-4. Create a symlink in the `VSCL-Install` directory to  `<root>/VSCL-Update-DAT/VSCL-Update-DAT.sh`.
-5. Set up the EEDK executable. Under the properties for the executable, configure it to always "run as administrator" for all users under "Compatibility Options".
-    *PLEASE NOTE*: A copy of EEDK is provided in the `EEDK` subdirectory of the repository, and it's available for download from McAfee [here](https://nofile.io/f/AqKytH7Fp86/ePO.Endpoint.Deployment.Kit.9.6.1.zip).  It is *highly recommended* that the EEDK executable be copied to and run from a directory OUTSIDE the local repository.
+### Preparatory steps performed ONLY ONCE for each site:
+1. Install the [Git command line tool for Windows](https://git-scm.com/downloads) and [Github Desktop for Windows](https://desktop.github.com/) on the site's McAfee EPO server.
+2. Clone this [Git repo](https://github.com/BroadcomSaaSOps/VSCL.git) to a directory on the site's EPO server.  By default, the directory is `E:\Software\McAfee\EEDK\Development\VSCL`, but it may vary per site.
+3. In the local Git repo, MANUALLY create symlinks as follows (directions for creating symlinks below):
+   a. `/VSCL-local.sh` in the `VSCL-Install` directory
+   b. `/VSCL-Update-DAT/VSCL-Update-DAT.sh`, in the `VSCL-Install` directory
+   c. `/VSCL-local.sh` in the `VSCL-Install` directory
+4. Set up the EEDK executable on the EPO server.  Under the properties for the executable, configure it to always "Run as Administrator" for all users under "Compatibility Options".
+    *PLEASE NOTE*: A copy of EEDK v9.6.1 is provided in the `EEDK` subdirectory of the Git repo.  It is also available for download from McAfee [here](https://nofile.io/f/AqKytH7Fp86/ePO.Endpoint.Deployment.Kit.9.6.1.zip).  It is *highly recommended* that the EEDK executable be copied to and run from a directory OUTSIDE the local Git repo.
+5. Make sure that the latest 64-bit version of the VSCL package has been uploaded to EPO:
+   a. Check that the "VSCL-Package" in the EPO "Master Repository" is the latest available from [McAfee Product Downloads](https://www.mcafee.com/content/enterprise/en-us/downloads/my-products/downloads.html).
+   b. If not, the file `vscl-l64-<version#>-l.tar.gz` should be downloaded and copied to the local Git repo's `/VSCL-Package` directory.  Any old versions should be deleted.
+   c. Update the "FILENAME" entry in the "[VSCL-PACK]" section of the `/VSCL-Package/vsclpackage.ini` file in the same directory to match.
+   d. Remove any old versions of "VSCL-Package" from the EPO "Master Repository".
+   e. Resync the Git repo to distribute this new version of VSCL to all sites.
+   f. For each site, resync the Git repo and repeat the above steps to create the new package and import it to EPO.
 
-### After modifying script(s) for any of the VSCL packages:
-1. Verify that the repository is synced with the master repository.
-2. Start up EEDK and load in the appropriate `.EEDK` file for the package from `<root>`.
-3. Update the version number if required.
-4. Create the output EPO package to a local `builds` directory
-5a. Upload the new package to the EPO server (this step will *NOT* work in FedRAMP!)
-5b. Log into EPO and manually import the new package to the Master Repository (FedRAMP only!)
-6. From the EPO system tree, the package will be available to select from deployable packages for one or more clients.
+### After modifying script(s) for any of the custom VSCL packages in any site:
+1. Verify that any changes made to the local Git repo are synced with the GitHub repository.
+2. Start up EEDK and load in the appropriate `.EEDK` file for the package. NOTE: These are in the root of the Git repo.
+3. Update the version number displayed in EEDK, if required.
+4. Create the new version of EPO package to a local `builds` directory.  The filename will be `<package><version>.ZIP` (eg. "VSCLPACK6130.zip").
+5. Save the updated `.EEDK` file over the original one.  NOTE: `.EEDK` files should NOT have a version number in the name.
+5. Import the new version of the package to the EPO server's "Master Repository":
+   a. For *non-FedRAMP* sites, you can directly from the EEDK tool to EPO.
+   b. Otherwise, log into EPO and manually import the new package to the "Master Repository".  NOTE: Manual upload is only required for the FedRAMP site.
+6. From the EPO system tree, the package will be available to select as a deployable package for one or more clients.
+7. Delete any old versions of the package from EPO's "Master Repository".
+8. Perform the above steps on all remaining sites.
 
 ## File and Package details
 
