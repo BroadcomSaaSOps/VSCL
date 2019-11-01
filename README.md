@@ -1,4 +1,4 @@
-# McAfee VirusScan Command Line scripts for deployment from McAfee EPO to support the command-line scanner functionality of PPM
+# McAfee VirusScan Command Line scripts for deployment from McAfee EPO to support antivirus scanning of customer files upoaded to PPM
 
 ## Purpose
 The McAfee VirusScan Command Line (VSCL) tool is required for the correct functioning of the PPM application hosted by Broadcom SaaS. Unfortunately, while it is a member of the McAfee suite of tools, is not natively supported as an ePolicy Orchestrator (EPO) managed software package.  This set of scripts is used in combination with the free community EPO Enterprise Deployment Kit (EEDK) tool to create EPO-compatible packages.  These packages can be deployed manually to mimic the remote installation and management functionality of packages designed to work with EPO.
