@@ -1,7 +1,7 @@
 # McAfee VirusScan Command Line scripts for deployment from McAfee EPO to support the command-line scanner functionality of PPM
 
 ## Purpose
-The McAfee VirusScan Command Line (VSCL) tool is not natively supported as an ePolicy Orchestrator (EPO) managed software package.  This set of scripts is used in combination with the free community EPO Enterprise Deployment Kit (EEDK) tool to create EPO-compatible packages that can be deployed manually to mimic the function of supported EPO packages.
+The McAfee VirusScan Command Line (VSCL) tool is not natively supported as an ePolicy Orchestrator (EPO) managed software package.  This set of scripts is used in combination with the free community EPO Enterprise Deployment Kit (EEDK) tool to create EPO-compatible packages.  These packages can be deployed manually to mimic the remote installation and management functionality of fully-supported EPO packages.
 
 EPO is deployed in several datacenters globally which are managed by Broadcom SaaS Ops:
 - AU1  (Sydney, Australia)
@@ -15,8 +15,9 @@ EPO is deployed in several datacenters globally which are managed by Broadcom Sa
 1. Install the Git command line tool (https://git-scm.com/downloads) or Github Desktop (https://desktop.github.com/) to the McAfee EPO server.
 2. Clone [this repository](https://github.com/tayni03/VSCL).
 3. Create the file `<root/>VSCL-local.sh` MANUALLY in the local repository and symlink it into the appropriate subdirectories (directions below).
-4. Create a symlink in the `VSC:-Install` directory to  `<root>/VSCL-Update-DAT/VSCL-Update-DAT.sh`.
-5. Set up the EEDK executable (a copy is provided in the `EEDK` subdirectory of the repository)
+4. Create a symlink in the `VSCL-Install` directory to  `<root>/VSCL-Update-DAT/VSCL-Update-DAT.sh`.
+5. Set up the EEDK executable. Under the properties for the executable, configure it to always "run as administrator" for all users under "Compatibility Options".
+    *PLEASE NOTE*: A copy of EEDK is provided in the `EEDK` subdirectory of the repository, and it's available for download from McAfee [here](https://nofile.io/f/AqKytH7Fp86/ePO.Endpoint.Deployment.Kit.9.6.1.zip).  It is *highly recommended* that the EEDK executable be copied to and run from a directory OUTSIDE the local repository.
 
 ### After modifying script(s) for any of the VSCL packages:
 1. Verify that the repository is synced with the master repository.
@@ -39,11 +40,11 @@ Performs a fresh install of VSCL on a PPM client system.
 #### External Requirements:
 - Custom `VSCL-Package` package installed into EPO (this is a central copy of the VSCL client install).
 - McAfee VirusScan Enterprise scanner installed into EPO (this is where daily `.DAT` files are pulled from).
-    *PLEASE NOTE*: The VSE package is required even if VSE is not used in the enviroment.
+    *PLEASE NOTE*: The VSE package is required to be available in EPO even if VSE is not used in the enviroment.
 #### Usage:
 Standard client package deployment via EPO.
 
-### Package: `VSCL-Update-DAT`  (VSCLUP1)
+### Package: `VSCL-Update-DAT`  (VSCLUDAT)
 #### Purpose:
 Updates an EPO client using VSCL with the newest DAT files downloaded from McAfee.  This should be run on all clients at least daily via a client task scheduled in EPO.
 #### Imports:
@@ -66,12 +67,12 @@ None
 #### External Requirements:
 None
 #### Usage:
-The file `zzz SAMPLE VSCL-local.sh` contains a template of the file `VSCL-local.sh` that should be created in the local repository.  The filename `VCSL-local.sh` is in .gitignore.  A *symlink* to it should be created in the `VSCL-Install` and `VSCL-Update-DAT` subdirectories.
+The file `zzz SAMPLE VSCL-local.sh` contains a template of the file `VSCL-local.sh` that should be created in the local repository for a particular site.  The filename `VCSL-local.sh` is in .gitignore.  A *symlink* to it should be created in the `VSCL-Install` and `VSCL-Update-DAT` subdirectories.
 
 To create a symlink in Windows, navigate to each directory where the symlink shoud be and run this command:
     `cmd /c mklink ./VSCL-local.sh ../VSCL-local.sh`
 
-The main file VSCL-local.sh in the root and the symlinks required must be created manually PER ENDPOINT.
+*PLEASE NOTE*: The main file `VSCL-local.sh` is in the root of the repository. The symlinks required must be created manually PER SITE.
 
 Modify the contents per this example:
 ```
