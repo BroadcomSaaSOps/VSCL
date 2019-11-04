@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
-Generated: 10/21/2019 10:39:56 AM
+Generated: 11/1/2019 4:28:55 PM
 EEDK.exe
 -Build:"E:\Software\McAfee\EEDK\Builds" -Folder:"E:\Software\McAfee\EEDK\Development\VSCL\VSCL-Update-DAT" -ProdName:"VSCLUDAT" -ProdID:"1200" -ProdVer:"1.2.0.0" -ProdDesc:"VSCL - Update DATs (VSCLUDAT)" -Install:"./VSCL-Update-DAT.sh" -Reboot:"3010" -Platform:"LINUX" 
 -->

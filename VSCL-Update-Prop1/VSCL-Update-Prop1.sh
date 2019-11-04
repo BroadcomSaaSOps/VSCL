@@ -52,7 +52,7 @@ CMDAGENT_PATH="/opt/McAfee/agent/bin/cmdagent"
 #-----------------------------------------
 # show debug messages (set to non-empty to enable)
 DEBUG_IT=yes
-DEBUG_LOG=/var/McAfee/agent/logs/VSCL_mgmt.log
+LOG_FILE=/var/McAfee/agent/logs/VSCL_mgmt.log
 
 #=============================================================================
 # FUNCTIONS
@@ -63,7 +63,7 @@ Exit-WithError() {
     #----------------------------------------------------------
     # Exit script with error code 1
     #----------------------------------------------------------
-	# Params: $1 (optional) error message to print
+    # Params: $1 (optional) error message to print
     #----------------------------------------------------------
 
     if [ -n "$1" ]
@@ -79,15 +79,14 @@ Debug-Print() {
     #----------------------------------------------------------
     # If 'DEBUG_IT' global is set, print error message
     #----------------------------------------------------------
-	# Params: $1 = error message to print
+    # Params: $1 = error message to print
     #----------------------------------------------------------
 
-    if [ -n "$DEBUG_IT" ]
-    then
-        printf "$SCRIPT_NAME: [debug] $@\n" >> $DEBUG_LOG
-    fi
-	
-	return 0
+    local OUTPUT=$(printf "%s:%s" $SCRIPT_NAME "[$(date "+%FT%T")] $@")
+    echo $OUTPUT >> "$LOG_FILE"
+    echo $OUTPUT
+    
+    return 0
 }
 
 
@@ -98,7 +97,7 @@ Get-CurrentDATVersion() {
     #------------------------------------------------------------
 
     unset UVSCAN_DAT LOCAL_DAT_VERSION LOCAL_ENG_VERSION
-	UVSCAN_DAT=`("$UVSCAN_DIR/$UVSCAN_EXE" --version)`
+    UVSCAN_DAT=`("$UVSCAN_DIR/$UVSCAN_EXE" --version)`
 
     if [ $? -ne 0 ]
     then
@@ -106,8 +105,9 @@ Get-CurrentDATVersion() {
     fi
 
     LOCAL_DAT_VERSION=`printf "$UVSCAN_DAT\n" | grep -i "dat set version:" | cut -d' ' -f4`
-	LOCAL_ENG_VERSION=`printf "$UVSCAN_DAT\n" | grep -i "av engine version:" | cut -d' ' -f4`
+    LOCAL_ENG_VERSION=`printf "$UVSCAN_DAT\n" | grep -i "av engine version:" | cut -d' ' -f4`
     printf "${LOCAL_DAT_VERSION}.0 (${LOCAL_ENG_VERSION})\n"
+    Debug-Print "${LOCAL_DAT_VERSION}.0 (${LOCAL_ENG_VERSION})\n"
 
     return 0
 }
@@ -118,70 +118,69 @@ Refresh-ToEPO() {
     # Function to refresh the agent with EPO
     #------------------------------------------------------------
 
-	# flags to use with CMDAGENT utility
-	unset CMDAGENT_FLAGS
-	CMDAGENT_FLAGS="-c -f -p -e"
+    # flags to use with CMDAGENT utility
+    unset CMDAGENT_FLAGS
+    CMDAGENT_FLAGS="-c -f -p -e"
 
     Debug-Print "Refreshing agent data with EPO..."
-	
+    
     # loop through provided flags and call one command per
-	# (CMDAGENT can't handle more than one)
-	for FLAG_NAME in $CMDAGENT_FLAGS
+    # (CMDAGENT can't handle more than one)
+    for FLAG_NAME in $CMDAGENT_FLAGS
     do
         $CMDAGENT_PATH $FLAG_NAME
-		
-		if [ $? -ne 0 ]
-		then
-			Exit-WithError "Error running EPO refresh command '$CMDAGENT_PATH $FLAG_NAME'!"
-		fi
+        
+        if [ $? -ne 0 ]
+        then
+            Exit-WithError "Error running EPO refresh command '$CMDAGENT_PATH $FLAG_NAME'!"
+        fi
     done
-	
-	return 0
+    
+    return 0
 }
 
 
 Check-For() {
     #------------------------------------------------------------
     # Function to check for existence of a file
-	#------------------------------------------------------------
-	# Params:  $1 = full path to file
-	#          $2 = friendly-name of file
-	#          $3 = (optional) --no-terminate to return always
     #------------------------------------------------------------
-	Debug-Print "Checking for '$2' at '$1'..."
+    # Params:  $1 = full path to file
+    #          $2 = friendly-name of file
+    #          $3 = (optional) --no-terminate to return always
+    #------------------------------------------------------------
+    Debug-Print "Checking for '$2' at '$1'..."
 
-	if [ ! -x "$1" ]
-	then
-		if [ "$3" = "--no-terminate" ]
-		then
-			return 1
-		else
-			Exit-WithError "Could not find '$2' at '$1'!"
-		fi
-	fi
-	
-	return 0
+    if [ ! -x "$1" ]
+    then
+        if [ "$3" = "--no-terminate" ]
+        then
+            return 1
+        else
+            Exit-WithError "Could not find '$2' at '$1'!"
+        fi
+    fi
+    
+    return 0
 }
 
 
 Set-CustomProp1() {
     #------------------------------------------------------------
     # Set the value of McAfee custom Property #1
-	#------------------------------------------------------------
-	# Params:  $1 = value to set property
     #------------------------------------------------------------
-	Debug-Print "Setting EPO Custom Property #1 to '$1'..."
+    # Params:  $1 = value to set property
+    #------------------------------------------------------------
+    Debug-Print "Setting EPO Custom Property #1 to '$1'..."
 
-	$MACONFIG_PATH -custom -prop1 "$1"
+    $MACONFIG_PATH -custom -prop1 "$1"
 
-	if [ $? -ne 0 ]
-	then
-		Exit-WithError "Error setting EPO Custom Property #1 to '$1'!"
-	fi
-	
-	return 0
+    if [ $? -ne 0 ]
+    then
+        Exit-WithError "Error setting EPO Custom Property #1 to '$1'!"
+    fi
+    
+    return 0
 }
-
 
 #=============================================================================
 #  MAIN PROGRAM
@@ -199,27 +198,27 @@ Check-For $UVSCAN_DIR/$UVSCAN_EXE "uvscan executable" --no-terminate
 
 if [ $? -ne 0 ]
 then
-	# uvscan not found
-	# set custom property to error value, then exit with error
+    # uvscan not found
+    # set custom property to error value, then exit with error
     Debug-Print "Could not find 'uvscan executable' at '$UVSCAN_DIR/$UVSCAN_EXE'!"
-	CURRENT_DAT="VSCL:NOT INSTALLED"
+    CURRENT_DAT="VSCL:NOT INSTALLED"
 else
-	# Get the version of the installed DATs...
-	Debug-Print "Determining the currently DAT version..."
-	CURRENT_DAT=`Get-CurrentDATVersion "$UVSCAN_DIR/$UVSCAN_EXE"`
+    # Get the version of the installed DATs...
+    Debug-Print "Determining the currently DAT version..."
+    CURRENT_DAT=`Get-CurrentDATVersion "$UVSCAN_DIR/$UVSCAN_EXE"`
 
-	if [ -z "$CURRENT_DAT" ]
-	then
-		# Could not determine current value for DAT version from uvscan
-		# set custom property to error value, then exit with error
-		Debug-Print "Unable to determine currently installed DAT version!"
-		CURRENT_DAT="VSCL:INVALID DAT"
-	else
-		CURRENT_DAT="VSCL=$CURRENT_DAT"
-	fi
+    if [ -z "$CURRENT_DAT" ]
+    then
+        # Could not determine current value for DAT version from uvscan
+        # set custom property to error value, then exit with error
+        Debug-Print "Unable to determine currently installed DAT version!"
+        CURRENT_DAT="VSCL:INVALID DAT"
+    else
+        CURRENT_DAT="VSCL=$CURRENT_DAT"
+    fi
 fi
 
 Debug-Print "Setting McAfee Custom Property #1 to '$CURRENT_DAT'..."
 Set-CustomProp1 "$CURRENT_DAT"
-Refresh-ToEPO	
+Refresh-ToEPO   
 exit 0
