@@ -1,18 +1,18 @@
 #!/bin/bash
-#
+
 #=============================================================================
-# NAME:		UPDATE-UVSCAN-DAT.SH
-# Purpose:	Update the DAT files for the McAfee VirusScan Command Line 
-#			Scanner 6.1.0 on SaaS Linux PPM App servers
-# Creator:	Nick Taylor, Sr. Engineer, CA SaaS Ops
-# Date:		21-Oct-2019
-# Version:	1.2
-# PreReqs:	Linux
-#			CA PPM Application Server
-#			VSCL antivirus scanner installed
-#			Latest VSCL DAT .ZIP file
-#			unzip, tar, gunzip, gclib > 2.7 utilities in OS
-# Params:	$1 = VSCL DAT .ZIP file
+# NAME:     UPDATE-UVSCAN-DAT.SH
+# Purpose:  Update the DAT files for the McAfee VirusScan Command Line 
+#           Scanner 6.1.0 on SaaS Linux PPM App servers
+# Creator:  Nick Taylor, Sr. Engineer, CA SaaS Ops
+# Date:     21-Oct-2019
+# Version:  1.2
+# PreReqs:  Linux
+#           CA PPM Application Server
+#           VSCL antivirus scanner installed
+#           Latest VSCL DAT .ZIP file
+#           unzip, tar, gunzip, gclib > 2.7 utilities in OS
+# Params:   $1 = VSCL DAT .ZIP file
 # Switches: none
 # Imports:  none
 #=============================================================================
@@ -28,11 +28,11 @@ IGNORE_FILES=legal.txt
 #=============================================================================
 
 function do_exit {
-	echo ===========================
-	echo $(date +'%x %X')
-	echo Ending with exit code: $1
+    echo ===========================
+    echo $(date +'%x %X')
+    echo Ending with exit code: $1
 
-	exit $1
+    exit $1
 }
 
 #=============================================================================
@@ -43,13 +43,13 @@ echo $(date +'%x %X')
 echo ===========================
 
 if [ ! -f $1 ]; then
-	echo ERROR: DAT File \'$1\' does not exist!
-	do_exit 1
+    echo ERROR: DAT File \'$1\' does not exist!
+    do_exit 1
 fi
 
 if [ ! -d $UVSCAN_HOME ]; then
-	echo ERROR: uvscan product not found!
-	do_exit 1
+    echo ERROR: uvscan product not found!
+    do_exit 1
 fi
 
 # unzip DAT into uvscan directory and decompress for use

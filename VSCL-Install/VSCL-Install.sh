@@ -1,22 +1,22 @@
 #!/bin/bash
-#
+
 #=============================================================================
-# NAME:		VSCL-Install.sh
-# Purpose:	Installer for McAfee VirusScan Command Line Scanner 6.1.3 on 
+# NAME:     VSCL-Install.sh
+# Purpose:  Installer for McAfee VirusScan Command Line Scanner 6.1.3 on 
 #           FedRAMP PPM App Servers
-# Creator:	Nick Taylor, Pr. Engineer, Broadcom SaaS Ops
-# Date:		21-OCT-2019
-# Version:	1.2
-# PreReqs:	Linux
-#			PPM Application Server
-#			ClamAV antivirus scanner installed and integrated with PPM
-#				default install directory: /fs0/od/clamav/bin
-#			VSCL installer available in EPO (VSCLPACKxxxx)
-#			Latest VSCL DAT .ZIP file available in EPO (VSCANDATxxxx)
-#			VSCL-Download-DAT.sh in directory
-#			uvwrap.sh in directory
-#			unzip, tar, gunzip, gclib (> 2.7) utilities in OS
-# Params:	none
+# Creator:  Nick Taylor, Pr. Engineer, Broadcom SaaS Ops
+# Date:     21-OCT-2019
+# Version:  1.2
+# PreReqs:  Linux
+#           PPM Application Server
+#           ClamAV antivirus scanner installed and integrated with PPM
+#               default install directory: /fs0/od/clamav/bin
+#           VSCL installer available in EPO (VSCLPACKxxxx)
+#           Latest VSCL DAT .ZIP file available in EPO (VSCANDATxxxx)
+#           VSCL-Download-DAT.sh in directory
+#           uvwrap.sh in directory
+#           unzip, tar, gunzip, gclib (> 2.7) utilities in OS
+# Params:   none
 # Switches: none
 # Imports:  ./VSCL-local.sh
 #============================================================================= 
@@ -62,17 +62,17 @@ WRAPPER="uvwrap.sh"
 #=============================================================================
 
 function log-print {
-	echo "$(date +'%x %X') >> $1" >> "$LOG_PATH"
+    echo "$(date +'%x %X') >> $1" >> "$LOG_PATH"
 }
 
 function exit-script {
-	if [ "$1" != "0" ]; then
-	  log-print "==========================="
-	  log-print "Ending with exit code: $1"
-	  log-print "==========================="
-	fi
+    if [ "$1" != "0" ]; then
+      log-print "==========================="
+      log-print "Ending with exit code: $1"
+      log-print "==========================="
+    fi
 
-	exit $1
+    exit $1
 }
 
 #=============================================================================
@@ -91,11 +91,11 @@ fi
 
 # move install files to unzip into temp
 if [ -f "./$INSTALLER_ZIP" ]; then
-	log-print "Copying install archive to temp directory..."
-	cp -f "./$INSTALLER_ZIP" "./$TEMP_DIR"
+    log-print "Copying install archive to temp directory..."
+    cp -f "./$INSTALLER_ZIP" "./$TEMP_DIR"
 else 
-	log-print "ERROR: Installer archive './$INSTALLER_ZIP' does not exist!"
-	exit-script 1
+    log-print "ERROR: Installer archive './$INSTALLER_ZIP' does not exist!"
+    exit-script 1
 fi
 
 #TODO: Download installer from EPO
@@ -116,10 +116,10 @@ rm -rf "./$TEMP_DIR"
 # Run shell file to update the scanner with the latest AV definitions
 if [ -f "./$DAT_ZIP" ]
 then
-	log-print "Unpacking DAT files to uvscan directory..."
-	"./$DAT_UPDATE_CMD" "./$DAT_ZIP"
+    log-print "Unpacking DAT files to uvscan directory..."
+    "./$DAT_UPDATE_CMD" "./$DAT_ZIP"
 else
-	log-print "WARNING: .DAT files unavailable for installation!"
+    log-print "WARNING: .DAT files unavailable for installation!"
 fi
 
 # make uvwrap.sh executable and copy to uvscan directory
@@ -130,17 +130,17 @@ if [ -f "$UVSCAN_HOME/$WRAPPER" ]; then rm -f "$UVSCAN_HOME/$WRAPPER"; fi
 cp -f "./$WRAPPER" "$UVSCAN_HOME"
 
 if [ ! -d "$CLAMAV_HOME" ]; then
-	log-print "WARNING: ClamAV home directory '$CLAMAV_HOME' does not exist.  Creating..."
-	mkdir -p "$CLAMAV_HOME"
+    log-print "WARNING: ClamAV home directory '$CLAMAV_HOME' does not exist.  Creating..."
+    mkdir -p "$CLAMAV_HOME"
 fi
 
 if [ -f "$CLAMSCAN_BACKUP" ]; then
-	# save file exists, bypass save
-	log-print "WARNING: Original ClamAV scanner executable already saved to '$CLAMSCAN_BACKUP'.  Skipping save..."
+    # save file exists, bypass save
+    log-print "WARNING: Original ClamAV scanner executable already saved to '$CLAMSCAN_BACKUP'.  Skipping save..."
 else
-	# no existing save file, save clamscan original file
-	log-print "Saving original ClamAV scanner executable to '$CLAMSCAN_BACKUP'..."
-	mv "$CLAMSCAN_EXE" "$CLAMSCAN_BACKUP"
+    # no existing save file, save clamscan original file
+    log-print "Saving original ClamAV scanner executable to '$CLAMSCAN_BACKUP'..."
+    mv "$CLAMSCAN_EXE" "$CLAMSCAN_BACKUP"
 fi
 
 # remove existing clamscan file or link
