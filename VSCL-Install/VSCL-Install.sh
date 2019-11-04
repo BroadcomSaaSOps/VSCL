@@ -62,7 +62,7 @@ WRAPPER="uvwrap.sh"
 #=============================================================================
 
 function log-print {
-	log-print "$(date +'%x %X') >> $1" >> "$LOG_PATH"
+	echo "$(date +'%x %X') >> $1" >> "$LOG_PATH"
 }
 
 function exit-script {
