@@ -53,61 +53,89 @@ INSTALL_CMD="install-uvscan"
 # v---- for integrated download
 DAT_UPDATE_CMD="update-uvscan-dat.sh"
 # Path to default log file
-LOG_PATH="/var/McAfee/agent/log/VCSL.log"
+LOG_FILE="/var/McAfee/agent/logs/VSCL_mgmt.log"
 # Filename of scan wrapper to put in place of ClamAV executable
 WRAPPER="uvwrap.sh"
+SCRIPT_ABBR="VSCLINST"
 
 #=============================================================================
 # FUNCTIONS
 #=============================================================================
 
-function log-print {
-    echo "$(date +'%x %X') >> $1" >> "$LOG_PATH"
+function Log-Print() {
+    #----------------------------------------------------------
+    # Params: $1 = error message to print
+    #----------------------------------------------------------
+
+    local OUTPUT="$(date +'%x %X'):$SCRIPT_ABBR:$1"
+    echo $OUTPUT | tee --append "$LOG_PATH"
+    
+    return 0
 }
 
-function exit-script {
+function Exit-Script {
+    #----------------------------------------------------------
+    # Params: $1 = exit code (assumes 0/ok)
+    #----------------------------------------------------------
+
+    Log-Print "==========================="
+
     if [ "$1" != "0" ]; then
-      log-print "==========================="
-      log-print "Ending with exit code: $1"
-      log-print "==========================="
+      Log-Print "Ending with error code: $1"
+      Log-Print "==========================="
     fi
 
     exit $1
+}
+
+function Exit-WithError() {
+    #----------------------------------------------------------
+    # Exit script with error code 1
+    #----------------------------------------------------------
+    # Params: $1 (optional) error message to print
+    #----------------------------------------------------------
+
+    if [[ -n "$1" ]]; then
+        Log-Print "$1"
+    fi
+
+    Exit-Script 1
 }
 
 #=============================================================================
 # MAIN
 #=============================================================================
 
-log-print "==========================="
-log-print "Beginning VSCL installation"
-log-print "==========================="
+Log-Print "==========================="
+Log-Print "Beginning VSCL installation"
+Log-Print "==========================="
 
 # make temp directory off installer directory
 if [ ! -d "./$TEMP_DIR" ]; then 
-  log-print "Creating temp directory '$TEMP_DIR'..."
+  Log-Print "Creating temp directory '$TEMP_DIR'..."
   mkdir -p "./$TEMP_DIR"
 fi
 
 # move install files to unzip into temp
-if [ -f "./$INSTALLER_ZIP" ]; then
-    log-print "Copying install archive to temp directory..."
+# DO NOT quote below, [ -f ] conditionals don't work with quoting
+if [ -f ./$INSTALLER_ZIP ]; then
+    Log-Print "Copying install archive to temp directory..."
     cp -f "./$INSTALLER_ZIP" "./$TEMP_DIR"
 else 
-    log-print "ERROR: Installer archive './$INSTALLER_ZIP' does not exist!"
-    exit-script 1
+    Log-Print "ERROR: Installer archive './$INSTALLER_ZIP' does not exist!"
+    Exit-Script 1
 fi
 
 #TODO: Download installer from EPO
 
 # untar installer archive in-place and install uvscan with default settings
-log-print "Installing VSCL..."
+Log-Print "Installing VSCL..."
 cd "./$TEMP_DIR"
 tar -xvzf "./$INSTALLER_ZIP"
 "./$INSTALL_CMD" -y
 
 # remove temp directory
-log-print "Removing temp directory..."
+Log-Print "Removing temp directory..."
 cd ..
 rm -rf "./$TEMP_DIR"
 
@@ -116,37 +144,37 @@ rm -rf "./$TEMP_DIR"
 # Run shell file to update the scanner with the latest AV definitions
 if [ -f "./$DAT_ZIP" ]
 then
-    log-print "Unpacking DAT files to uvscan directory..."
+    Log-Print "Unpacking DAT files to uvscan directory..."
     "./$DAT_UPDATE_CMD" "./$DAT_ZIP"
 else
-    log-print "WARNING: .DAT files unavailable for installation!"
+    Log-Print "WARNING: .DAT files unavailable for installation!"
 fi
 
 # make uvwrap.sh executable and copy to uvscan directory
-log-print "Setting up shim wrapper for uvscan..."
+Log-Print "Setting up shim wrapper for uvscan..."
 chmod +x "./$WRAPPER"
 
 if [ -f "$UVSCAN_HOME/$WRAPPER" ]; then rm -f "$UVSCAN_HOME/$WRAPPER"; fi
 cp -f "./$WRAPPER" "$UVSCAN_HOME"
 
 if [ ! -d "$CLAMAV_HOME" ]; then
-    log-print "WARNING: ClamAV home directory '$CLAMAV_HOME' does not exist.  Creating..."
+    Log-Print "WARNING: ClamAV home directory '$CLAMAV_HOME' does not exist.  Creating..."
     mkdir -p "$CLAMAV_HOME"
 fi
 
 if [ -f "$CLAMSCAN_BACKUP" ]; then
     # save file exists, bypass save
-    log-print "WARNING: Original ClamAV scanner executable already saved to '$CLAMSCAN_BACKUP'.  Skipping save..."
+    Log-Print "WARNING: Original ClamAV scanner executable already saved to '$CLAMSCAN_BACKUP'.  Skipping save..."
 else
     # no existing save file, save clamscan original file
-    log-print "Saving original ClamAV scanner executable to '$CLAMSCAN_BACKUP'..."
+    Log-Print "Saving original ClamAV scanner executable to '$CLAMSCAN_BACKUP'..."
     mv "$CLAMSCAN_EXE" "$CLAMSCAN_BACKUP"
 fi
 
 # remove existing clamscan file or link
-log-print "Replacing clamscan executable with symlink to '$UVSCAN_HOME/$WRAPPER'..."
+Log-Print "Replacing clamscan executable with symlink to '$UVSCAN_HOME/$WRAPPER'..."
 rm -f "$CLAMSCAN_EXE"
 ln -s "$UVSCAN_HOME/$WRAPPER" "$CLAMSCAN_EXE"
 
-exit-script 0
+Exit-Script 0
 

@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
-Generated: 10/21/2019 10:38:34 AM
+Generated: 11/4/2019 9:25:05 AM
 EEDK.exe
--Build:"E:\Software\McAfee\EEDK\Builds" -Folder:"E:\Software\McAfee\EEDK\Development\VSCL\VSCL-Uninstall" -ProdName:"VSCLUNIN" -ProdID:"1200" -ProdVer:"1.2.0.0" -ProdDesc:"VSCL Uninstall (VSCLUNIN)" -Install:"./VSCL-Uninstall.sh" -Reboot:"3010" -Platform:"LINUX" 
+-Build:"E:\Software\McAfee\EEDK\Builds" -Folder:"E:\Software\McAfee\EEDK\Development\VSCL\VSCL-Uninstall" -ProdName:"VSCLUNIN" -ProdID:"1200" -ProdVer:"1.2.0.0" -ProdDesc:"VSCL - Uninstall VirusScan Command Line (VSCLUNIN)" -Install:"./VSCL-Uninstall.sh" -Reboot:"3010" -Platform:"LINUX" 
 -->
 <ePO.Endpoint.Deployment.Kit.Settings>
   <File>false</File>
@@ -11,7 +11,7 @@ EEDK.exe
   <BuildFolder>E:\Software\McAfee\EEDK\Builds</BuildFolder>
   <ProductName>VSCLUNIN</ProductName>
   <ProductID>1200</ProductID>
-  <ProductDescription>VSCL Uninstall (VSCLUNIN)</ProductDescription>
+  <ProductDescription>VSCL - Uninstall VirusScan Command Line (VSCLUNIN)</ProductDescription>
   <ProductVersion>1.2.0.0</ProductVersion>
   <InstallCommand>./VSCL-Uninstall.sh</InstallCommand>
   <DetectionKey />

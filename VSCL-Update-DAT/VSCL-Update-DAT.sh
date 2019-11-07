@@ -54,6 +54,7 @@ done
 # name and path of this script
 SCRIPT_NAME=$(basename "$0")
 SCRIPT_PATH=$(dirname "$0")
+SCRIPT_ABBR="VCSLUDAT"
 
 # name of the repo file with current DAT version
 VERSION_FILE="avvdat.ini"
@@ -106,7 +107,7 @@ DOWNLOAD_SITE="https://${SITE_NAME}${EPO_SERVER}:443/Software/Current/VSCANDAT10
 # format => <filename>:<permissions>
 FILE_LIST="avvscan.dat:444 avvnames.dat:444 avvclean.dat:444"
 
-LOG_FILE=/var/McAfee/agent/logs/VSCL_mgmt.log
+LOG_FILE="/var/McAfee/agent/logs/VSCL_mgmt.log"
 
 #=============================================================================
 # FUNCTIONS
@@ -403,7 +404,7 @@ if [[ -z "$DOWNLOAD_ONLY" ]]; then
     # check for uvscan
     if ! Check-For $UVSCAN_DIR/$UVSCAN_EXE "uvscan executable" --no-terminate; then
         # uvscan not found
-        # set custom property to error value, then exit with error
+        # set custom property to error value, then exit
         Log-Print "Could not find 'uvscan executable' at '$UVSCAN_DIR/$UVSCAN_EXE'!"
         Log-Print "Setting McAfee Custom Property #1 to 'VSCL:NOT INSTALLED'..."
         Set-CustomProp1 "VSCL:NOT INSTALLED"
