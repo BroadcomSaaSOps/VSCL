@@ -63,7 +63,7 @@ INSTALL_CMD="install-uvscan"
 # v---- for integrated download
 DAT_UPDATE_CMD="update-uvscan-dat.sh"
 # Path to default log file
-LOG_FILE="/var/McAfee/agent/logs/VSCL_mgmt.log"
+LOG_PATH="/var/McAfee/agent/logs/VSCL_mgmt.log"
 # Filename of scan wrapper to put in place of ClamAV executable
 WRAPPER="uvwrap.sh"
 SCRIPT_ABBR="VSCLINST"
@@ -72,13 +72,19 @@ SCRIPT_ABBR="VSCLINST"
 # FUNCTIONS
 #=============================================================================
 
-function Log-Print() {
+Log-Print() {
     #----------------------------------------------------------
     # Params: $1 = error message to print
     #----------------------------------------------------------
 
-    local OUTPUT="$(date +'%x %X'):$SCRIPT_ABBR:$1"
-    echo $OUTPUT | tee --append "$LOG_PATH"
+    local OUTPUT
+    OUTPUT="$(date +'%x %X'):$SCRIPT_ABBR:$*"
+
+    if [[ -f "$LOGPATH" ]]; then
+        echo "$OUTPUT" | tee --append "$LOG_PATH"
+    else
+        echo "$OUTPUT" | tee "$LOG_PATH"
+    fi
     
     return 0
 }
@@ -92,7 +98,7 @@ function Exit-Script {
 
     Log-Print "==========================="
 
-    if [[ -z "$1" ]]; then
+    if [ -z "$1" ]; then
         OUTCODE="0"
     else
         if [ "$1" != "0" ]; then
@@ -102,7 +108,7 @@ function Exit-Script {
     
     Log-Print "Ending with exit code: $1"
     Log-Print "==========================="
-    exit OUTCODE
+    exit $OUTCODE
 }
 
 function Exit-WithError() {
@@ -112,7 +118,7 @@ function Exit-WithError() {
     # Params: $1 (optional) error message to print
     #----------------------------------------------------------
 
-    if [[ -n "$1" ]]; then
+    if [ -n "$1" ]; then
         Log-Print "$1"
     fi
 
@@ -128,16 +134,16 @@ Log-Print "Beginning VSCL installation"
 Log-Print "==========================="
 
 # make temp directory off installer directory
-if [[ ! -d "./$TEMP_DIR" ]]; then 
+if [ ! -d "./$TEMP_DIR" ]; then 
   Log-Print "Creating temp directory '$TEMP_DIR'..."
   mkdir -p "./$TEMP_DIR"
 fi
 
 # move install files to unzip into temp
 # >>> DO NOT add quote below, [ -f ] conditionals don't work with quoting
-if [[ -f ./$INSTALLER_ZIP ]]; then
+if [ -f ./$INSTALLER_ZIP ]; then
     Log-Print "Copying install archive to temp directory..."
-    cp -f "./$INSTALLER_ZIP" "./$TEMP_DIR"
+    cp -f ./$INSTALLER_ZIP "./$TEMP_DIR"
 else 
     Exit-WithError "ERROR: Installer archive './$INSTALLER_ZIP' does not exist!"
 fi
@@ -148,7 +154,7 @@ fi
 Log-Print "Extracting installer to directory './$TEMP_DIR'..."
 cd "./$TEMP_DIR"
 
-if ! tar -xvzf "./$INSTALLER_ZIP"; then
+if ! tar -xvzf ./$INSTALLER_ZIP; then
     Exit-WithError "Error extracting installer to directory './$TEMP_DIR'!"
 fi
 
@@ -173,9 +179,13 @@ else
     Log-Print "WARNING: .DAT files unavailable for installation!"
 fi
 
-# make uvwrap.sh executable and copy to uvscan directory
-Log-Print "Setting up shim wrapper for uvscan..."
-chmod +x "./$WRAPPER"
+if [ -f "./$WRAPPER" ]; then
+    # make uvwrap.sh executable and copy to uvscan directory
+    Log-Print "Setting up shim wrapper for uvscan..."
+    chmod +x "./$WRAPPER"
+else
+    Exit-WithError "File '$WRAPPER' not available.  Aborting installer!"
+fi
 
 if [ -f "$UVSCAN_HOME/$WRAPPER" ]; then
     rm -f "$UVSCAN_HOME/$WRAPPER"

@@ -33,6 +33,23 @@ DAT_UPDATE_CMD=./update-uvscan-dat.sh
 # FUNCTIONS
 #=============================================================================
 
+Log-Print() {
+    #----------------------------------------------------------
+    # Params: $1 = error message to print
+    #----------------------------------------------------------
+
+    local OUTPUT
+    OUTPUT="$(date +'%x %X'):$SCRIPT_ABBR:$*"
+
+    if [[ -f "$LOGPATH" ]]; then
+        echo "$OUTPUT" | tee --append "$LOG_PATH"
+    else
+        echo "$OUTPUT" | tee "$LOG_PATH"
+    fi
+    
+    return 0
+}
+
 function do_exit {
     echo ===========================
     echo $(date +'%x %X')

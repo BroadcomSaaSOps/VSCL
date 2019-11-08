@@ -1,13 +1,17 @@
 #!/bin/bash
 
 #=============================================================================
-# NAME:         VSCL-Update-DAT.sh
+# Name:         VSCL-Update-DAT.sh
+#-----------------------------------------------------------------------------
 # Purpose:      Update the DAT files for the McAfee VirusScan Command Line
 #                       Scanner 6.1.3 on SaaS Linux PPM App servers from EPO
+#-----------------------------------------------------------------------------
 # Creator:      Nick Taylor, Pr. Engineer, Broadcom SaaS Ops
-# Original:     Copyright (c) 2009 McAfee, Inc. All Rights Reserved.
+#-----------------------------------------------------------------------------
 # Date:         21-OCT-2019
+#-----------------------------------------------------------------------------
 # Version:      1.2
+#-----------------------------------------------------------------------------
 # PreReqs:      Linux
 #               CA PPM Application Server
 #               VSCL antivirus scanner installed
@@ -15,26 +19,21 @@
 #               unzip, tar, gunzip, gclib > 2.7 utilities in OS,
 #               awk, echo, cut, ls, printf, wget
 # Params:       none
+#-----------------------------------------------------------------------------
 # Switches:     -d:  download current DATs and exit
 #               -l:  leave any files extracted intact at exit
-# Imports:      ./VSCL-local.sh
+#-----------------------------------------------------------------------------
+# Imports:      ./VSCL-local.sh:  local per-site variables
+#               ./VSCL-local.sh:  library functions
 #=============================================================================
 
-#=============================================================================
-# VARIABLES
-#=============================================================================
-
+#-----------------------------------------
 #  Imports
 #-----------------------------------------
 . ./VSCL-local.sh
+. ./VSCL-lib.sh
 
-# Defaults: Do not modify
 #-----------------------------------------
-unset MD5CHECKER LEAVE_FILES DEBUG_IT FETCHER SCRIPT_NAME SITE_NAME EPO_SERVER
-unset PERFORM_UPDATE LOCAL_VERSION_FILE DAT_ZIP UVSCAN_EXE UVSCAN_SWITCHES
-unset MACONFIG_PATH CMDAGENT_PATH UVSCAN_DIR TMP_DIR VER_SECTION DOWNLOAD_SITE
-unset FILE_LIST DOWNLOAD_ONLY OPTION_VAR LOG_FILE
-
 # Process command line options
 #-----------------------------------------
 while getopts :dl OPTION_VAR; do
@@ -48,8 +47,8 @@ while getopts :dl OPTION_VAR; do
     esac
 done
 
-# Globals
-# (these variables are normally best left unmodified)
+#-----------------------------------------
+# Globals variables
 #-----------------------------------------
 # name and path of this script
 SCRIPT_NAME=$(basename "$0")
@@ -98,9 +97,11 @@ FETCHER="wget"
 # set to non-empty to leave downloaded files after the update is done
 #LEAVE_FILES="true"
 # show debug messages (set to non-empty to enable)
+# shellcheck disable=SC2034
 DEBUG_IT=yes
 
 # download site
+# shellcheck disable=SC2153
 DOWNLOAD_SITE="https://${SITE_NAME}${EPO_SERVER}:443/Software/Current/VSCANDAT1000/DAT/0000"
 
 # space-delimited list of files to unzip
@@ -113,39 +114,6 @@ LOG_FILE="/var/McAfee/agent/logs/VSCL_mgmt.log"
 # FUNCTIONS
 #=============================================================================
 
-Do-Cleanup() {
-    #------------------------------------------------------------
-    # if 'LEAVE_FILES' global is NOT set, erase downloaded files
-    #------------------------------------------------------------
-
-    if [[ -z "$LEAVE_FILES" ]]; then
-        rm -rf "$TMP_DIR"
-    fi
-}
-
-Exit-WithError() {
-    #----------------------------------------------------------
-    # if $1 param is set, print error msg
-    # in any case, exit with error
-    #----------------------------------------------------------
-
-    if [[ -n "$1" ]]; then
-        Log-Print "$@"
-    fi
-
-    Do-Cleanup
-    exit 1
-}
-
-Log-Print() {
-    #----------------------------------------------------------
-    # if 'DEBUG_IT' global is set, print params
-    #----------------------------------------------------------
-
-    local OUTPUT=$(printf "%s:%s" $SCRIPT_NAME "[$(date "+%FT%T")] $@")
-    echo $OUTPUT >> "$LOG_FILE"
-    echo $OUTPUT
-}
 
 Find-INISection() {
     #----------------------------------------------------------
@@ -183,7 +151,9 @@ Get-CurrentDATVersion() {
     # use with the command line scanner
     #------------------------------------------------------------
 
-    printf "%s.0\n" $(echo "$("$UVSCAN_DIR/$UVSCAN_EXE" --version)" | grep -i "dat set version:"  | cut -d' ' -f4)
+    local DAT_QUERY
+    DAT_QUERY="$(""$UVSCAN_DIR/$UVSCAN_EXE"" --version 2> /dev/null | grep -i ""dat set version:""  | cut -d' ' -f4)"
+    printf "%s.0\n" "$($DAT_QUERY)"
 
     return 0
 }
@@ -258,7 +228,7 @@ Validate-File() {
     fi
 
     # make MD5 check optional. return "success" if there's no support
-    if [[ -z "$MD5CHECKER" ]] || [[ ! -x $(which $MD5CHECKER 2> /dev/null) ]]; then
+    if [[ -z "$MD5CHECKER" ]] || [[ ! -x $(command -v $MD5CHECKER 2> /dev/null) ]]; then
         Log-Print "MD5 Checker not available, skipping MD5 check..."
         return 0
     fi
@@ -269,7 +239,7 @@ Validate-File() {
     if [[ -n "$MD5_CSUM" ]] && [[ "$MD5_CSUM" = "$3" ]]; then
         Log-Print "File '$1' MD5 checksum is correct ($3)"
     else
-        Exit-WithError "Downloaded DAT MD5 hash '$MD5_csum' should be '$3'!"
+        Exit-WithError "Downloaded DAT MD5 hash '$MD5_CSUM' should be '$3'!"
     fi
 
     return 0
@@ -308,7 +278,7 @@ Update-FromZip() {
     # Update the DAT files.
     Log-Print "Uncompressing '$2' to '$1'..."
 
-    if ! unzip -o -d "$1" "$2" "$FILE_LIST" 2> /dev/null; then
+    if ! unzip -o -d "$1" "$2" $FILE_LIST 2> /dev/null; then
         Exit-WithError "Error unzipping '$2' to '$1'!"
     fi
 
@@ -569,7 +539,7 @@ if [[ -n "$PERFORM_UPDATE" ]] || [[ -n "$DOWNLOAD_ONLY" ]]; then
         NEW_MAJOR=$(echo "$NEW_VERSION" | cut -d. -f-1)
         NEW_MINOR=$(echo "$NEW_VERSION" | cut -d. -f2-)
 
-        if (( NEW_MAJOR == MAJOR_VER )) && (( NEW_MINOR == MINOR_VER)); then
+        if ! (( NEW_MAJOR == MAJOR_VER )) && (( NEW_MINOR == MINOR_VER)); then
             Log-Print "DAT update succeeded ($CURRENT_DAT -> $NEW_VERSION)!"
         else
             Exit-WithError "DAT update failed - installed version different than expected!"

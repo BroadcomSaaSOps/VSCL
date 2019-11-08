@@ -18,84 +18,24 @@
 # Params:       none
 # Switches:     -d:  download current DATs and exit
 #               -l:  leave any files extracted intact at exit
-# Imports:      none
+#-----------------------------------------------------------------------------
+# Imports:      ./VSCL-local.sh:  library functions
 #=============================================================================
 
-#=============================================================================
-# VARIABLES
-#=============================================================================
-
-# Defaults: Do not modify
 #-----------------------------------------
-unset DEBUG_IT SCRIPT_NAME UVSCAN_EXE UVSCAN_DIR MACONFIG_PATH CMDAGENT_PATH CURRENT_DAT DEBUG_LOG
+#  Imports
+#-----------------------------------------
+. ./VSCL-lib.sh
 
-# Globals
-# (these variables are normally best left unmodified)
+#-----------------------------------------
+# Globals variables
 #-----------------------------------------
 # name of this script
-SCRIPT_NAME=`basename "$0"`
 SCRIPT_ABBR="VSCL_UP1"
 
-# name of scanner executable
-UVSCAN_EXE="uvscan"
-
-# Change these variables to match your environment
-# UVSCAN_DIR must be a directory and writable where uvscan is installed
-UVSCAN_DIR="/usr/local/uvscan"
-
-# path to MACONFIG program
-MACONFIG_PATH="/opt/McAfee/agent/bin/maconfig"
-
-# path to CMDAGENT utility
-CMDAGENT_PATH="/opt/McAfee/agent/bin/cmdagent"
-
-# Preferences
 #-----------------------------------------
-# show debug messages (set to non-empty to enable)
-DEBUG_IT=yes
-LOG_PATH=/var/McAfee/agent/logs/VSCL_mgmt.log
-
-#=============================================================================
-# FUNCTIONS
-#=============================================================================
-
-function Exit-Script {
-    Log-Print "==========================="
-
-    if [ "$1" != "0" ]; then
-      Log-Print "Ending with error code: $1"
-      Log-Print "==========================="
-    fi
-
-    exit $1
-}
-
-function Exit-WithError() {
-    #----------------------------------------------------------
-    # Exit script with error code 1
-    #----------------------------------------------------------
-    # Params: $1 (optional) error message to print
-    #----------------------------------------------------------
-
-    if [[ -n "$1" ]]; then
-        Log-Print "$1"
-    fi
-
-    Exit-Script 1
-}
-
-function Log-Print() {
-    #----------------------------------------------------------
-    # If 'DEBUG_IT' global is set, print error message
-    #----------------------------------------------------------
-    # Params: $1 = error message to print
-    #----------------------------------------------------------
-
-    local OUTPUT="$(date +'%x %X'):$SCRIPT_ABBR:$1"
-    echo $OUTPUT | tee --append "$LOG_PATH"
-    
-    return 0
-}
+# Functions
+#-----------------------------------------
 
 function Get-CurrentDATVersion() {
     #------------------------------------------------------------
@@ -115,51 +55,6 @@ function Get-CurrentDATVersion() {
     printf "${LOCAL_DAT_VERSION}.0 (${LOCAL_ENG_VERSION})\n"
     Log-Print "${LOCAL_DAT_VERSION}.0 (${LOCAL_ENG_VERSION})\n"
 
-    return 0
-}
-
-function Refresh-ToEPO() {
-    #------------------------------------------------------------
-    # Function to refresh the agent with EPO
-    #------------------------------------------------------------
-
-    # flags to use with CMDAGENT utility
-    unset CMDAGENT_FLAGS
-    CMDAGENT_FLAGS="-c -f -p -e"
-
-    Log-Print "Refreshing agent data with EPO..."
-    
-    # loop through provided flags and call one command per
-    # (CMDAGENT can't handle more than one)
-    for FLAG_NAME in $CMDAGENT_FLAGS; do
-        $CMDAGENT_PATH $FLAG_NAME >>"$LOG_PATH" 2>&1
-        
-        if [ $? -ne 0 ]; then
-            Exit-WithError "Error running EPO refresh command '$CMDAGENT_PATH $FLAG_NAME'!"
-        fi
-    done
-    
-    return 0
-}
-
-function Check-For() {
-    #------------------------------------------------------------
-    # Function to check for existence of a file
-    #------------------------------------------------------------
-    # Params:  $1 = full path to file
-    #          $2 = friendly-name of file
-    #          $3 = (optional) --no-terminate to return always
-    #------------------------------------------------------------
-    Log-Print "Checking for '$2' at '$1'..."
-
-    if [ ! -x "$1" ]; then
-        if [ "$3" = "--no-terminate" ]; then
-            return 1
-        else
-            Exit-WithError "Could not find '$2' at '$1'!"
-        fi
-    fi
-    
     return 0
 }
 
