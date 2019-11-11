@@ -144,7 +144,7 @@ function Refresh-ToEPO() {
     #------------------------------------------------------------
 
     # flags to use with CMDAGENT utility
-    local CMDAGENT_FLAGS OUT
+    local CMDAGENT_FLAGS OUT ERR
     CMDAGENT_FLAGS="-c -f -p -e"
 
     Log-Print "Refreshing agent data with EPO..."
@@ -154,15 +154,25 @@ function Refresh-ToEPO() {
     for FLAG_NAME in $CMDAGENT_FLAGS; do
         unset OUT
         Log-Print ">> cmd = '$CMDAGENT_PATH $FLAG_NAME'"
-        readarray -t OUT < <($CMDAGENT_PATH $FLAG_NAME)
         
-        if [ $? -ne 0 ]; then
-            Exit-WithError "Error running EPO refresh command '$CMDAGENT_PATH $FLAG_NAME'\!"
+        if command -v readarray; then
+            readarray -t OUT < <($CMDAGENT_PATH $FLAG_NAME)
+            ERR=$?
+        else
+            IFS=$'\n'
+            OUT=($($CMDAGENT_PATH $FLAG_NAME))
+            ERR=$?
+            unset IFS
         fi
-        
+
         for output in "${OUT[@]}"; do
             Log-Print ">> $output"
         done
+        
+        if [ $ERR -ne 0 ]; then
+
+            Exit-WithError "Error running EPO refresh command '$CMDAGENT_PATH $FLAG_NAME'\!"
+        fi
     done
     
     return 0
