@@ -51,33 +51,10 @@ done
 # Globals variables
 #-----------------------------------------
 # name and path of this script
-SCRIPT_NAME=$(basename "$0")
-SCRIPT_PATH=$(dirname "$0")
 SCRIPT_ABBR="VCSLUDAT"
 
 # name of the repo file with current DAT version
 VERSION_FILE="avvdat.ini"
-
-# name of scanner executable
-UVSCAN_EXE="uvscan"
-UVSCAN_SWITCHES=""
-
-# path to MACONFIG program
-MACONFIG_PATH="/opt/McAfee/agent/bin/maconfig"
-
-# path to CMDAGENT utility
-CMDAGENT_PATH="/opt/McAfee/agent/bin/cmdagent"
-
-# Change these variables to match your environment
-# UVSCAN_DIR must be a directory and writable where uvscan is installed
-UVSCAN_DIR="/usr/local/uvscan"
-
-# TMP_DIR must be a directory and writable
-TMP_DIR=$(mktemp -d -p "$SCRIPT_PATH" 2> /dev/null)
-
-if [[ ! -d "$TMP_DIR" ]];then
-    Exit-WithError "Unable to create temporary directory '$TMP_DIR'"
-fi
 
 # Name of the file in the repository to extract current DAT version from
 LOCAL_VERSION_FILE="$TMP_DIR/$VERSION_FILE"
@@ -85,20 +62,10 @@ LOCAL_VERSION_FILE="$TMP_DIR/$VERSION_FILE"
 # section of avvdat.ini from repository to examine for DAT version
 VER_SECTION="AVV-ZIP"
 
-# Optional: Program for calculating the MD5 for a file
-MD5CHECKER="md5sum"
-
-# Program to use to download files from web repository
-# (default is wget but curl is OK)
-FETCHER="wget"
-
 # Preferences
 #-----------------------------------------
 # set to non-empty to leave downloaded files after the update is done
 #LEAVE_FILES="true"
-# show debug messages (set to non-empty to enable)
-# shellcheck disable=SC2034
-DEBUG_IT=yes
 
 # download site
 # shellcheck disable=SC2153
@@ -108,144 +75,11 @@ DOWNLOAD_SITE="https://${SITE_NAME}${EPO_SERVER}:443/Software/Current/VSCANDAT10
 # format => <filename>:<permissions>
 FILE_LIST="avvscan.dat:444 avvnames.dat:444 avvclean.dat:444"
 
-LOG_FILE="/var/McAfee/agent/logs/VSCL_mgmt.log"
-
 #=============================================================================
 # FUNCTIONS
 #=============================================================================
 
-
-Find-INISection() {
-    #----------------------------------------------------------
-    # Function to parse avvdat.ini and return, via stdout, the
-    # contents of a specified section. Requires the avvdat.ini
-    # file to be available on stdin.
-    #----------------------------------------------------------
-    # Params: $1 - Section name
-    #----------------------------------------------------------
-    # Output: space-delimited INI entries
-    #----------------------------------------------------------
-
-    unset SECTION_FOUND
-
-    SECTION_NAME="[$1]"
-
-    while read -r LINE; do
-        if [[ "$LINE" = "$SECTION_NAME" ]]; then
-            SECTION_FOUND="true"
-        elif [[ -n "$SECTION_FOUND" ]]; then
-            if [[ "$(echo "$LINE" | cut -c1)" != "[" ]]; then
-                if [[ -n "$LINE" ]]; then
-                    printf "%s\n" "$LINE"
-                fi
-            else
-                unset SECTION_FOUND
-            fi
-        fi
-    done
-}
-
-Get-CurrentDATVersion() {
-    #------------------------------------------------------------
-    # Function to return the DAT version currently installed for
-    # use with the command line scanner
-    #------------------------------------------------------------
-
-    local DAT_QUERY
-    DAT_QUERY="$(""$UVSCAN_DIR/$UVSCAN_EXE"" --version 2> /dev/null | grep -i ""dat set version:""  | cut -d' ' -f4)"
-    printf "%s.0\n" "$($DAT_QUERY)"
-
-    return 0
-}
-
-Download-File() {
-    #------------------------------------------------------------
-    # Function to download a specified file from repository
-    #------------------------------------------------------------
-    # Params: $1 - Download site
-    #         $2 - Name of file to download.
-    #         $3 - Download type (either bin or ascii)
-    #         $4 - Local download directory
-    #         $5 - executable to use to fetch file (wget or curl)
-    #------------------------------------------------------------
-
-    # type must be "bin" or "ascii"
-    if [[ "$3" != "bin" ]] && [[ "$3" != "ascii" ]]; then
-        Exit-WithError "Download type must be 'bin' or 'ascii'!"
-    fi
-
-    local FILE_NAME="$4/$2"
-    local DOWNLOAD_URL="$1/$2"
-    local FETCHER_CMD
-
-    # download with wget
-    case $5 in
-        "wget") FETCHER_CMD="wget -q --tries=10 --no-check-certificate ""$DOWNLOAD_URL"" -O ""$FILE_NAME"""
-            ;;
-        "curl") FETCHER_CMD="curl -s -k ""$DOWNLOAD_URL"" -o ""$FILE_NAME"""
-            ;;
-        *) Exit-WithError "No valid URL fetcher available!"
-            ;;
-    esac
-
-    
-    #FETCH_RESULT="$?"
-
-    if $FETCHER_CMD; then
-        #ls -lAh "$4"
-        
-        # file downloaded OK
-        if [[ "$3" = "ascii" ]]; then
-            # strip and CR/LF line terminators
-            tr -d '\r' < "$FILE_NAME" > "$FILE_NAME.tmp"
-            rm -f "$FILE_NAME"
-            mv "$FILE_NAME.tmp" "$FILE_NAME"
-        fi
-        
-        return 0
-    fi
-    
-    return 1
-}
-
-Validate-File() {
-    #------------------------------------------------------------
-    # Function to check the specified file against its expected
-    # size, checksum and MD5 checksum.
-    #------------------------------------------------------------
-    # Params: $1 - File name (including path)
-    #         $2 - expected size
-    #         $3 - MD5 Checksum
-    #------------------------------------------------------------
-
-    # Check the file size matches what we expect...
-    SIZE=$(stat "$1" --printf "%s")
-
-    if [[ -n "$SIZE" ]] && [[ "$SIZE" = "$2" ]]; then
-        Log-Print "File '$1' size is correct ($2)"
-    else
-        Exit-WithError "Downloaded DAT size '$SIZE' should be '$1'!"
-    fi
-
-    # make MD5 check optional. return "success" if there's no support
-    if [[ -z "$MD5CHECKER" ]] || [[ ! -x $(command -v $MD5CHECKER 2> /dev/null) ]]; then
-        Log-Print "MD5 Checker not available, skipping MD5 check..."
-        return 0
-    fi
-
-    # Check the MD5 checksum...
-    MD5_CSUM=$($MD5CHECKER "$1" 2>/dev/null | cut -d' ' -f1)
-
-    if [[ -n "$MD5_CSUM" ]] && [[ "$MD5_CSUM" = "$3" ]]; then
-        Log-Print "File '$1' MD5 checksum is correct ($3)"
-    else
-        Exit-WithError "Downloaded DAT MD5 hash '$MD5_CSUM' should be '$3'!"
-    fi
-
-    return 0
-}
-
-Update-FromZip() {
+function Update-FromZip() {
     #---------------------------------------------------------------
     # Function to extract the listed files from the given zip file.
     #---------------------------------------------------------------
@@ -292,77 +126,10 @@ Update-FromZip() {
     return 0
 }
 
-Check-For() {
-    #------------------------------------------------------------
-    # Function to check for existence of a file
-    #------------------------------------------------------------
-    # Params:  $1 = full path to file
-    #          $2 = friendly-name of file
-    #          $3 = (optional) --no-terminate to return always
-    #------------------------------------------------------------
-    Log-Print "Checking for '$2' at '$1'..."
-
-    if [[ ! -x "$1" ]]; then
-        if [[ "$3" = "--no-terminate" ]]; then
-            return 1
-        else
-            Exit-WithError "Could not find '$2' at '$1'!"
-        fi
-    fi
-
-    return 0
-}
-
-Set-CustomProp1() {
-    #------------------------------------------------------------
-    # Set the value of McAfee custom Property #1
-    #------------------------------------------------------------
-    # Params:  $1 = value to set property
-    #------------------------------------------------------------
-    Log-Print "Setting EPO Custom Property #1 to '$1'..."
-
-    if ! "$MACONFIG_PATH" -custom -prop1 "$1" 2> /dev/null; then
-        Exit-WithError "Error setting EPO Custom Property #1 to '$1'!"
-    fi
-
-    return 0
-}
-
-Refresh-ToEPO() {
-    #------------------------------------------------------------
-    # Function to refresh the agent with EPO
-    #------------------------------------------------------------
-
-    # flags to use with CMDAGENT utility
-    unset CMDAGENT_FLAGS
-    CMDAGENT_FLAGS="-c -f -p -e"
-
-    Log-Print "Refreshing agent data with EPO..."
-
-    # loop through provided flags and call one command per
-    # (CMDAGENT can't handle more than one)
-    for FLAG_NAME in $CMDAGENT_FLAGS; do
-        if ! "$CMDAGENT_PATH" "$FLAG_NAME" 2> /dev/null; then
-            Exit-WithError "Error running EPO refresh command '$CMDAGENT_PATH $FLAG_NAME'!"
-        fi
-    done
-
-    return 0
-}
-
 #=============================================================================
 #  MAIN PROGRAM
 #=============================================================================
 
-# sanity checks
-# check for wget
-if command -v wget 2> /dev/null; then
-    FETCHER="wget"
-elif command -v curl 2> /dev/null; then
-    FETCHER="curl"
-else
-    Exit-WithError "No valid URL fetcher available!"
-fi
 
 if [[ -z "$DOWNLOAD_ONLY" ]]; then
     # check for MACONFIG
@@ -377,7 +144,7 @@ if [[ -z "$DOWNLOAD_ONLY" ]]; then
         # set custom property to error value, then exit
         Log-Print "Could not find 'uvscan executable' at '$UVSCAN_DIR/$UVSCAN_EXE'!"
         Log-Print "Setting McAfee Custom Property #1 to 'VSCL:NOT INSTALLED'..."
-        Set-CustomProp1 "VSCL:NOT INSTALLED"
+        Set-CustomProp 1 "VSCL:NOT INSTALLED"
         Refresh-ToEPO
         exit 0
     fi
@@ -417,7 +184,7 @@ if [[ -z "$DOWNLOAD_ONLY" ]]; then
     Log-Print "Determining the currently installed DAT version..."
 
     unset CURRENT_DAT
-    CURRENT_DAT=$(Get-CurrentDATVersion "$UVSCAN_DIR/$UVSCAN_EXE" "$UVSCAN_SWITCHES")
+    CURRENT_DAT=$(Get-CurrentDATVersion)
 
     if [[ -z "$CURRENT_DAT" ]] ; then
         Log-Print "Unable to determine currently installed DAT version!"
@@ -490,7 +257,7 @@ if [[ -n "$PERFORM_UPDATE" ]] || [[ -n "$DOWNLOAD_ONLY" ]]; then
     # Download the dat files...
     Log-Print "Downloading the current DAT '$FILE_NAME' from '$DOWNLOAD_SITE'..."
 
-    Download-File "$DOWNLOAD_SITE" "$FILE_NAME" "bin" "$TMP_DIR" "$FETCHER"
+    Download-File "$DOWNLOAD_SITE" "$FILE_NAME" "bin" "$TMP_DIR"
     DOWNLOAD_OUT="$?"
 
     if [[ "$DOWNLOAD_OUT" != "0" ]]; then
@@ -549,7 +316,7 @@ if [[ -n "$PERFORM_UPDATE" ]] || [[ -n "$DOWNLOAD_ONLY" ]]; then
     fi
 
     # Set McAfee Custom Property #1 to '$NEW_VERSION'...
-    Set-CustomProp1 "$NEW_VERSION"
+    Set-CustomProp 1 "$NEW_VERSION"
 
     # Refresh agent data with EPO
     Refresh-ToEPO

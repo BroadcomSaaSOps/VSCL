@@ -33,48 +33,6 @@
 # name of this script
 SCRIPT_ABBR="VSCL_UP1"
 
-#-----------------------------------------
-# Functions
-#-----------------------------------------
-
-function Get-CurrentDATVersion() {
-    #------------------------------------------------------------
-    # Function to return the DAT version currently installed for
-    # use with the command line scanner
-    #------------------------------------------------------------
-
-    unset UVSCAN_DAT LOCAL_DAT_VERSION LOCAL_ENG_VERSION
-    UVSCAN_DAT=`("$UVSCAN_DIR/$UVSCAN_EXE" --version)`
-
-    if [ $? -ne 0 ]; then
-        return 1
-    fi
-
-    LOCAL_DAT_VERSION=`printf "$UVSCAN_DAT\n" | grep -i "dat set version:" | cut -d' ' -f4`
-    LOCAL_ENG_VERSION=`printf "$UVSCAN_DAT\n" | grep -i "av engine version:" | cut -d' ' -f4`
-    printf "${LOCAL_DAT_VERSION}.0 (${LOCAL_ENG_VERSION})\n"
-    Log-Print "${LOCAL_DAT_VERSION}.0 (${LOCAL_ENG_VERSION})\n"
-
-    return 0
-}
-
-function Set-CustomProp1() {
-    #------------------------------------------------------------
-    # Set the value of McAfee custom Property #1
-    #------------------------------------------------------------
-    # Params:  $1 = value to set property
-    #------------------------------------------------------------
-    Log-Print "Setting EPO Custom Property #1 to '$1'..."
-
-    $MACONFIG_PATH -custom -prop1 "$1" >>"$LOG_PATH" 2>&1
-
-    if [ $? -ne 0 ]; then
-        Exit-WithError "Error setting EPO Custom Property #1 to '$1'!"
-    fi
-    
-    return 0
-}
-
 #=============================================================================
 #  MAIN PROGRAM
 #=============================================================================
@@ -97,7 +55,7 @@ if [ $? -ne 0 ]; then
 else
     # Get the version of the installed DATs...
     Log-Print "Determining the currently DAT version..."
-    CURRENT_DAT=`Get-CurrentDATVersion "$UVSCAN_DIR/$UVSCAN_EXE"`
+    CURRENT_DAT=$(Get-CurrentDATVersion)
 
     if [[ -z "$CURRENT_DAT" ]]; then
         # Could not determine current value for DAT version from uvscan
@@ -110,6 +68,6 @@ else
 fi
 
 # Set custom property #1 and push to EPO, then exit cleanly
-Set-CustomProp1 "$CURRENT_DAT"
+Set-CustomProp 1 "$CURRENT_DAT"
 Refresh-ToEPO   
 Exit-Script 0
