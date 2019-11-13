@@ -8,7 +8,7 @@
 #-----------------------------------------------------------------------------
 # Creator:  Nick Taylor, Pr. Engineer, Broadcom SaaS Ops
 #-----------------------------------------------------------------------------
-# Date:     21-OCT-2019
+# Date:     13-NOV-2019
 #-----------------------------------------------------------------------------
 # Version:  1.2
 #-----------------------------------------------------------------------------
@@ -26,8 +26,9 @@
 #-----------------------------------------------------------------------------
 # Switches: none
 #-----------------------------------------------------------------------------
-# Imports:  ./VSCL-local.sh
-#============================================================================= 
+# Imports:      ./VSCL-local.sh:  local per-site variables
+#               ./VSCL-local.sh:  library functions
+#=============================================================================
 
 #=============================================================================
 # VARIABLES
@@ -37,93 +38,40 @@
 #  Imports
 #-----------------------------------------
 . ./VSCL-local.sh
+. ./VSCL-lib.sh
 
 #-----------------------------------------
-# Globals
-# (these variables are normally best left unmodified)
+# Global variables
 #-----------------------------------------
-# place where VSCL installer will live on PPM server
-UVSCAN_HOME="/usr/local/uvscan"
-# Temporary directory for use while installing
-TEMP_DIR="VSCL-TEMP"
-# Default ClamAV location
-CLAMAV_HOME="/fs0/od/clamav/bin"
-# Default path to ClamAV executable
-CLAMSCAN_EXE="$CLAMAV_HOME/clamscan"
-# Path to backup original ClamAV scanner shell file
-CLAMSCAN_BACKUP="$CLAMSCAN_EXE.orig"
-# Pattern for downloaded VSCL binary installer tarball
-INSTALLER_ZIP="vscl-*.tar.gz"
-# Pattern for downloaded DAT .ZIP file
-DAT_ZIP="avvdat-*.zip"
-# Raw command to install VSCL from installer tarball
-INSTALL_CMD="install-uvscan"
-# Command to call to download and update to current .DATs from EPO
-#DAT_UPDATE_CMD="VSCL-Update-DAT.sh"    <--  for EPO download
-# v---- for integrated download
-DAT_UPDATE_CMD="update-uvscan-dat.sh"
-# Path to default log file
-LOG_PATH="/var/McAfee/agent/logs/VSCL_mgmt.log"
-# Filename of scan wrapper to put in place of ClamAV executable
-WRAPPER="uvwrap.sh"
+# Abbreviation of this script name for logging
 SCRIPT_ABBR="VSCLINST"
 
-#=============================================================================
-# FUNCTIONS
-#=============================================================================
+# Default ClamAV location
+CLAMAV_HOME="/fs0/od/clamav/bin"
 
-Log-Print() {
-    #----------------------------------------------------------
-    # Params: $1 = error message to print
-    #----------------------------------------------------------
+# Default path to ClamAV executable
+CLAMSCAN_EXE="$CLAMAV_HOME/clamscan"
 
-    local OUTPUT
-    OUTPUT="$(date +'%x %X'):$SCRIPT_ABBR:$*"
+# Path to backup original ClamAV scanner shell file
+CLAMSCAN_BACKUP="$CLAMSCAN_EXE.orig"
 
-    if [[ -f "$LOGPATH" ]]; then
-        echo "$OUTPUT" | tee --append "$LOG_PATH"
-    else
-        echo "$OUTPUT" | tee "$LOG_PATH"
-    fi
-    
-    return 0
-}
+# Pattern for downloaded VSCL binary installer tarball
+INSTALLER_ZIP="vscl-*.tar.gz"
 
-function Exit-Script {
-    #----------------------------------------------------------
-    # Params: $1 = exit code (assumes 0/ok)
-    #----------------------------------------------------------
+# Pattern for downloaded DAT .ZIP file
+DAT_ZIP="avvdat-*.zip"
 
-    local OUTCODE
+# Raw command to install VSCL from installer tarball
+INSTALL_CMD="install-uvscan"
 
-    Log-Print "==========================="
+# Command to call to download and update to current .DATs from EPO
+#DAT_UPDATE_CMD="VSCL-Update-DAT.sh"    <--  for EPO download
 
-    if [ -z "$1" ]; then
-        OUTCODE="0"
-    else
-        if [ "$1" != "0" ]; then
-            OUTCODE="$1"
-        fi
-    fi
-    
-    Log-Print "Ending with exit code: $1"
-    Log-Print "==========================="
-    exit $OUTCODE
-}
+# v---- for integrated download
+DAT_UPDATE_CMD="update-uvscan-dat.sh"
 
-function Exit-WithError() {
-    #----------------------------------------------------------
-    # Exit script with error code 1
-    #----------------------------------------------------------
-    # Params: $1 (optional) error message to print
-    #----------------------------------------------------------
-
-    if [ -n "$1" ]; then
-        Log-Print "$1"
-    fi
-
-    Exit-Script 1
-}
+# Filename of scan wrapper to put in place of ClamAV executable
+WRAPPER="uvwrap.sh"
 
 #=============================================================================
 # MAIN
@@ -132,12 +80,6 @@ function Exit-WithError() {
 Log-Print "==========================="
 Log-Print "Beginning VSCL installation"
 Log-Print "==========================="
-
-# make temp directory off installer directory
-if [ ! -d "./$TEMP_DIR" ]; then 
-  Log-Print "Creating temp directory '$TEMP_DIR'..."
-  mkdir -p "./$TEMP_DIR"
-fi
 
 # move install files to unzip into temp
 # >>> DO NOT add quote below, [ -f ] conditionals don't work with quoting
