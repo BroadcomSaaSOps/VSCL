@@ -48,9 +48,9 @@ while getopts :dl OPTION_VAR; do
 done
 
 #-----------------------------------------
-# Globals variables
+# Global variables
 #-----------------------------------------
-# name and path of this script
+# Abbreviation of this script name for logging
 SCRIPT_ABBR="VCSLUDAT"
 
 # name of the repo file with current DAT version
