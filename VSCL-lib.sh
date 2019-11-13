@@ -13,32 +13,31 @@
 #-----------------------------------------------------------------------------
 # PreReqs:      none
 #-----------------------------------------------------------------------------
-# Params:       none
-#-----------------------------------------------------------------------------
-# Switches:     none
-#-----------------------------------------------------------------------------
 # Imports:      none
 #=============================================================================
 
-#-----------------------------------------
-# Globals variables
-#-----------------------------------------
-# name of script file
+#----------------------------------------------------------------
+# Globals variables used by all scripts this import this library
+#----------------------------------------------------------------
+# name of script file (the one that dotsourced this library, not the library itself)
 SCRIPT_NAME=$(basename "$0")
 
-# path to script file
+# path to script file (the one that dotsourced this library, not the library itself)
 SCRIPT_PATH=$(dirname "$0")
 
 # show debug messages (set to non-empty to enable)
 DEBUG_IT=yes
 
-# Path to common log file
+# flag to erase any temp files on exit (set to non-empty to enable)
+#LEAVE_FILES=
+
+# Path to common log file for all VSCL scripts
 LOG_PATH="/var/McAfee/agent/logs/VSCL_mgmt.log"
 
-# name of scanner executable
+# name of VSCL scanner executable
 UVSCAN_EXE="uvscan"
 
-# UVSCAN_DIR must be a directory and writable where uvscan is installed
+# UVSCAN_DIR must be a directory and writable where VSCL is installed
 UVSCAN_DIR="/usr/local/uvscan"
 
 # path to MACONFIG program
@@ -47,18 +46,11 @@ MACONFIG_PATH="/opt/McAfee/agent/bin/maconfig"
 # path to CMDAGENT utility
 CMDAGENT_PATH="/opt/McAfee/agent/bin/cmdagent"
 
-# TMP_DIR must be a directory and writable
-TMP_DIR=$(mktemp -d -p "$SCRIPT_PATH" 2> /dev/null)
-
-if [[ ! -d "$TMP_DIR" ]];then
-    Exit-WithError "Unable to create temporary directory '$TMP_DIR'"
-fi
-
 #-----------------------------------------
-# Library functions
+# VSCL Library functions
 #-----------------------------------------
 
-Do-Cleanup() {
+function Do-Cleanup {
     #------------------------------------------------------------
     # if 'LEAVE_FILES' global is NOT set, erase downloaded files
     #------------------------------------------------------------
@@ -70,7 +62,9 @@ Do-Cleanup() {
     fi
 }
 
-function Exit-Script() {
+function Exit-Script {
+    #------------------------------------------------------------
+    # Exit the script with an exit code
     #----------------------------------------------------------
     # Params: $1 = exit code (assumes 0/ok)
     #----------------------------------------------------------
@@ -95,7 +89,7 @@ function Exit-Script() {
     exit $OUTCODE
 }
 
-function Exit-WithError() {
+function Exit-WithError {
     #----------------------------------------------------------
     # Exit script with error code 1
     #----------------------------------------------------------
@@ -110,45 +104,34 @@ function Exit-WithError() {
     Exit-Script 1
 }
 
-function Log-Print() {
+function Log-Print {
+    #----------------------------------------------------------
+    # Print a message to the log defined in $LOG_PATH
+    # (by default '/var/McAfee/agent/logs/VSCL_mgmt.log')
     #----------------------------------------------------------
     # Params: $1 = error message to print
     #----------------------------------------------------------
 
     local OUTPUT
+    
+    # Prepend date/time, which script, then the log message
+    # i.e.  "11/12/2019 11:14:10 AM:VSCL_UP1:Refreshing agent data with EPO..."
+    #        <- date -------------> <script> <-- message -->
     OUTPUT="$(date +'%x %X'):$SCRIPT_ABBR:$*"
 
-    if [[ -f $LOG_PATH ]]; then
+    if [[ -w $LOG_PATH ]]; then
+        # log file exists and is writable, append
         echo "$OUTPUT" | tee --append "$LOG_PATH"
     else
+        # log file absent, create
         echo "$OUTPUT" | tee "$LOG_PATH"
     fi
     
     return 0
 }
 
-function Check-For() {
-    #------------------------------------------------------------
-    # Function to check for existence of a file
-    #------------------------------------------------------------
-    # Params:  $1 = full path to file
-    #          $2 = friendly-name of file
-    #          $3 = (optional) --no-terminate to return always
-    #------------------------------------------------------------
-    Log-Print "Checking for '$2' at '$1'..."
 
-    if [[ ! -x "$1" ]]; then
-        if [[ "$3" = "--no-terminate" ]]; then
-            return 1
-        else
-            Exit-WithError "Could not find '$2' at '$1'!"
-        fi
-    fi
-    
-    return 0
-}
-
-function Refresh-ToEPO() {
+function Refresh-ToEPO {
     #------------------------------------------------------------
     # Function to refresh the agent with EPO
     #------------------------------------------------------------
@@ -163,24 +146,21 @@ function Refresh-ToEPO() {
     # (CMDAGENT can't handle more than one)
     for FLAG_NAME in $CMDAGENT_FLAGS; do
         unset OUT
-        CMDSTR="$CMDAGENT_PATH $FLAG_NAME"
-        Log-Print ">> cmd = '$CMDSTR'"
+        Log-Print ">> cmd = '$CMDAGENT_PATH $FLAG_NAME'"
         
-        if command -v readarray &> /dev/null; then
-            readarray -t OUT < <($CMDAGENT_PATH $FLAG_NAME)
-            ERR=$?
-        else
-            IFS=$'\n'
-            OUT=($($CMDAGENT_PATH $FLAG_NAME))
-            ERR=$?
-            unset IFS
-        fi
+        # run command and capture output
+        IFS=$'\n'
+        read -a OUT < <($CMDAGENT_PATH $FLAG_NAME)
+        ERR=$?
+        unset IFS
 
-        for output in "${OUT[@]}"; do
+        for output in "${OUT[*]}"; do
+            # append output to log
             Log-Print ">> $output"
         done
         
         if [ $ERR -ne 0 ]; then
+            # error, exit sctipt
             Exit-WithError "Error running EPO refresh command '$CMDAGENT_PATH $FLAG_NAME'\!"
         fi
     done
@@ -189,7 +169,7 @@ function Refresh-ToEPO() {
 }
 
 
-function Find-INISection() {
+function Find-INISection {
     #----------------------------------------------------------
     # Function to parse avvdat.ini and return, via stdout, the
     # contents of a specified section. Requires the avvdat.ini
@@ -200,7 +180,7 @@ function Find-INISection() {
     # Output: space-delimited INI entries
     #----------------------------------------------------------
 
-    unset SECTION_FOUND
+    local SECTION_FOUND
 
     SECTION_NAME="[$1]"
 
@@ -220,9 +200,9 @@ function Find-INISection() {
 }
 
 
-function Check-For() {
+function Check-For {
     #------------------------------------------------------------
-    # Function to check for existence of a file
+    # Function to check that a file is available and executable
     #------------------------------------------------------------
     # Params:  $1 = full path to file
     #          $2 = friendly-name of file
@@ -231,47 +211,45 @@ function Check-For() {
     Log-Print "Checking for '$2' at '$1'..."
 
     if [[ ! -x "$1" ]]; then
+        # not available or executable
         if [[ "$3" = "--no-terminate" ]]; then
+            # return error
             return 1
         else
+            # exit script with error
             Exit-WithError "Could not find '$2' at '$1'!"
         fi
     fi
-
+    
     return 0
 }
 
 
-function Set-CustomProp() {
+function Set-CustomProp {
     #------------------------------------------------------------
-    # Set the value of McAfee custom Property #1
+    # Set the value of a McAfee custom property
     #------------------------------------------------------------
     # Params: $1 = number of property to set (1-8) 
     #         $2 = value to set property
     #------------------------------------------------------------
-    local CMDSTR
-
     Log-Print "Setting EPO Custom Property #$1 to '$2'..."
+    Log-Print ">> cmd = '$MACONFIG_PATH -custom -prop$1 \"$2\"'"
 
-    CMDSTR="$MACONFIG_PATH"
-    CMDARGS="-custom -prop$1 '$2'"
-    Log-Print ">> cmd = '$CMDSTR $CMDARGS'"
+    # execute command and capture output to array
+    IFS=$'\n'
+    read -a OUT < <($MACONFIG_PATH -custom -prop$1 "$2")
+    ERR=$?
+    unset IFS
 
-    if command -v readarray &> /dev/null; then
-        readarray -t OUT < <($MACONFIG_PATH -custom -prop$1 "$2")
-        ERR=$?
-    else
-        IFS=$'\n'
-        OUT=($($MACONFIG_PATH -custom -prop$1 "$2"))
-        ERR=$?
-        unset IFS
-    fi
+    echo "length = '${#OUT[*]}'"
 
-    for output in "${OUT[@]}"; do
+    for output in "${OUT[*]}"; do
+        # append output to log
         Log-Print ">> $output"
     done
 
-    if [ $? -ne 0 ]; then
+    if [ $ERR -ne 0 ]; then
+        # error encountered, exit script
         Exit-WithError "Error setting EPO Custom Property #$1 to '$2'!"
     fi
     
@@ -279,21 +257,29 @@ function Set-CustomProp() {
 }
 
 
-function Get-CurrentDATVersion() {
+function Get-CurrentDATVersion {
     #------------------------------------------------------------
     # Function to return the DAT version currently installed for
     # use with the command line scanner
     #------------------------------------------------------------
 
     local UVSCAN_DAT LOCAL_DAT_VERSION LOCAL_ENG_VERSION OUTPUT
+    
+    # get text of VSCL --version output
     UVSCAN_DAT=$("$UVSCAN_DIR/$UVSCAN_EXE" --version)
 
     if [ $? -ne 0 ]; then
+        # error getting version, exit script
         return 1
     fi
 
+    # parse DAT version
     LOCAL_DAT_VERSION=$(printf "%s" "$UVSCAN_DAT" | grep -i "dat set version:" | cut -d' ' -f4)
+    
+    # parse engine version
     LOCAL_ENG_VERSION=$(printf "%s" "$UVSCAN_DAT" | grep -i "av engine version:" | cut -d' ' -f4)
+    
+    # return string STDOUT
     OUTPUT=$(printf "%s.0 (%s)" "$LOCAL_DAT_VERSION" "$LOCAL_ENG_VERSION")
     printf "%s" "$OUTPUT"
 
@@ -302,9 +288,9 @@ function Get-CurrentDATVersion() {
 
 
 
-function Download-File() {
+function Download-File {
     #------------------------------------------------------------
-    # Function to download a specified file from repository
+    # Function to download a specified file from EPO repository
     #------------------------------------------------------------
     # Params: $1 - Download site
     #         $2 - Name of file to download.
@@ -314,13 +300,13 @@ function Download-File() {
 
     local FILE_NAME DOWNLOAD_URL FETCHER_CMD FETCHER
 
-    # sanity checks
-    # check for wget
+    # get the available HTTP download tool, preference to "wget", but "curl" is ok
     if command -v wget 2> /dev/null; then
         FETCHER="wget"
     elif command -v curl 2> /dev/null; then
         FETCHER="curl"
     else
+        # no HTTP download tool available, exit script
         Exit-WithError "No valid URL fetcher available!"
     fi
 
@@ -332,7 +318,7 @@ function Download-File() {
     FILE_NAME="$4/$2"
     DOWNLOAD_URL="$1/$2"
 
-    # download with wget
+    # download with available download tool
     case $FETCHER in
         "wget") FETCHER_CMD="wget -q --tries=10 --no-check-certificate ""$DOWNLOAD_URL"" -O ""$FILE_NAME"""
             ;;
@@ -345,25 +331,23 @@ function Download-File() {
     
     #FETCH_RESULT="$?"
 
-    if $FETCHER_CMD; then
-        #ls -lAh "$4"
-        
+    if ! $FETCHER_CMD; then
+        return 1
+    else
         # file downloaded OK
         if [[ "$3" = "ascii" ]]; then
-            # strip and CR/LF line terminators
+            # strip any CR/LF line terminators
             tr -d '\r' < "$FILE_NAME" > "$FILE_NAME.tmp"
             rm -f "$FILE_NAME"
             mv "$FILE_NAME.tmp" "$FILE_NAME"
         fi
-        
-        return 0
     fi
     
-    return 1
+    return 0
 }
 
 
-Validate-File() {
+function Validate-File {
     #------------------------------------------------------------
     # Function to check the specified file against its expected
     # size, checksum and MD5 checksum.
@@ -404,3 +388,14 @@ Validate-File() {
 
     return 0
 }
+
+#-----------------------------------------
+# VSCL Library initialization code
+#-----------------------------------------
+
+# TMP_DIR must be a directory and writable
+TMP_DIR=$(mktemp -d -p "$SCRIPT_PATH" 2> /dev/null)
+
+if [[ ! -w "$TMP_DIR" ]]; then
+    Exit-WithError "Unable to create temporary directory '$TMP_DIR'"
+fi

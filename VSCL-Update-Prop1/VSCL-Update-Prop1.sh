@@ -54,7 +54,7 @@ if [ $? -ne 0 ]; then
     CURRENT_DAT="VSCL:NOT INSTALLED"
 else
     # Get the version of the installed DATs...
-    Log-Print "Determining the currently DAT version..."
+    Log-Print "Determining the current DAT version..."
     CURRENT_DAT=$(Get-CurrentDATVersion)
 
     if [[ -z "$CURRENT_DAT" ]]; then
