@@ -56,8 +56,8 @@ function Do-Cleanup {
     #------------------------------------------------------------
 
     if [[ -z "$LEAVE_FILES" ]]; then
-        if [[ -z "$TMP_DIR" ]]; then
-            rm -rf "$TMP_DIR"
+        if [[ -z "$TEMP_DIR" ]]; then
+            rm -rf "$TEMP_DIR"
         fi
     fi
 }
@@ -393,9 +393,11 @@ function Validate-File {
 # VSCL Library initialization code
 #-----------------------------------------
 
-# TMP_DIR must be a directory and writable
-TMP_DIR=$(mktemp -d -p "$SCRIPT_PATH" 2> /dev/null)
+# TEMP_DIR must be a directory and writable
+TEMP_DIR=$(mktemp -d -p "$SCRIPT_PATH" 2> /dev/null)
 
-if [[ ! -w "$TMP_DIR" ]]; then
-    Exit-WithError "Unable to create temporary directory '$TMP_DIR'"
+if [[ -w "$TEMP_DIR" ]]; then
+    Log-Print "Temporary directory created at '$TEMP_DIR'"
+else
+    Exit-WithError "Unable to create temporary directory '$TEMP_DIR'"
 fi

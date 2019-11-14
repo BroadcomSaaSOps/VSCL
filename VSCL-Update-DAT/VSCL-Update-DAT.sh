@@ -57,7 +57,7 @@ SCRIPT_ABBR="VCSLUDAT"
 VERSION_FILE="avvdat.ini"
 
 # Name of the file in the repository to extract current DAT version from
-LOCAL_VERSION_FILE="$TMP_DIR/$VERSION_FILE"
+LOCAL_VERSION_FILE="$TEMP_DIR/$VERSION_FILE"
 
 # section of avvdat.ini from repository to examine for DAT version
 VER_SECTION="AVV-ZIP"
@@ -151,18 +151,18 @@ if [[ -z "$DOWNLOAD_ONLY" ]]; then
 fi
 
 # make temp dir if it doesn't exist
-Log-Print "Checking for temporary directory '$TMP_DIR'..."
+Log-Print "Checking for temporary directory '$TEMP_DIR'..."
 
-if [[ ! -d "$TMP_DIR" ]]; then
-    Log-Print "Creating temporary directory '$TMP_DIR'..."
+if [[ ! -d "$TEMP_DIR" ]]; then
+    Log-Print "Creating temporary directory '$TEMP_DIR'..."
 
-    if ! mkdir -p "$TMP_DIR" 2> /dev/null; then
-        Exit-WithError "Error creating temporary directory '$TMP_DIR'!"
+    if ! mkdir -p "$TEMP_DIR" 2> /dev/null; then
+        Exit-WithError "Error creating temporary directory '$TEMP_DIR'!"
     fi
 fi
 
-if [[ ! -d "$TMP_DIR" ]]; then
-    Exit-WithError "Error creating temporary directory '$TMP_DIR'!"
+if [[ ! -d "$TEMP_DIR" ]]; then
+    Exit-WithError "Error creating temporary directory '$TEMP_DIR'!"
 fi
 
 # download current DAT version file from repository, exit if not available
@@ -170,7 +170,7 @@ Log-Print "Downloading DAT versioning file '$VERSION_FILE' from '$DOWNLOAD_SITE'
 
 #DOWNLOAD_OUT="$?"
 
-if ! Download-File "$DOWNLOAD_SITE" "$VERSION_FILE" "ascii" "$TMP_DIR" "$FETCHER"; then
+if ! Download-File "$DOWNLOAD_SITE" "$VERSION_FILE" "ascii" "$ETEMP_DIR" "$FETCHER"; then
     Exit-WithError "+++Error downloading '$VERSION_FILE' from '$DOWNLOAD_SITE'!"
 fi
 
@@ -257,14 +257,14 @@ if [[ -n "$PERFORM_UPDATE" ]] || [[ -n "$DOWNLOAD_ONLY" ]]; then
     # Download the dat files...
     Log-Print "Downloading the current DAT '$FILE_NAME' from '$DOWNLOAD_SITE'..."
 
-    Download-File "$DOWNLOAD_SITE" "$FILE_NAME" "bin" "$TMP_DIR"
+    Download-File "$DOWNLOAD_SITE" "$FILE_NAME" "bin" "$TEMP_DIR"
     DOWNLOAD_OUT="$?"
 
     if [[ "$DOWNLOAD_OUT" != "0" ]]; then
         Exit-WithError "Error downloading '$FILE_NAME' from '$DOWNLOAD_SITE'!"
     fi
 
-    DAT_ZIP="$TMP_DIR/$FILE_NAME"
+    DAT_ZIP="$TEMP_DIR/$FILE_NAME"
 
     # Did we get the dat update file?
     if [[ ! -r "$DAT_ZIP" ]]; then
@@ -275,7 +275,7 @@ if [[ -n "$PERFORM_UPDATE" ]] || [[ -n "$DOWNLOAD_ONLY" ]]; then
     VALIDATE_OUT="$?"
 
     if [[ "$VALIDATE_OUT" != "0" ]]; then
-        Exit-WithError "DAT download failed - Validation failed for '$TMP_DIR/$FILE_NAME'!"
+        Exit-WithError "DAT download failed - Validation failed for '$TEMP_DIR/$FILE_NAME'!"
     fi
 
     # Exit if we only wanted to download
@@ -289,7 +289,7 @@ if [[ -n "$PERFORM_UPDATE" ]] || [[ -n "$DOWNLOAD_ONLY" ]]; then
     UPDATE_OUT="$?"
 
     if [[ "$UPDATE_OUT" != "0" ]] ; then
-        Exit-WithError "Error unzipping DATs from file '$TMP_DIR/$DAT_ZIP'!"
+        Exit-WithError "Error unzipping DATs from file '$TEMP_DIR/$DAT_ZIP'!"
     fi
 
     # Check the new version matches the downloaded one.
