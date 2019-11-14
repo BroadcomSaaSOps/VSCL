@@ -2,92 +2,92 @@
 
 #=============================================================================
 # NAME:     UNINSTALL-VSCL.SH
+#-----------------------------------------------------------------------------
 # Purpose:  Uninstall the McAfee VirusScan Command Line Scanner v6.1.0
 #           from SaaS Linux PPM App servers
-# Creator:  Nick Taylor, Sr. Engineer, CA SaaS Ops
-# Date:     21-OCT-2019
+#-----------------------------------------------------------------------------
+# Creator:  Nick Taylor, Pr. Engineer, Broadcom SaaS Ops
+#-----------------------------------------------------------------------------
+# Date:     14-NOV-2019
+#-----------------------------------------------------------------------------
 # Version:  1.2
+#-----------------------------------------------------------------------------
 # PreReqs:  Linux
-#           CA PPM Application Server
-#           VSCL antivirus scanner installed
-#           unzip, tar, gunzip, yes, gclib > 2.7 utilities in OS
+#           PPM Application Server
+#           VSCL installed
+#           unzip, tar, gunzip, gclib (> 2.7) utilities in OS
+#-----------------------------------------------------------------------------
 # Params:   none
+#-----------------------------------------------------------------------------
 # Switches: none
-# Imports:  none
+#-----------------------------------------------------------------------------
+# Imports:  ./VSCL-lib.sh:    library functions
 #=============================================================================
 
 #=============================================================================
 # VARIABLES
 #=============================================================================
-UVSCAN_HOME=/usr/local/uvscan/
-TEMP_DIR=./VSCL-TEMP/
-CLAMAV_HOME=/fs0/od/clamav/bin/
-CLAMSCAN_EXE=$CLAMAV_HOME/clamscan
-CLAMSCAN_BACKUP=$CLAMSCAN_EXE.orig
-INSTALLER_ZIP=./vscl-*.tar.gz
-DAT_ZIP=./avvdat-*.zip
-INSTALL_CMD=./install-uvscan
-DAT_UPDATE_CMD=./update-uvscan-dat.sh
 
-#=============================================================================
-# FUNCTIONS
-#=============================================================================
+#-----------------------------------------
+#  Imports
+#-----------------------------------------
+# shellcheck disable=SC1091
+. ./VSCL-lib.sh
 
-Log-Print() {
-    #----------------------------------------------------------
-    # Params: $1 = error message to print
-    #----------------------------------------------------------
+#-----------------------------------------
+# Global variables
+#-----------------------------------------
+# Abbreviation of this script name for logging
+# shellcheck disable=SC2034
+SCRIPT_ABBR="VSCLUNIN"
 
-    local OUTPUT
-    OUTPUT="$(date +'%x %X'):$SCRIPT_ABBR:$*"
-
-    if [[ -f "$LOGPATH" ]]; then
-        echo "$OUTPUT" | tee --append "$LOG_PATH"
-    else
-        echo "$OUTPUT" | tee "$LOG_PATH"
-    fi
-    
-    return 0
-}
-
-function do_exit {
-    echo ===========================
-    echo $(date +'%x %X')
-    echo Ending with exit code: $1
-
-    exit $1
-}
+# Raw command to remove VSCL from system
+UNINSTALL_CMD="$UVSCAN_DIR/uninstall-uvscan"
 
 #=============================================================================
 # MAIN
 #=============================================================================
-echo Beginning VSCL uninstallation
-echo $(date +'%x %X')
-echo =============================
+
+Log-Print "==========================="
+Log-Print "Beginning VSCL uninstall"
+Log-Print "==========================="
 
 # uninstall the uvscan product and remove the uninstaller
-if [ -d $UVSCAN_HOME ]
-then
-    echo Running uvscan uninstaller...
-    yes | $UVSCAN_HOME/uninstall-uvscan $UVSCAN_HOME
-    rm -rf $UVSCAN_HOME
-else
-    echo ERROR: uvscan product not found!
-    do_exit 1
+if [ ! -d "$UVSCAN_DIR" ]; then
+    Exit-WithError "Error: uvscan software not found in '$UVSCAN_DIR'!"
 fi
 
-if [ -f $CLAMSCAN_BACKUP ]
-then
+Log-Print "Running uvscan uninstaller..."
+
+if yes | "$UNINSTALL_CMD" "$UVSCAN_DIR"; then
+    if ! rm -rf "$UVSCAN_DIR" &> /dev/null; then
+        Log-Print "WARNING: Unable to remove uvscan directory '$UVSCAN_DIR'!"
+    fi
+else
+    Exit-WithError "Error: Unable to remove uvscan software!"
+fi
+
+if [ -w "$CLAMSCAN_BACKUP" ]; then
     # clamscan was replaced previously
     # delete the impersonator file or symlink created for uvwrap
-    echo ClamAV scanner backup detected, restoring...
-    rm -f $CLAMSCAN_EXE
-
-    # copy original clamscan file back
-    mv $CLAMSCAN_BACKUP $CLAMSCAN_EXE
-    chmod +x $CLAMSCAN_EXE
+    Log-Print "ClamAV scanner backup detected, restoring..."
+    
+    if ! rm -f "$CLAMSCAN_EXE" &> /dev/null; then
+        Log-Print "Warning: Unable to restore original ClamAV scanner!"
+    else
+        # copy original clamscan file back
+        if ! mv "$CLAMSCAN_BACKUP" "$CLAMSCAN_EXE" &> /dev/null; then
+            Log-Print "Warning: Unable to restore original ClamAV scanner!"
+        else
+            if ! chmod +x "$CLAMSCAN_EXE" &> /dev/null; then
+                Log-Print "Warning: Unable to restore original ClamAV scanner!"
+            else
+                Log-Print "Original ClamAV scanner restored!"
+            fi
+        fi
+    fi
 else
-    echo ClamAV scanner backup NOT detected, skipping...
+    Log-Print "Warning: ClamAV scanner backup NOT detected!"
 fi
 
-do_exit 0
+Exit-Script 0
