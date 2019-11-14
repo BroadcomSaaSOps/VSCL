@@ -27,47 +27,44 @@ UVSCAN_HOME=/usr/local/uvscan/
 #=============================================================================
 
 function do_exit {
-    echo ===========================
-    echo $(date +'%x %X')
-    echo Ending with exit code: $1
+    echo "==========================="
+    date +'%x %X'
+    echo "Ending with exit code: $1"
 
-    exit $1
+    exit "$1"
 }
 
 #=============================================================================
 # MAIN
 #=============================================================================
-echo Beginning command line scan...
-echo $(date +'%x %X')
-echo ===========================
+echo "Beginning command line scan..."
+date +'%x %X'
+echo "==========================="
 
-if [ "-$@-" == "--" ]
-then
+if [ "-$*-" == "--" ]; then
     # exit if no file specified
     echo ERROR: No command line parameters supplied!
     do_exit 1
 else
-    echo Parameter supplied: \'$1\'
+    echo "Parameter supplied: '$1'"
 fi
 
 # call uvscan
-$UVSCAN_HOME/uvscan -c -p --afc 512 -e --nocomp --ignore-links --noboot --nodecrypt --noexpire --one-file-system --timeout 10 "$@"
-# -c                    clean viruses if found
-# -p                    
-# --afc 512             half-meg buffers
-# -e                    
-# --nocomp              don't scan compressed files
-# --ignore-links        ignore symlinks
-# --noboot              don't scan boot sectors
-# --nodecrypt           do not decrypt files
-# --noexpire            no error for expired files
-# --one-file-system     do not follow mouned directory trees
-# --timeout 10          scan for 10 seconds then abort
+if ! $UVSCAN_HOME/uvscan -c -p --afc 512 -e --nocomp --ignore-links --noboot --nodecrypt --noexpire --one-file-system --timeout 10 "$@"; then
+    # -c                    clean viruses if found
+    # -p                    
+    # --afc 512             half-meg buffers
+    # -e                    
+    # --nocomp              don't scan compressed files
+    # --ignore-links        ignore symlinks
+    # --noboot              don't scan boot sectors
+    # --nodecrypt           do not decrypt files
+    # --noexpire            no error for expired files
+    # --one-file-system     do not follow mouned directory trees
+    # --timeout 10          scan for 10 seconds then abort
 
-if [ $? -ne 0 ]
-then
     # uvscan returned anything other than 0, exit and return 1
-    echo *** Virus found! ***
+    echo "*** Virus found! ***"
     do_exit 1
 fi
 

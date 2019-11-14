@@ -37,6 +37,7 @@
 #-----------------------------------------
 #  Imports
 #-----------------------------------------
+# shellcheck disable=SC1091
 . ./VSCL-local.sh
 . ./VSCL-lib.sh
 
@@ -44,6 +45,7 @@
 # Global variables
 #-----------------------------------------
 # Abbreviation of this script name for logging
+# shellcheck disable=SC2034
 SCRIPT_ABBR="VSCLINST"
 
 # Default ClamAV location
@@ -83,6 +85,7 @@ Log-Print "==========================="
 
 # move install files to unzip into temp
 # >>> DO NOT add quote below, [ -f ] conditionals don't work with quoting
+# shellcheck disable=SC2086
 if [ -f ./$INSTALLER_ZIP ]; then
     Log-Print "Copying install archive to temp directory..."
     cp -f ./$INSTALLER_ZIP "./$TEMP_DIR"
@@ -94,9 +97,12 @@ fi
 
 # untar installer archive in-place and install uvscan with default settings
 Log-Print "Extracting installer to directory './$TEMP_DIR'..."
-cd "./$TEMP_DIR"
 
-if ! tar -xvzf ./$INSTALLER_ZIP; then
+if ! cd "./$TEMP_DIR"; then
+    Exit-WithError "Unable to cd to './$TEMP_DIR'!"
+fi
+
+if ! tar -xvzf ./"$INSTALLER_ZIP"; then
     Exit-WithError "Error extracting installer to directory './$TEMP_DIR'!"
 fi
 
@@ -155,4 +161,3 @@ rm -f "$CLAMSCAN_EXE"
 ln -s "$UVSCAN_HOME/$WRAPPER" "$CLAMSCAN_EXE"
 
 Exit-Script 0
-

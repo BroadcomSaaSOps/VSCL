@@ -30,12 +30,14 @@
 #-----------------------------------------
 #  Imports
 #-----------------------------------------
+# shellcheck disable=SC1091
 . ./VSCL-local.sh
 . ./VSCL-lib.sh
 
 #-----------------------------------------
 # Process command line options
 #-----------------------------------------
+# shellcheck disable=2034
 while getopts :dl OPTION_VAR; do
     case "$OPTION_VAR" in
         "d") DOWNLOAD_ONLY=1    # only download most current DAT from EPO and exit
@@ -51,6 +53,7 @@ done
 # Global variables
 #-----------------------------------------
 # Abbreviation of this script name for logging
+# shellcheck disable=2034
 SCRIPT_ABBR="VCSLUDAT"
 
 # name of the repo file with current DAT version
@@ -111,8 +114,9 @@ function Update-FromZip() {
 
     # Update the DAT files.
     Log-Print "Uncompressing '$2' to '$1'..."
+    unzipoptions="-o -d $1 $2 $FILE_LIST"
 
-    if ! unzip -o -d "$1" "$2" $FILE_LIST 2> /dev/null; then
+    if ! unzip "$unzipoptions" 2> /dev/null; then
         Exit-WithError "Error unzipping '$2' to '$1'!"
     fi
 
@@ -133,13 +137,13 @@ function Update-FromZip() {
 
 if [[ -z "$DOWNLOAD_ONLY" ]]; then
     # check for MACONFIG
-    Check-For $MACONFIG_PATH "MACONFIG utility"
+    Check-For "$MACONFIG_PATH" "MACONFIG utility"
 
     # check for CMDAGENT
-    Check-For $CMDAGENT_PATH "CMDAGENT utility"
+    Check-For "$CMDAGENT_PATH" "CMDAGENT utility"
 
     # check for uvscan
-    if ! Check-For $UVSCAN_DIR/$UVSCAN_EXE "uvscan executable" --no-terminate; then
+    if ! Check-For "$UVSCAN_DIR/$UVSCAN_EXE" "uvscan executable" --no-terminate; then
         # uvscan not found
         # set custom property to error value, then exit
         Log-Print "Could not find 'uvscan executable' at '$UVSCAN_DIR/$UVSCAN_EXE'!"

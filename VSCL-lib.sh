@@ -20,6 +20,7 @@
 # Globals variables used by all scripts this import this library
 #----------------------------------------------------------------
 # name of script file (the one that dotsourced this library, not the library itself)
+# shellcheck disable=SC2034
 SCRIPT_NAME=$(basename "$0")
 
 # path to script file (the one that dotsourced this library, not the library itself)
@@ -86,6 +87,7 @@ function Exit-Script {
     #Log-Print $SCRIPT_NAME
     #Log-Print $SCRIPT_PATH
     #Log-Print $SCRIPT_ABBR
+    # shellcheck disable=SC2086
     exit $OUTCODE
 }
 
@@ -150,11 +152,11 @@ function Refresh-ToEPO {
         
         # run command and capture output
         IFS=$'\n'
-        read -a OUT < <($CMDAGENT_PATH $FLAG_NAME)
+        read -r -a OUT < <($CMDAGENT_PATH "$FLAG_NAME")
         ERR=$?
         unset IFS
 
-        for output in "${OUT[*]}"; do
+        for output in ${OUT[*]}; do
             # append output to log
             Log-Print ">> $output"
         done
@@ -237,13 +239,13 @@ function Set-CustomProp {
 
     # execute command and capture output to array
     IFS=$'\n'
-    read -a OUT < <($MACONFIG_PATH -custom -prop$1 "$2")
+    read -r -a OUT < <($MACONFIG_PATH -custom "-prop$1" "$2")
     ERR=$?
     unset IFS
 
     echo "length = '${#OUT[*]}'"
 
-    for output in "${OUT[*]}"; do
+    for output in ${OUT[*]}; do
         # append output to log
         Log-Print ">> $output"
     done
@@ -266,9 +268,7 @@ function Get-CurrentDATVersion {
     local UVSCAN_DAT LOCAL_DAT_VERSION LOCAL_ENG_VERSION OUTPUT
     
     # get text of VSCL --version output
-    UVSCAN_DAT=$("$UVSCAN_DIR/$UVSCAN_EXE" --version)
-
-    if [ $? -ne 0 ]; then
+    if ! UVSCAN_DAT=$("$UVSCAN_DIR/$UVSCAN_EXE" --version); then
         # error getting version, exit script
         return 1
     fi

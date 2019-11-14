@@ -25,12 +25,14 @@
 #-----------------------------------------
 #  Imports
 #-----------------------------------------
+# shellcheck disable=SC1091
 . ./VSCL-lib.sh
 
 #-----------------------------------------
 # Globals variables
 #-----------------------------------------
 # name of this script
+# shellcheck disable=SC2034
 SCRIPT_ABBR="VSCL_UP1"
 
 #=============================================================================
@@ -39,15 +41,13 @@ SCRIPT_ABBR="VSCL_UP1"
 
 # sanity checks
 # check for MACONFIG
-Check-For $MACONFIG_PATH "MACONFIG utility"
+Check-For "$MACONFIG_PATH" "MACONFIG utility"
 
 # check for CMDAGENT
-Check-For $CMDAGENT_PATH "CMDAGENT utility"
+Check-For "$CMDAGENT_PATH" "CMDAGENT utility"
 
 # check for uvscan
-Check-For $UVSCAN_DIR/$UVSCAN_EXE "uvscan executable" --no-terminate
-
-if [ $? -ne 0 ]; then
+if ! Check-For "$UVSCAN_DIR/$UVSCAN_EXE" "uvscan executable" --no-terminate; then
     # uvscan not found
     # set custom property to error value, then exit with error
     Log-Print "Could not find 'uvscan executable' at '$UVSCAN_DIR/$UVSCAN_EXE'!"
