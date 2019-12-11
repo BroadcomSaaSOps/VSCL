@@ -209,12 +209,10 @@ if [[ -z "$INI_SECTION" ]]; then
     Exit-WithError "Unable to find section '$INI_SECTION' in '$LOCAL_VERSION_FILE'!"
 fi
 
-unset MAJOR_VER FILE_NAME FILE_PATH FILE_SIZE MD5
+unset INI_FIELD AVAIL_MAJOR AVAIL_MINOR FILE_NAME FILE_PATH FILE_SIZE MD5
 # Some INI sections have the MinorVersion field missing.
 # To work around this, we will initialise it to 0.
-MINOR_VER=0
-
-unset INI_FIELD
+AVAIL_MINOR=0
 
 # Parse the section and keep what we are interested in.
 for INI_FIELD in $INI_SECTION; do
@@ -222,9 +220,9 @@ for INI_FIELD in $INI_SECTION; do
     FIELD_VALUE=$(echo "$INI_FIELD" | awk -F'=' ' { print $2 } ')
 
     case $FIELD_NAME in
-        "DATVersion") MAJOR_VER="$FIELD_VALUE"  # available: major
+        "DATVersion") AVAIL_MAJOR="$FIELD_VALUE"  # available: major
             ;; 
-        "MinorVersion") MINOR_VER="$FIELD_VALUE" # available: minor
+        "MinorVersion") AVAIL_MINOR="$FIELD_VALUE" # available: minor
             ;;
         "FileName") FILE_NAME="$FIELD_VALUE" # file to download
             ;;
@@ -241,13 +239,15 @@ done
 
 # sanity check
 # All extracted fields have values?
-if [[ -z "$MAJOR_VER" ]] || [[ -z "$MINOR_VER" ]] || [[ -z "$FILE_NAME" ]] || [[ -z "$FILE_PATH" ]] || [[ -z "$FILE_SIZE" ]] || [[ -z "$MD5" ]]; then
+if [[ -z "$AVAIL_MAJOR" ]] || [[ -z "$AVAIL_MINOR" ]] || [[ -z "$FILE_NAME" ]] || [[ -z "$FILE_PATH" ]] || [[ -z "$FILE_SIZE" ]] || [[ -z "$MD5" ]]; then
     Exit-WithError "Section '[$INI_SECTION]' in '$LOCAL_VERSION_FILE' has incomplete data!"
 fi
 
+Log-Print "New DAT Version Available: $AVAIL_MAJOR.$AVAIL_MINOR"
+
 if [[ -z "$DOWNLOAD_ONLY" ]]; then
     # Installed version is less than current DAT version?
-    if (( CURRENT_MAJOR < MAJOR_VER )) || ( (( CURRENT_MAJOR == MAJOR_VER )) && (( CURRENT_MINOR < MINOR_VER )) ); then
+    if (( CURRENT_MAJOR < AVAIL_MAJOR )) || ( (( CURRENT_MAJOR == AVAIL_MAJOR )) && (( CURRENT_MINOR < AVAIL_MINOR )) ); then
         PERFORM_UPDATE="yes"
     fi
 fi
@@ -255,7 +255,7 @@ fi
 # OK to perform update?
 if [[ -n "$PERFORM_UPDATE" ]] || [[ -n "$DOWNLOAD_ONLY" ]]; then
     if [[ -n "$PERFORM_UPDATE" ]]; then
-        Log-Print "Performing an update ($CURRENT_DAT -> $MAJOR_VER.$MINOR_VER)..."
+        Log-Print "Performing an update ($CURRENT_DAT -> $AVAIL_MAJOR.$AVAIL_MINOR)..."
     fi
 
     # Download the dat files...
@@ -310,7 +310,7 @@ if [[ -n "$PERFORM_UPDATE" ]] || [[ -n "$DOWNLOAD_ONLY" ]]; then
         NEW_MAJOR=$(Get-CurrentDATVersion "DATMAJ")
         NEW_MINOR=$(Get-CurrentDATVersion "DATMIN")
 
-        if ! (( NEW_MAJOR == MAJOR_VER )) && (( NEW_MINOR == MINOR_VER)); then
+        if ! (( NEW_MAJOR == AVAIL_MAJOR )) && (( NEW_MINOR == AVAIL_MINOR)); then
             Log-Print "DAT update succeeded ($CURRENT_DAT -> $NEW_VERSION)!"
         else
             Exit-WithError "DAT update failed - installed version different than expected!"

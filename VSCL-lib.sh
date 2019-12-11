@@ -278,14 +278,10 @@ function Get-CurrentDATVersion {
 
     local UVSCAN_DAT LOCAL_DAT_VERSION LOCAL_ENG_VERSION OUTPUT
 
-    if ! Check-For "$UVSCAN_DIR/$UVSCAN_EXE" "uvscan executable" --no-terminate; then
-        # uvscan not found
-        # set custom property to error value, then exit
-        Exit-WithError "Could not find 'uvscan executable' at '$UVSCAN_DIR/$UVSCAN_EXE'!"
-    fi
+    Check-For "$UVSCAN_DIR/$UVSCAN_EXE" "uvscan executable" > /dev/null 2>&1
     
     # get text of VSCL --version output
-    if ! UVSCAN_DAT=$("$UVSCAN_DIR/$UVSCAN_EXE" --version); then
+    if ! UVSCAN_DAT=$("$UVSCAN_DIR/$UVSCAN_EXE" --version > /dev/null 2>&1); then
         # error getting version, exit script (returns null output)
         return 1
     fi
@@ -339,9 +335,9 @@ function Download-File {
     local FILE_NAME DOWNLOAD_URL FETCHER_CMD FETCHER
 
     # get the available HTTP download tool, preference to "wget", but "curl" is ok
-    if command -v wget 2> /dev/null; then
+    if command -v wget > /dev/null 2>&1; then
         FETCHER="wget"
-    elif command -v curl 2> /dev/null; then
+    elif command -v curl > /dev/null 2>&1; then
         FETCHER="curl"
     else
         # no HTTP download tool available, exit script
