@@ -87,8 +87,8 @@ Log-Print "==========================="
 # >>> DO NOT add quote below, [ -f ] conditionals don't work with quoting
 # shellcheck disable=SC2086
 if [ -f ./$INSTALLER_ZIP ]; then
-    Log-Print "Copying install archive to temp directory..."
-    cp -f ./$INSTALLER_ZIP "./$TEMP_DIR"
+    Log-Print "Copying install archive to temp directory '$TEMP_DIR'..."
+    cp -f ./$INSTALLER_ZIP "$TEMP_DIR"
 else 
     Exit-WithError "ERROR: Installer archive './$INSTALLER_ZIP' does not exist!"
 fi
@@ -96,14 +96,14 @@ fi
 #TODO: Download installer from EPO
 
 # untar installer archive in-place and install uvscan with default settings
-Log-Print "Extracting installer to directory './$TEMP_DIR'..."
+Log-Print "Extracting installer to directory '$TEMP_DIR'..."
 
-if ! cd "./$TEMP_DIR"; then
+if ! cd "$TEMP_DIR"; then
     Exit-WithError "Unable to cd to './$TEMP_DIR'!"
 fi
 
-if ! tar -xvzf ./"$INSTALLER_ZIP"; then
-    Exit-WithError "Error extracting installer to directory './$TEMP_DIR'!"
+if ! tar -xvzf ./$INSTALLER_ZIP; then
+    Exit-WithError "Error extracting installer to directory '$TEMP_DIR'!"
 fi
 
 Log-Print "Installing VSCL..."

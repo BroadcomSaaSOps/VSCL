@@ -116,7 +116,7 @@ function Update-FromZip() {
     Log-Print "Uncompressing '$2' to '$1'..."
     unzipoptions="-o -d $1 $2 $FILE_LIST"
 
-    if ! unzip "$unzipoptions" 2> /dev/null; then
+    if ! unzip $unzipoptions 2> /dev/null; then
         Exit-WithError "Error unzipping '$2' to '$1'!"
     fi
 
@@ -174,7 +174,7 @@ Log-Print "Downloading DAT versioning file '$VERSION_FILE' from '$DOWNLOAD_SITE'
 
 #DOWNLOAD_OUT="$?"
 
-if ! Download-File "$DOWNLOAD_SITE" "$VERSION_FILE" "ascii" "$ETEMP_DIR" "$FETCHER"; then
+if ! Download-File "$DOWNLOAD_SITE" "$VERSION_FILE" "ascii" "$TEMP_DIR" "$FETCHER"; then
     Exit-WithError "+++Error downloading '$VERSION_FILE' from '$DOWNLOAD_SITE'!"
 fi
 
@@ -195,8 +195,8 @@ if [[ -z "$DOWNLOAD_ONLY" ]]; then
         CURRENT_DAT="0000.0"
     fi
 
-    CURRENT_MAJOR=$(echo "$CURRENT_DAT" | cut -d. -f-1)
-    CURRENT_MINOR=$(echo "$CURRENT_DAT" | cut -d. -f2-)
+    CURRENT_MAJOR=$(Get-CurrentDATVersion "DATMAJ")
+    CURRENT_MINOR=$(Get-CurrentDATVersion "DATMIN")
 fi
 
 # extract DAT info from avvdat.ini
@@ -298,7 +298,7 @@ if [[ -n "$PERFORM_UPDATE" ]] || [[ -n "$DOWNLOAD_ONLY" ]]; then
 
     # Check the new version matches the downloaded one.
     Log-Print "Starting up uvscan with new DAT files..."
-    NEW_VERSION=$(Get-CurrentDATVersion "$UVSCAN_DIR/$UVSCAN_EXE" "$UVSCAN_SWITCHES")
+    NEW_VERSION=$(Get-CurrentDATVersion)
 
     if [[ -z "$NEW_VERSION" ]]; then
         # Could not determine current value for DAT version from uvscan
@@ -307,8 +307,8 @@ if [[ -n "$PERFORM_UPDATE" ]] || [[ -n "$DOWNLOAD_ONLY" ]]; then
         NEW_VERSION="VSCL:INVALID DAT"
     else
         Log-Print "Checking that the installed DAT matches the available DAT version..."
-        NEW_MAJOR=$(echo "$NEW_VERSION" | cut -d. -f-1)
-        NEW_MINOR=$(echo "$NEW_VERSION" | cut -d. -f2-)
+        NEW_MAJOR=$(Get-CurrentDATVersion "DATMAJ")
+        NEW_MINOR=$(Get-CurrentDATVersion "DATMIN")
 
         if ! (( NEW_MAJOR == MAJOR_VER )) && (( NEW_MINOR == MINOR_VER)); then
             Log-Print "DAT update succeeded ($CURRENT_DAT -> $NEW_VERSION)!"

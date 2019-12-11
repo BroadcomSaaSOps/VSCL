@@ -151,15 +151,16 @@ function Refresh-ToEPO {
         Log-Print ">> cmd = '$CMDAGENT_PATH $FLAG_NAME'"
         
         # run command and capture output
-        IFS=$'\n'
-        read -r -a OUT < <($CMDAGENT_PATH "$FLAG_NAME")
+        unset OUT
+        OUT=$($CMDAGENT_PATH "$FLAG_NAME")
         ERR=$?
-        unset IFS
 
-        for output in ${OUT[*]}; do
+        for output in "$OUT"; do
             # append output to log
             Log-Print ">> $output"
         done
+
+        unset IFS
         
         if [ $ERR -ne 0 ]; then
             # error, exit sctipt
@@ -238,17 +239,16 @@ function Set-CustomProp {
     Log-Print ">> cmd = '$MACONFIG_PATH -custom -prop$1 \"$2\"'"
 
     # execute command and capture output to array
-    IFS=$'\n'
-    read -r -a OUT < <($MACONFIG_PATH -custom "-prop$1" "$2")
+    unset OUT
+    OUT=$($MACONFIG_PATH -custom "-prop$1" "$2")
     ERR=$?
-    unset IFS
 
-    echo "length = '${#OUT[*]}'"
-
-    for output in ${OUT[*]}; do
+    for output in "$OUT"; do
         # append output to log
         Log-Print ">> $output"
     done
+
+    unset IFS
 
     if [ $ERR -ne 0 ]; then
         # error encountered, exit script
@@ -264,12 +264,29 @@ function Get-CurrentDATVersion {
     # Function to return the DAT version currently installed for
     # use with the command line scanner
     #------------------------------------------------------------
+    # Params: $1 = which part to return
+    #              <blank>: Entire DAT and engine string (default)
+    #              DATMAJ:  DAT file major version #
+    #              DATMIN:  DAT file minor version # (always zero)
+    #              ENGMAJ:  Engine major version #
+    #              ENGMIN:  Engine minor version #
+    #------------------------------------------------------------
+    # Output: null if error, otherwise number according to
+    #         value of $1 (see above), default entire DAT and 
+    #         engine string
+    #----------------------------------------------------------
 
     local UVSCAN_DAT LOCAL_DAT_VERSION LOCAL_ENG_VERSION OUTPUT
+
+    if ! Check-For "$UVSCAN_DIR/$UVSCAN_EXE" "uvscan executable" --no-terminate; then
+        # uvscan not found
+        # set custom property to error value, then exit
+        Exit-WithError "Could not find 'uvscan executable' at '$UVSCAN_DIR/$UVSCAN_EXE'!"
+    fi
     
     # get text of VSCL --version output
     if ! UVSCAN_DAT=$("$UVSCAN_DIR/$UVSCAN_EXE" --version); then
-        # error getting version, exit script
+        # error getting version, exit script (returns null output)
         return 1
     fi
 
@@ -279,8 +296,29 @@ function Get-CurrentDATVersion {
     # parse engine version
     LOCAL_ENG_VERSION=$(printf "%s" "$UVSCAN_DAT" | grep -i "av engine version:" | cut -d' ' -f4)
     
-    # return string STDOUT
+    # default to printing entire DAT and engine string, i.e. "9999.0 (9999.9999)"
     OUTPUT=$(printf "%s.0 (%s)" "$LOCAL_DAT_VERSION" "$LOCAL_ENG_VERSION")
+
+    if [[ ! -z $1 ]]; then
+        case $1 in
+            # Extract everything up to first '.'
+            "DATMAJ") OUTPUT=$(echo "$LOCAL_DAT_VERSION" | cut -d. -f-1)
+                ;; 
+            # Always retruns zero
+            "DATMIN") OUTPUT="0"
+                ;;
+            # Extract everything up to first '.'
+            "ENGMAJ") OUTPUT=$(echo "$LOCAL_ENG_VERSION" | cut -d. -f-1)
+                ;;
+            # Extract everything after first '.'
+            "ENGMIN") OUTPUT=$(echo "$LOCAL_ENG_VERSION" | cut -d' ' -f1 | cut -d. -f2-)
+                ;;
+            *) true  # ignore any other fields
+                ;;
+        esac
+    fi
+    
+    # return string STDOUT
     printf "%s" "$OUTPUT"
 
     return 0
