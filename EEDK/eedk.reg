@@ -1,0 +1,19 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\Software\Classes\Applications]
+
+[HKEY_CURRENT_USER\Software\Classes\Applications\EEDK.exe]
+
+[HKEY_CURRENT_USER\Software\Classes\Applications\EEDK.exe\shell]
+
+[HKEY_CURRENT_USER\Software\Classes\Applications\EEDK.exe\shell\Build With EEDK]
+
+[HKEY_CURRENT_USER\Software\Classes\Applications\EEDK.exe\shell\Build With EEDK\command]
+@="E:\\Software\\McAfee\\EEDK\\EEDK.exe -Settings:\"%1\""
+
+[HKEY_CURRENT_USER\Software\Classes\Applications\EEDK.exe\shell\Open With EEDK]
+"Position"="Top"
+
+[HKEY_CURRENT_USER\Software\Classes\Applications\EEDK.exe\shell\Open With EEDK\command]
+@="E:\\Software\\McAfee\\EEDK\\EEDK.exe -GUI -Settings:\"%1\""
+

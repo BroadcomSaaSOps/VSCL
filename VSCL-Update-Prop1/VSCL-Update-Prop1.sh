@@ -41,26 +41,26 @@ SCRIPT_ABBR="VSCL_UP1"
 
 # sanity checks
 # check for MACONFIG
-Check-For "$MACONFIG_PATH" "MACONFIG utility"
+Check_For "$MACONFIG_PATH" "MACONFIG utility"
 
 # check for CMDAGENT
-Check-For "$CMDAGENT_PATH" "CMDAGENT utility"
+Check_For "$CMDAGENT_PATH" "CMDAGENT utility"
 
 # check for uvscan
-if ! Check-For "$UVSCAN_DIR/$UVSCAN_EXE" "uvscan executable" --no-terminate; then
+if ! Check_For "$UVSCAN_DIR/$UVSCAN_EXE" "uvscan executable" --no-terminate; then
     # uvscan not found
     # set custom property to error value, then exit with error
-    Log-Print "Could not find 'uvscan executable' at '$UVSCAN_DIR/$UVSCAN_EXE'!"
+    Log_Print "Could not find 'uvscan executable' at '$UVSCAN_DIR/$UVSCAN_EXE'!"
     CURRENT_DAT="VSCL:NOT INSTALLED"
 else
     # Get the version of the installed DATs...
-    Log-Print "Determining the current DAT version..."
-    CURRENT_DAT=$(Get-CurrentDATVersion)
+    Log_Print "Determining the current DAT version..."
+    CURRENT_DAT=$(Get_CurrentDATVersion)
 
     if [[ -z "$CURRENT_DAT" ]]; then
         # Could not determine current value for DAT version from uvscan
         # set custom property to error value, then exit with error
-        Log-Print "Unable to determine currently installed DAT version!"
+        Log_Print "Unable to determine currently installed DAT version!"
         CURRENT_DAT="VSCL:INVALID DAT"
     else
         CURRENT_DAT="VSCL:$CURRENT_DAT"
@@ -68,6 +68,6 @@ else
 fi
 
 # Set custom property #1 and push to EPO, then exit cleanly
-Set-CustomProp 1 "$CURRENT_DAT"
-Refresh-ToEPO   
-Exit-Script 0
+Set_CustomProp 1 "$CURRENT_DAT"
+Refresh_ToEPO   
+Exit_Script 0

@@ -3,12 +3,12 @@
 #=============================================================================
 # NAME:     VSCL-Install.sh
 #-----------------------------------------------------------------------------
-# Purpose:  Installer for McAfee VirusScan Command Line Scanner 6.1.3 on 
+# Purpose:  Installer for McAfee VirusScan Command Line Scanner on 
 #           FedRAMP PPM App Servers
 #-----------------------------------------------------------------------------
 # Creator:  Nick Taylor, Pr. Engineer, Broadcom SaaS Ops
 #-----------------------------------------------------------------------------
-# Date:     13-NOV-2019
+# Date:     16-Dec-2019
 #-----------------------------------------------------------------------------
 # Version:  1.2
 #-----------------------------------------------------------------------------
@@ -24,10 +24,10 @@
 #-----------------------------------------------------------------------------
 # Params:   none
 #-----------------------------------------------------------------------------
-# Switches: none
+# Switches: -n: do NOT update DAT files (defaults to updating if supplied in package)
 #-----------------------------------------------------------------------------
-# Imports:      ./VSCL-local.sh:  local per-site variables
-#               ./VSCL-local.sh:  library functions
+# Imports:  ./VSCL-local.sh:  local per-site variables
+#           ./VSCL-local.sh:  library functions
 #=============================================================================
 
 #=============================================================================
@@ -40,6 +40,19 @@
 # shellcheck disable=SC1091
 . ./VSCL-local.sh
 . ./VSCL-lib.sh
+
+#-----------------------------------------
+# Process command line options
+#-----------------------------------------
+# shellcheck disable=2034
+while getopts :n OPTION_VAR; do
+    case "$OPTION_VAR" in
+        "n") DAT_UPDATE=0    # do NOT update DAT files
+            ;;
+        *) Exit_WithError "Unknown option specified!"
+            ;;
+    esac
+done
 
 #-----------------------------------------
 # Global variables
@@ -75,89 +88,130 @@ DAT_UPDATE_CMD="update-uvscan-dat.sh"
 # Filename of scan wrapper to put in place of ClamAV executable
 WRAPPER="uvwrap.sh"
 
+# Default to updating DATs (if supplied)
+if [[ -z "$DAT_UPDATE" ]]; then
+    DAT_UPDATE=1
+fi
+
+# Default filler for Custom Property #1
+NEW_VERSION="VSCL:INVALID DAT"
+
 #=============================================================================
 # MAIN
 #=============================================================================
 
-Log-Print "==========================="
-Log-Print "Beginning VSCL installation"
-Log-Print "==========================="
+Log_Print "==========================="
+Log_Print "Beginning VSCL installation"
+Log_Print "==========================="
 
 # move install files to unzip into temp
 # >>> DO NOT add quote below, [ -f ] conditionals don't work with quoting
+# >>> this must stay [..], [[..]] doesnt do globbing
 # shellcheck disable=SC2086
-if [ -f ./$INSTALLER_ZIP ]; then
-    Log-Print "Copying install archive to temp directory '$TEMP_DIR'..."
-    cp -f ./$INSTALLER_ZIP "$TEMP_DIR"
-else 
-    Exit-WithError "ERROR: Installer archive './$INSTALLER_ZIP' does not exist!"
+if [ ! -f ./$INSTALLER_ZIP ]; then
+    Exit_WithError "ERROR: Installer archive './$INSTALLER_ZIP' does not exist!"
+fi
+
+Log_Print "Copying installer archive './$INSTALLER_ZIP' to temp directory '$TEMP_DIR'..."
+    
+if ! cp -f ./$INSTALLER_ZIP "$TEMP_DIR"; then
+    Exit_WithError "ERROR: Error copying installer archive './$INSTALLER_ZIP' to temp directory '$TEMP_DIR'!"
 fi
 
 #TODO: Download installer from EPO
+#TODO: For now installation only works if installer supplied with this script
 
 # untar installer archive in-place and install uvscan with default settings
-Log-Print "Extracting installer to directory '$TEMP_DIR'..."
+Log_Print "Extracting installer to directory '$TEMP_DIR'..."
 
 if ! cd "$TEMP_DIR"; then
-    Exit-WithError "Unable to cd to './$TEMP_DIR'!"
+    Exit_WithError "Unable to change to temp directory './$TEMP_DIR'!"
 fi
 
 if ! tar -xvzf ./$INSTALLER_ZIP; then
-    Exit-WithError "Error extracting installer to directory '$TEMP_DIR'!"
+    Exit_WithError "Error extracting installer to directory '$TEMP_DIR'!"
 fi
 
-Log-Print "Installing VSCL..."
+Log_Print "Installing VSCL..."
+
 if ! "./$INSTALL_CMD" -y; then
-    Exit-WithError "Error installing VirusScan Command Line Scanner!"
+    Exit_WithError "Error installing VirusScan Command Line Scanner!"
 fi
 
 # remove temp directory
-Log-Print "Removing temp directory..."
-cd ..
-rm -rf "./$TEMP_DIR"
+#Log_Print "Removing temp directory..."
+#cd ..
+#rm -rf "./$TEMP_DIR"
 
-#TODO: Download latest DATs from EPO
-
-# Run shell file to update the scanner with the latest AV definitions
-if [ -f "./$DAT_ZIP" ]
-then
-    Log-Print "Unpacking DAT files to uvscan directory..."
-    "./$DAT_UPDATE_CMD" "./$DAT_ZIP"
+if [[ "$DAT_UPDATE" = "0" ]]; then
+    Log_Print "NOTE: Option specified to NOT update DAT files.  Continuing..."
 else
-    Log-Print "WARNING: .DAT files unavailable for installation!"
+    # OK to update DAT files
+    
+    #TODO: Download latest DATs from EPO
+    #TODO: For now updating only works if .ZIP supplied with installer
+    
+    if [[ -f "./$DAT_ZIP" ]]; then
+        # Update the scanner with the latest AV definitions supplied with installer
+        if ! ./$DAT_UPDATE_CMD "./$DAT_ZIP"; then
+            Exit_WithError "Error unpacking DAT files to uvscan directory!"
+        fi
+        
+        NEW_VERSION=$(Get_CurrentDATVersion)
+    fi
 fi
 
-if [ -f "./$WRAPPER" ]; then
-    # make uvwrap.sh executable and copy to uvscan directory
-    Log-Print "Setting up shim wrapper for uvscan..."
-    chmod +x "./$WRAPPER"
-else
-    Exit-WithError "File '$WRAPPER' not available.  Aborting installer!"
-fi
+# if [[ -f "./$WRAPPER" ]]; then
+    # # make uvwrap.sh executable and copy to uvscan directory
+    # Log_Print "Setting up shim wrapper for uvscan..."
+    # chmod +x "./$WRAPPER"
+# else
+    # Exit_WithError "File '$WRAPPER' not available.  Aborting installer!"
+# fi
 
-if [ -f "$UVSCAN_HOME/$WRAPPER" ]; then
-    rm -f "$UVSCAN_HOME/$WRAPPER"
-fi
+# if [[ -f "$UVSCAN_HOME/$WRAPPER" ]]; then
+    # Log_Print "Deleting any existing file at '$UVSCAN_HOME/$WRAPPER'..."
+    
+    # if ! rm -f "$UVSCAN_HOME/$WRAPPER"; then
+        # Log_Print "WARNING: Existing file '$UVSCAN_HOME/$WRAPPER' could not be deleted!  Continuing..."
+    # fi
+# fi
 
-cp -f "./$WRAPPER" "$UVSCAN_HOME"
+# if [[ ! -f "$UVSCAN_HOME/$WRAPPER" ]]; then
+    # Log_Print "Copying wrapper file './$WRAPPER' to '$UVSCAN_HOME/$WRAPPER'..."
+    
+    # if ! cp -f "./$WRAPPER" "$UVSCAN_HOME"; then
+        # Exit_WithError "Could not copy wrapper file './$WRAPPER' to '$UVSCAN_HOME/$WRAPPER'!"
+    # fi
+# fi
 
-if [ ! -d "$CLAMAV_HOME" ]; then
-    Log-Print "WARNING: ClamAV home directory '$CLAMAV_HOME' does not exist.  Creating..."
-    mkdir -p "$CLAMAV_HOME"
-fi
+# if [[ ! -d "$CLAMAV_HOME" ]]; then
+    # Log_Print "WARNING: ClamAV home directory '$CLAMAV_HOME' does not exist.  Creating..."
+    
+    # if ! mkdir -p "$CLAMAV_HOME"; then
+    # fi
+# fi
 
-if [ -f "$CLAMSCAN_BACKUP" ]; then
-    # save file exists, bypass save
-    Log-Print "WARNING: Original ClamAV scanner executable already saved to '$CLAMSCAN_BACKUP'.  Skipping save..."
-else
-    # no existing save file, save clamscan original file
-    Log-Print "Saving original ClamAV scanner executable to '$CLAMSCAN_BACKUP'..."
-    mv "$CLAMSCAN_EXE" "$CLAMSCAN_BACKUP"
-fi
+# if [[ -f "$CLAMSCAN_BACKUP" ]]; then
+    # # save file exists, bypass save
+    # Log_Print "WARNING: Original ClamAV scanner executable already saved to '$CLAMSCAN_BACKUP'.  Skipping save..."
+# else
+    # # no existing save file, save clamscan original file
+    # Log_Print "Saving original ClamAV scanner executable to '$CLAMSCAN_BACKUP'..."
+    # mv "$CLAMSCAN_EXE" "$CLAMSCAN_BACKUP"
+# fi
 
-# remove existing clamscan file or link
-Log-Print "Replacing clamscan executable with symlink to '$UVSCAN_HOME/$WRAPPER'..."
-rm -f "$CLAMSCAN_EXE"
-ln -s "$UVSCAN_HOME/$WRAPPER" "$CLAMSCAN_EXE"
+# # remove existing clamscan file or link
+# Log_Print "Replacing clamscan executable with symlink to '$UVSCAN_HOME/$WRAPPER'..."
+# rm -f "$CLAMSCAN_EXE"
+# ln -s "$UVSCAN_HOME/$WRAPPER" "$CLAMSCAN_EXE"
 
-Exit-Script 0
+# Set McAfee Custom Property #1 to '$NEW_VERSION'...
+Set_CustomProp 1 "$NEW_VERSION"
+
+# Refresh agent data with EPO
+Refresh_ToEPO
+
+# Clean up global variables and exit cleanly
+unset SCRIPT_ABBR CLAMAV_HOME CLAMSCAN_EXE CLAMSCAN_BACKUP INSTALLER_ZIP DAT_ZIP INSTALL_CMD DAT_UPDATE_CMD WRAPPER DAT_UPDATE NEW_VERSION
+Exit_Script 0
