@@ -5,3 +5,4 @@ VSCL-local.sh
 VSCL-Install/VSCL-local.sh
 VSCL-Install/VSCL-Update-DAT.sh
 VSCL-Update-DAT/VSCL-local.sh
+build-all-vars.ps1

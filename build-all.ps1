@@ -1,11 +1,5 @@
 # variables
-$buildDir = "E:\Software\McAfee\EEDK\Builds"
-$EEDKExe = "E:\Software\McAfee\EEDK\EEDK.exe"
-$sourceDir = "E:\Software\McAfee\EEDK\Development\VSCL"
-$EPOServer="avanmav001.casaasops.az.com"
-$uploadPort=8443
-$uploadPath="remote/repository.checkInPackage"
-$uploadParams="branch=Current&option=Normal&force=true&allowUnsignedPackages=true"
+. ./build-all-vars.ps1
 
 Set-Location -Path $sourceDir
 
