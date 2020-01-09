@@ -2,55 +2,55 @@
 
 #=============================================================================
 # NAME:     UVWRAP.SH
+#-----------------------------------------------------------------------------
 # Purpose:  Wrapper to redirect PPM command line antivirus call to McAfee 
-#           VirusScan Command Line Scanner 6.1.0 on SaaS Linux PPM App servers
-# Creator:  Nick Taylor, Sr. Engineer, CA SaaS Ops
-# Date:     22-May-2017
-# Version:  1.1
+#           VirusScan Command Line Scanner
+#-----------------------------------------------------------------------------
+# Creator:  Nick Taylor, Pr. Engineer, Broadcom SaaS Ops
+#-----------------------------------------------------------------------------
+# Date:     19-Dec-2019
+#-----------------------------------------------------------------------------
+# Version:  1.2
+#-----------------------------------------------------------------------------
 # PreReqs:  Linux
 #           CA PPM Application Server
-#           ClamAV antivirus scanner installed and integrated with PPM
-#               default install directory: /fs0/od/clamav/bin
 #           VSCL installed and integrated with PPM
 #           unzip, tar, gunzip, gclib > 2.7 utilities in OS
-#=============================================================================
+#-----------------------------------------------------------------------------
 # Params:   $1 = full path of file to be scanned (supplied by PPM) 
+#-----------------------------------------------------------------------------
+# Switches: none
+#-----------------------------------------------------------------------------
+# Imports:  ./VSCL-lib.sh:    library functions
 #=============================================================================
 
-#=============================================================================
-# VARIABLES
-#=============================================================================
-UVSCAN_HOME=/usr/local/uvscan/
+#-----------------------------------------
+#  Imports
+#-----------------------------------------
+# shellcheck disable=SC1091
+. ./VSCL-lib.sh
 
-#=============================================================================
-# FUNCTIONS
-#=============================================================================
-
-function do_exit {
-    echo "==========================="
-    date +'%x %X'
-    echo "Ending with exit code: $1"
-
-    exit "$1"
-}
+#-----------------------------------------
+# Variables
+#-----------------------------------------
+# Abbreviation of this script name for logging
+SCRIPT_ABBR="UVWRAP"
 
 #=============================================================================
 # MAIN
 #=============================================================================
-echo "Beginning command line scan..."
-date +'%x %X'
-echo "==========================="
+Log-Print "Beginning command line scan..."
 
-if [ "-$*-" == "--" ]; then
+if [[ -z "$@" ]]; then
     # exit if no file specified
-    echo ERROR: No command line parameters supplied!
-    do_exit 1
+    Log-Print "ERROR: No command line parameters supplied!"
+    Exit_WithError 1
 else
-    echo "Parameter supplied: '$1'"
+    Log-Print "Parameters supplied: '$@'"
 fi
 
 # call uvscan
-if ! $UVSCAN_HOME/uvscan -c -p --afc 512 -e --nocomp --ignore-links --noboot --nodecrypt --noexpire --one-file-system --timeout 10 "$@"; then
+if $UVSCAN_DIR/$UVSCAN_EXE -c -p --afc 512 -e --nocomp --ignore-links --noboot --nodecrypt --noexpire --one-file-system --timeout 10 "$@"; then
     # -c                    clean viruses if found
     # -p                    
     # --afc 512             half-meg buffers
@@ -64,11 +64,10 @@ if ! $UVSCAN_HOME/uvscan -c -p --afc 512 -e --nocomp --ignore-links --noboot --n
     # --timeout 10          scan for 10 seconds then abort
 
     # uvscan returned anything other than 0, exit and return 1
-    echo "*** Virus found! ***"
-    do_exit 1
+    Log-Print "*** Virus found! ***"
+    Exit_WithError 1
 fi
 
-# exit successfully
-echo NO virus found!
-
-do_exit 0
+# No virus found, exit successfully
+Log-Print "*** No virus found! ***"
+Exit_Script 0
