@@ -20,16 +20,18 @@ foreach ($EEDKFile in $EEDKList) {
 $ZIPList = $buildOutput | % { (($_ | sls "^Zipping Package") -split " ")[2] }
 
 # fix upload parameters in powershell's network connection
-Add-Type -TypeDefinition @"
-    using System.Net;
-    using System.Security.Cryptography.X509Certificates;
-    
-    public class TrustAllCertsPolicy : ICertificatePolicy {
-        public bool CheckValidationResult(ServicePoint srvPoint, X509Certificate certificate,WebRequest request, int certificateProblem) {
-            return true;
+if (-not ([System.Management.Automation.PSTypeName]'TrustAllCertsPolicy').Type) {
+    Add-Type -TypeDefinition @"
+        using System.Net;
+        using System.Security.Cryptography.X509Certificates;
+        
+        public class TrustAllCertsPolicy : ICertificatePolicy {
+            public bool CheckValidationResult(ServicePoint srvPoint, X509Certificate certificate,WebRequest request, int certificateProblem) {
+                return true;
+            }
         }
-    }
 "@
+}
 
 [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
 [System.Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12

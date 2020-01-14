@@ -152,6 +152,55 @@ function Log_Print {
     return 0
 }
 
+function Capture_Command {
+    #------------------------------------------------------------
+    # Function to capture output of command to log
+    #------------------------------------------------------------
+    # Params: $1 = command to capture
+    #         $2 = arguments of command
+    #----------------------------------------------------------
+    local OUT ERR OUTPUT MASK CAPTURECMD CAPTUREARG SAVEIFS
+    
+    if [[ -z "$1" ]]; then
+        Exit_WithError "Command to capture empty!"
+    else
+        CAPTURECMD="$1"
+    fi
+
+    if [[ -z "$2" ]]; then
+        Exit_WithError "Arguments of command to capture empty!"
+    else
+        CAPTUREARG="$2"
+    fi
+    
+    Log_Print ">> cmd = '$1 $2'"
+    
+    MASK="s/^[[:digit:]][[:digit:]][[:digit:]][[:digit:]]-[[:digit:]][[:digit:]]-[[:digit:]][[:digit:]] [[:digit:]][[:digit:]]:[[:digit:]][[:digit:]]:[[:digit:]][[:digit:]]\.[[:digit:]]* ([[:digit:]]*\.[[:digit:]]*) //g"
+    
+    SAVEIFS=$IFS
+    # run command and capture output
+    IFS=$'\n' OUT=($(eval $CAPTURECMD $CAPTUREARG))
+    ERR=$?
+    IFS=$SAVEIFS
+
+    for OUTPUT in "${OUT[@]}"; do
+        # append output to log
+        if [[ -n "$MASK" ]]; then
+            # mask supplied, apply to each line
+            OUTPUT=$(echo $OUTPUT | sed -e "$MASK")
+        fi
+        
+        Log_Print ">> $OUTPUT"
+    done
+    
+    if [ $ERR -ne 0 ]; then
+        # error, exit sctipt
+        Exit_WithError "Error running command '$CAPTURECMD $CAPTUREARG'"
+    fi
+    
+    return 0
+}
+
 
 function Refresh_ToEPO {
     #------------------------------------------------------------
@@ -159,34 +208,34 @@ function Refresh_ToEPO {
     #------------------------------------------------------------
 
     # flags to use with CMDAGENT utility
-    local CMDAGENT_FLAGS OUT ERR CMDSTR SAVE_IFS
-    CMDAGENT_FLAGS="-c -f -p -e"
-
+    local CMDAGENTFLAGS MASK FLAGNAME
+    CMDAGENTFLAGS="-c -f -p -e"
     Log_Print "Refreshing agent data with EPO..."
     
     # loop through provided flags and call one command per
     # (CMDAGENT can't handle more than one)
-    for FLAG_NAME in $CMDAGENT_FLAGS; do
-        unset OUT
-        Log_Print ">> cmd = '$CMDAGENT_PATH $FLAG_NAME'"
+    for FLAGNAME in $CMDAGENTFLAGS; do
+        Capture_Command "$CMDAGENT_PATH" "$FLAGNAME"
+        # unset OUT
+        # Log_Print ">> cmd = '$CMDAGENT_PATH $FLAG_NAME'"
         
-        # run command and capture output
-        unset OUT
-        SAVE_IFS=$IFS
-        IFS=$'\n' OUT=($($CMDAGENT_PATH "$FLAG_NAME"))
-        ERR=$?
+        # # run command and capture output
+        # unset OUT
+        # SAVE_IFS=$IFS
+        # IFS=$'\n' OUT=($($CMDAGENT_PATH "$FLAG_NAME"))
+        # ERR=$?
 
-        for output in "${OUT[@]}"; do
-            # append output to log
-            Log_Print ">> $output"
-        done
+        # for output in "${OUT[@]}"; do
+            # # append output to log
+            # Log_Print ">> $output"
+        # done
 
-        IFS=$SAVE_IFS
+        # IFS=$SAVE_IFS
         
-        if [ $ERR -ne 0 ]; then
-            # error, exit sctipt
-            Exit_WithError "Error running EPO refresh command '$CMDAGENT_PATH $FLAG_NAME'\!"
-        fi
+        # if [ $ERR -ne 0 ]; then
+            # # error, exit sctipt
+            # Exit_WithError "Error running EPO refresh command '$CMDAGENT_PATH $FLAG_NAME'\!"
+        # fi
     done
     
     return 0
@@ -257,24 +306,25 @@ function Set_CustomProp {
     #         $2 = value to set property
     #------------------------------------------------------------
     Log_Print "Setting EPO Custom Property #$1 to '$2'..."
-    Log_Print ">> cmd = '$MACONFIG_PATH -custom -prop$1 \"$2\"'"
+    Capture_Command "$MACONFIG_PATH" "-custom -prop$1 '$2'"
+    # Log_Print ">> cmd = '$MACONFIG_PATH -custom -prop$1 \"$2\"'"
 
-    # execute command and capture output to array
-    unset OUT
-    IFS=$'\n' OUT=($($MACONFIG_PATH -custom "-prop$1" "$2"))
-    ERR=$?
+    # # execute command and capture output to array
+    # unset OUT
+    # IFS=$'\n' OUT=($($MACONFIG_PATH -custom "-prop$1" "$2"))
+    # ERR=$?
 
-    for output in "${OUT[@]}"; do
-        # append output to log
-        Log_Print ">> $output"
-    done
+    # for output in "${OUT[@]}"; do
+        # # append output to log
+        # Log_Print ">> $output"
+    # done
 
-    unset IFS
+    # unset IFS
 
-    if [ $ERR -ne 0 ]; then
-        # error encountered, exit script
-        Exit_WithError "Error setting EPO Custom Property #$1 to '$2'!"
-    fi
+    # if [ $ERR -ne 0 ]; then
+        # # error encountered, exit script
+        # Exit_WithError "Error setting EPO Custom Property #$1 to '$2'!"
+    # fi
     
     return 0
 }

@@ -174,8 +174,8 @@ Log_Print "Downloading DAT versioning file '$VERSION_FILE' from '$DOWNLOAD_SITE'
 
 #DOWNLOAD_OUT="$?"
 
-if ! Download_File "$DOWNLOAD_SITE" "$VERSION_FILE" "ascii" "$TEMP_DIR" "$FETCHER"; then
-    Exit_WithError "+++Error downloading '$VERSION_FILE' from '$DOWNLOAD_SITE'!"
+if ! Download_File "$DOWNLOAD_SITE" "$VERSION_FILE" "ascii" "$TEMP_DIR"; then
+    Exit_WithError "Error downloading '$VERSION_FILE' from '$DOWNLOAD_SITE'!"
 fi
 
 # Did we get the version file?
