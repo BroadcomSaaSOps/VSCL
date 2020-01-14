@@ -67,27 +67,27 @@ else
     Exit_WithError "Error: Unable to remove uvscan software!"
 fi
 
-if [ -w "$CLAMSCAN_BACKUP" ]; then
-    # clamscan was replaced previously
-    # delete the impersonator file or symlink created for uvwrap
-    Log_Print "ClamAV scanner backup detected, restoring..."
+# if [ -w "$CLAMSCAN_BACKUP" ]; then
+    # # clamscan was replaced previously
+    # # delete the impersonator file or symlink created for uvwrap
+    # Log_Print "ClamAV scanner backup detected, restoring..."
     
-    if ! rm -f "$CLAMSCAN_EXE" &> /dev/null; then
-        Log_Print "Warning: Unable to restore original ClamAV scanner!"
-    else
-        # copy original clamscan file back
-        if ! mv "$CLAMSCAN_BACKUP" "$CLAMSCAN_EXE" &> /dev/null; then
-            Log_Print "Warning: Unable to restore original ClamAV scanner!"
-        else
-            if ! chmod +x "$CLAMSCAN_EXE" &> /dev/null; then
-                Log_Print "Warning: Unable to restore original ClamAV scanner!"
-            else
-                Log_Print "Original ClamAV scanner restored!"
-            fi
-        fi
-    fi
-else
-    Log_Print "Warning: ClamAV scanner backup NOT detected!"
-fi
+    # if ! rm -f "$CLAMSCAN_EXE" &> /dev/null; then
+        # Log_Print "Warning: Unable to restore original ClamAV scanner!"
+    # else
+        # # copy original clamscan file back
+        # if ! mv "$CLAMSCAN_BACKUP" "$CLAMSCAN_EXE" &> /dev/null; then
+            # Log_Print "Warning: Unable to restore original ClamAV scanner!"
+        # else
+            # if ! chmod +x "$CLAMSCAN_EXE" &> /dev/null; then
+                # Log_Print "Warning: Unable to restore original ClamAV scanner!"
+            # else
+                # Log_Print "Original ClamAV scanner restored!"
+            # fi
+        # fi
+    # fi
+# else
+    # Log_Print "Warning: ClamAV scanner backup NOT detected!"
+# fi
 
 Exit_Script 0

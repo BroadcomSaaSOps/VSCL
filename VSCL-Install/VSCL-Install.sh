@@ -27,11 +27,7 @@
 # Switches: -n: do NOT update DAT files (defaults to updating if supplied in package)
 #-----------------------------------------------------------------------------
 # Imports:  ./VSCL-local.sh:  local per-site variables
-#           ./VSCL-local.sh:  library functions
-#=============================================================================
-
-#=============================================================================
-# VARIABLES
+#           ./VSCL-lib.sh:    library functions
 #=============================================================================
 
 #-----------------------------------------
@@ -161,50 +157,35 @@ else
     fi
 fi
 
-# if [[ -f "./$WRAPPER" ]]; then
-    # # make uvwrap.sh executable and copy to uvscan directory
-    # Log_Print "Setting up shim wrapper for uvscan..."
-    # chmod +x "./$WRAPPER"
-# else
-    # Exit_WithError "File '$WRAPPER' not available.  Aborting installer!"
-# fi
+if [[ -f "./$WRAPPER" ]]; then
+    # make uvwrap.sh executable and copy to uvscan directory
+    Log_Print "Setting up shim wrapper for uvscan..."
+    chmod +x "./$WRAPPER"
+else
+    Exit_WithError "File '$WRAPPER' not available.  Aborting installer!"
+fi
 
-# if [[ -f "$UVSCAN_HOME/$WRAPPER" ]]; then
-    # Log_Print "Deleting any existing file at '$UVSCAN_HOME/$WRAPPER'..."
+if [[ -f "$UVSCAN_DIR/$WRAPPER" ]]; then
+    Log_Print "Deleting any existing file at '$UVSCAN_DIR/$WRAPPER'..."
     
-    # if ! rm -f "$UVSCAN_HOME/$WRAPPER"; then
-        # Log_Print "WARNING: Existing file '$UVSCAN_HOME/$WRAPPER' could not be deleted!  Continuing..."
-    # fi
+    if ! rm -f "$UVSCAN_DIR/$WRAPPER"; then
+        Log_Print "WARNING: Existing file '$UVSCAN_DIR/$WRAPPER' could not be deleted!  Continuing..."
+    fi
 # fi
 
-# if [[ ! -f "$UVSCAN_HOME/$WRAPPER" ]]; then
-    # Log_Print "Copying wrapper file './$WRAPPER' to '$UVSCAN_HOME/$WRAPPER'..."
+if [[ ! -f "$UVSCAN_DIR/$WRAPPER" ]]; then
+    Log_Print "Copying wrapper file './$WRAPPER' to '$UVSCAN_DIR/$WRAPPER'..."
     
-    # if ! cp -f "./$WRAPPER" "$UVSCAN_HOME"; then
-        # Exit_WithError "Could not copy wrapper file './$WRAPPER' to '$UVSCAN_HOME/$WRAPPER'!"
-    # fi
-# fi
+    if ! cp -f "./$WRAPPER" "$UVSCAN_DIR"; then
+        Exit_WithError "Could not copy wrapper file './$WRAPPER' to '$UVSCAN_DIR/$WRAPPER'!"
+    fi
+fi
 
-# if [[ ! -d "$CLAMAV_HOME" ]]; then
-    # Log_Print "WARNING: ClamAV home directory '$CLAMAV_HOME' does not exist.  Creating..."
-    
-    # if ! mkdir -p "$CLAMAV_HOME"; then
-    # fi
-# fi
+Log_Print "Copying VSCL Library Functions file './VSCL-lib.sh' to '$UVSCAN_DIR/VSCL-lib.sh'..."
 
-# if [[ -f "$CLAMSCAN_BACKUP" ]]; then
-    # # save file exists, bypass save
-    # Log_Print "WARNING: Original ClamAV scanner executable already saved to '$CLAMSCAN_BACKUP'.  Skipping save..."
-# else
-    # # no existing save file, save clamscan original file
-    # Log_Print "Saving original ClamAV scanner executable to '$CLAMSCAN_BACKUP'..."
-    # mv "$CLAMSCAN_EXE" "$CLAMSCAN_BACKUP"
-# fi
-
-# # remove existing clamscan file or link
-# Log_Print "Replacing clamscan executable with symlink to '$UVSCAN_HOME/$WRAPPER'..."
-# rm -f "$CLAMSCAN_EXE"
-# ln -s "$UVSCAN_HOME/$WRAPPER" "$CLAMSCAN_EXE"
+if ! cp -f "./VSCL-lib.sh" "$UVSCAN_DIR"; then
+    Exit_WithError "Could not copy VSCL Library Functions file './VSCL-lib.sh' to '$UVSCAN_DIR/VSCL-lib.sh'!"
+fi
 
 # Set McAfee Custom Property #1 to '$NEW_VERSION'...
 Set_CustomProp 1 "$NEW_VERSION"
