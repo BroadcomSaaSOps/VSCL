@@ -18,6 +18,7 @@
 #               Latest VSCL DAT .ZIP file
 #               unzip, tar, gunzip, gclib > 2.7 utilities in OS,
 #               awk, echo, cut, ls, printf, wget
+#-----------------------------------------------------------------------------
 # Params:       none
 #-----------------------------------------------------------------------------
 # Switches:     -d:  download current DATs and exit
@@ -65,6 +66,7 @@ LOCAL_VERSION_FILE="$TEMP_DIR/$VERSION_FILE"
 # section of avvdat.ini from repository to examine for DAT version
 VER_SECTION="AVV-ZIP"
 
+#-----------------------------------------
 # Preferences
 #-----------------------------------------
 # set to non-empty to leave downloaded files after the update is done
@@ -92,7 +94,7 @@ function Update_FromZip {
     #              (format => <filename>:<chmod>)
     #---------------------------------------------------------------
 
-    unset FILE_LIST
+    local FILE_LIST FNAME FILE_NAME FILE_LIST UNZIPOPTIONS PERMISSIONS
 
     # strip filename to a list
     for FNAME in $3; do
@@ -104,7 +106,7 @@ function Update_FromZip {
 
     # Backup any files about to be updated...
     if [[ ! -d "$BACKUP_DIR" ]]; then
-        Log_Print "Creating backup directory files to be updated..."
+        Log_Info "Creating backup directory files to be updated..."
         mkdir -d -p "$BACKUP_DIR" 2> /dev/null
     fi
 
@@ -113,10 +115,10 @@ function Update_FromZip {
     fi
 
     # Update the DAT files.
-    Log_Print "Uncompressing '$2' to '$1'..."
-    unzipoptions="-o -d $1 $2 $FILE_LIST"
+    Log_Info "Uncompressing '$2' to '$1'..."
+    UNZIPOPTIONS="-o -d $1 $2 $FILE_LIST"
 
-    if ! unzip $unzipoptions 2> /dev/null; then
+    if ! unzip $UNZIPOPTIONS 2> /dev/null; then
         Exit_WithError "Error unzipping '$2' to '$1'!"
     fi
 
@@ -146,8 +148,8 @@ if [[ -z "$DOWNLOAD_ONLY" ]]; then
     if ! Check_For "$UVSCAN_DIR/$UVSCAN_EXE" "uvscan executable" --no-terminate; then
         # uvscan not found
         # set custom property to error value, then exit
-        Log_Print "Could not find 'uvscan executable' at '$UVSCAN_DIR/$UVSCAN_EXE'!"
-        Log_Print "Setting McAfee Custom Property #1 to 'VSCL:NOT INSTALLED'..."
+        Log_Info "Could not find 'uvscan executable' at '$UVSCAN_DIR/$UVSCAN_EXE'!"
+        Log_Info "Setting McAfee Custom Property #1 to 'VSCL:NOT INSTALLED'..."
         Set_CustomProp 1 "VSCL:NOT INSTALLED"
         Refresh_ToEPO
         Exit_WithError "Cannot update DATs, VSCL not installed!"
@@ -155,10 +157,10 @@ if [[ -z "$DOWNLOAD_ONLY" ]]; then
 fi
 
 # make temp dir if it doesn't exist
-Log_Print "Checking for temporary directory '$TEMP_DIR'..."
+Log_Info "Checking for temporary directory '$TEMP_DIR'..."
 
 if [[ ! -d "$TEMP_DIR" ]]; then
-    Log_Print "Creating temporary directory '$TEMP_DIR'..."
+    Log_Info "Creating temporary directory '$TEMP_DIR'..."
 
     if ! mkdir -p "$TEMP_DIR" 2> /dev/null; then
         Exit_WithError "Error creating temporary directory '$TEMP_DIR'!"
@@ -170,7 +172,7 @@ if [[ ! -d "$TEMP_DIR" ]]; then
 fi
 
 # download current DAT version file from repository, exit if not available
-Log_Print "Downloading DAT versioning file '$VERSION_FILE' from '$DOWNLOAD_SITE'..."
+Log_Info "Downloading DAT versioning file '$VERSION_FILE' from '$DOWNLOAD_SITE'..."
 
 #DOWNLOAD_OUT="$?"
 
@@ -185,13 +187,13 @@ fi
 
 if [[ -z "$DOWNLOAD_ONLY" ]]; then
     # Get the version of the installed DATs...
-    Log_Print "Determining the currently installed DAT version..."
+    Log_Info "Determining the currently installed DAT version..."
 
     unset CURRENT_DAT
     CURRENT_DAT=$(Get_CurrentDATVersion)
 
     if [[ -z "$CURRENT_DAT" ]] ; then
-        Log_Print "Unable to determine currently installed DAT version!"
+        Log_Info "Unable to determine currently installed DAT version!"
         CURRENT_DAT="0000.0"
     fi
 
@@ -200,9 +202,9 @@ if [[ -z "$DOWNLOAD_ONLY" ]]; then
 fi
 
 # extract DAT info from avvdat.ini
-Log_Print "Determining the available DAT version..."
+Log_Info "Determining the available DAT version..."
 unset INI_SECTION
-Log_Print "Finding section for current DAT version in '$LOCAL_VERSION_FILE'..."
+Log_Info "Finding section for current DAT version in '$LOCAL_VERSION_FILE'..."
 INI_SECTION=$(Find_INISection $VER_SECTION < "$LOCAL_VERSION_FILE")
 
 if [[ -z "$INI_SECTION" ]]; then
@@ -243,11 +245,12 @@ if [[ -z "$AVAIL_MAJOR" ]] || [[ -z "$AVAIL_MINOR" ]] || [[ -z "$FILE_NAME" ]] |
     Exit_WithError "Section '[$INI_SECTION]' in '$LOCAL_VERSION_FILE' has incomplete data!"
 fi
 
-Log_Print "New DAT Version Available: $AVAIL_MAJOR.$AVAIL_MINOR"
+Log_Info "Current DAT Version: $CURRENT_MAJOR.$CURRENT_MINOR"
+Log_Info "New DAT Version Available: $AVAIL_MAJOR.$AVAIL_MINOR"
 
 if [[ -z "$DOWNLOAD_ONLY" ]]; then
     # Installed version is less than current DAT version?
-    if (( CURRENT_MAJOR < AVAIL_MAJOR )) || ( (( CURRENT_MAJOR == AVAIL_MAJOR )) && (( CURRENT_MINOR < AVAIL_MINOR )) ); then
+    if (( $CURRENT_MAJOR < $AVAIL_MAJOR )) || ( (( $CURRENT_MAJOR == $AVAIL_MAJOR )) && (( $CURRENT_MINOR < $AVAIL_MINOR )) ); then
         PERFORM_UPDATE="yes"
     fi
 fi
@@ -255,11 +258,11 @@ fi
 # OK to perform update?
 if [[ -n "$PERFORM_UPDATE" ]] || [[ -n "$DOWNLOAD_ONLY" ]]; then
     if [[ -n "$PERFORM_UPDATE" ]]; then
-        Log_Print "Performing an update ($CURRENT_DAT -> $AVAIL_MAJOR.$AVAIL_MINOR)..."
+        Log_Info "Performing an update ($CURRENT_DAT -> $AVAIL_MAJOR.$AVAIL_MINOR)..."
     fi
 
     # Download the dat files...
-    Log_Print "Downloading the current DAT '$FILE_NAME' from '$DOWNLOAD_SITE'..."
+    Log_Info "Downloading the current DAT '$FILE_NAME' from '$DOWNLOAD_SITE'..."
 
     Download_File "$DOWNLOAD_SITE" "$FILE_NAME" "bin" "$TEMP_DIR"
     DOWNLOAD_OUT="$?"
@@ -285,7 +288,7 @@ if [[ -n "$PERFORM_UPDATE" ]] || [[ -n "$DOWNLOAD_ONLY" ]]; then
     # Exit if we only wanted to download
     if [[ -n "$DOWNLOAD_ONLY" ]]; then
         #Do_Cleanup
-        Log_Print "DAT downloaded to '$DAT_ZIP'.  Exiting.."
+        Log_Info "DAT downloaded to '$DAT_ZIP'.  Exiting.."
         Exit_Script 0
     fi
 
@@ -297,28 +300,28 @@ if [[ -n "$PERFORM_UPDATE" ]] || [[ -n "$DOWNLOAD_ONLY" ]]; then
     fi
 
     # Check the new version matches the downloaded one.
-    Log_Print "Starting up uvscan with new DAT files..."
+    Log_Info "Starting up uvscan with new DAT files..."
     NEW_VERSION=$(Get_CurrentDATVersion)
 
     if [[ -z "$NEW_VERSION" ]]; then
         # Could not determine current value for DAT version from uvscan
         # set custom property to error value, then exit with error
-        Log_Print "Unable to determine currently installed DAT version!"
+        Log_Info "Unable to determine currently installed DAT version!"
         NEW_VERSION="VSCL:INVALID DAT"
     else
-        Log_Print "Checking that the installed DAT matches the available DAT version..."
+        Log_Info "Checking that the installed DAT matches the available DAT version..."
         NEW_MAJOR=$(Get_CurrentDATVersion "DATMAJ")
         NEW_MINOR=$(Get_CurrentDATVersion "DATMIN")
 
-        #Log_Print "NEW_MAJOR = '$NEW_MAJOR'"
-        #Log_Print "NEW_MINOR = '$NEW_MINOR'"
-        #Log_Print "AVAIL_MAJOR = '$AVAIL_MAJOR'"
-        #Log_Print "AVAIL_MINOR = '$AVAIL_MINOR'"
+        #Log_Info "NEW_MAJOR = '$NEW_MAJOR'"
+        #Log_Info "NEW_MINOR = '$NEW_MINOR'"
+        #Log_Info "AVAIL_MAJOR = '$AVAIL_MAJOR'"
+        #Log_Info "AVAIL_MINOR = '$AVAIL_MINOR'"
 
         if (( NEW_MAJOR != AVAIL_MAJOR )) || (( NEW_MINOR != AVAIL_MINOR )); then
             Exit_WithError "DAT update failed - installed version different than expected!"
         else
-            Log_Print "DAT update succeeded ($CURRENT_DAT -> $NEW_VERSION)!"
+            Log_Info "DAT update succeeded ($CURRENT_DAT -> $NEW_VERSION)!"
         fi
 
         NEW_VERSION="VSCL:$NEW_VERSION"
@@ -332,7 +335,7 @@ if [[ -n "$PERFORM_UPDATE" ]] || [[ -n "$DOWNLOAD_ONLY" ]]; then
     Exit_Script 0
 else
     if [[ -z "$PERFORM_UPDATE" ]]; then
-        Log_Print "Installed DAT is already up to date ($CURRENT_DAT)!  Exiting..."
+        Log_Info "Installed DAT is already up to date ($CURRENT_DAT)!  Exiting..."
     fi
 fi
 

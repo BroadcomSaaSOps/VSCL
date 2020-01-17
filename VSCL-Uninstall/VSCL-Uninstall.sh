@@ -48,20 +48,20 @@ UNINSTALL_CMD="$UVSCAN_DIR/uninstall-uvscan"
 # MAIN
 #=============================================================================
 
-Log_Print "==========================="
-Log_Print "Beginning VSCL uninstall"
-Log_Print "==========================="
+Log_Info "==========================="
+Log_Info "Beginning VSCL uninstall"
+Log_Info "==========================="
 
 # uninstall the uvscan product and remove the uninstaller
 if [ ! -d "$UVSCAN_DIR" ]; then
-    Exit_WithError "Error: uvscan software not found in '$UVSCAN_DIR'!"
+    Exit_WithError "uvscan software not found in '$UVSCAN_DIR'!"
 fi
 
-Log_Print "Running uvscan uninstaller..."
+Log_Info "Running uvscan uninstaller..."
 
-if yes | "$UNINSTALL_CMD" "$UVSCAN_DIR"; then
+if Capture_Command "yes" "| ""$UNINSTALL_CMD"" ""$UVSCAN_DIR"""; then
     if ! rm -rf "$UVSCAN_DIR" &> /dev/null; then
-        Log_Print "WARNING: Unable to remove uvscan directory '$UVSCAN_DIR'!"
+        Log_Info "WARNING: Unable to remove uvscan directory '$UVSCAN_DIR'!"
     fi
 else
     Exit_WithError "Error: Unable to remove uvscan software!"
@@ -70,24 +70,24 @@ fi
 # if [ -w "$CLAMSCAN_BACKUP" ]; then
     # # clamscan was replaced previously
     # # delete the impersonator file or symlink created for uvwrap
-    # Log_Print "ClamAV scanner backup detected, restoring..."
+    # Log_Info "ClamAV scanner backup detected, restoring..."
     
     # if ! rm -f "$CLAMSCAN_EXE" &> /dev/null; then
-        # Log_Print "Warning: Unable to restore original ClamAV scanner!"
+        # Log_Info "Warning: Unable to restore original ClamAV scanner!"
     # else
         # # copy original clamscan file back
         # if ! mv "$CLAMSCAN_BACKUP" "$CLAMSCAN_EXE" &> /dev/null; then
-            # Log_Print "Warning: Unable to restore original ClamAV scanner!"
+            # Log_Info "Warning: Unable to restore original ClamAV scanner!"
         # else
             # if ! chmod +x "$CLAMSCAN_EXE" &> /dev/null; then
-                # Log_Print "Warning: Unable to restore original ClamAV scanner!"
+                # Log_Info "Warning: Unable to restore original ClamAV scanner!"
             # else
-                # Log_Print "Original ClamAV scanner restored!"
+                # Log_Info "Original ClamAV scanner restored!"
             # fi
         # fi
     # fi
 # else
-    # Log_Print "Warning: ClamAV scanner backup NOT detected!"
+    # Log_Info "Warning: ClamAV scanner backup NOT detected!"
 # fi
 
 Exit_Script 0

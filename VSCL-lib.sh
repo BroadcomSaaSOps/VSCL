@@ -7,31 +7,39 @@
 #-----------------------------------------------------------------------------
 # Creator:      Nick Taylor, Pr. Engineer, Broadcom SaaS Ops
 #-----------------------------------------------------------------------------
-# Date:         07-NOV-2019
+# Date:         14-JAN-2020
 #-----------------------------------------------------------------------------
 # Version:      1.2
 #-----------------------------------------------------------------------------
 # PreReqs:      none
+#-----------------------------------------------------------------------------  
+# Switches:     none
 #-----------------------------------------------------------------------------  
 # Imports:      none
 #=============================================================================
 
 # Bypass inclusion if already loaded
 if [[ -z "$_VSCL_LIB_LOADED" ]]; then
+    # not already loaded, set flag that it is now
     _VSCL_LIB_LOADED=1
 else
-    exit 0
+    # already loaded, exit gracefully
+    return 0
 fi
 
-#----------------------------------------------------------------
-# Globals variables used by all scripts this import this library
-#----------------------------------------------------------------
+#=============================================================================
+# GLOBALS: Global variables used by all scripts that import this library
+#=============================================================================
+
+unset SCRIPT_NAME SCRIPT_PATH DEBUG_IT LEAVE_FILES LOG_PATH
+unset UVSCAN_EXE UVSCAN_DIR MACONFIG_PATH CMDAGENT_PATH TEMP_DIR
+
 # name of script file (the one that dotsourced this library, not the library itself)
 # shellcheck disable=SC2034
-SCRIPT_NAME=$(basename "$0")
+SCRIPT_NAME=$(basename "${BASH_SOURCE%/*}/")
 
 # path to script file (the one that dotsourced this library, not the library itself)
-SCRIPT_PATH=$(dirname "$0")
+SCRIPT_PATH=$(dirname "${BASH_SOURCE%/*}/")
 
 # show debug messages (set to non-empty to enable)
 DEBUG_IT=yes
@@ -54,28 +62,31 @@ MACONFIG_PATH="/opt/McAfee/agent/bin/maconfig"
 # path to CMDAGENT utility
 CMDAGENT_PATH="/opt/McAfee/agent/bin/cmdagent"
 
-#-----------------------------------------
-# VSCL Library functions
-#-----------------------------------------
+#=============================================================================
+# FUNCTIONS: VSCL Library functions
+#=============================================================================
 
 function Do_Cleanup {
     #------------------------------------------------------------
-    # if 'LEAVE_FILES' global is NOT set, erase downloaded files
+    # If 'LEAVE_FILES' global is NOT set, erase downloaded files
+    # before exiting
     #------------------------------------------------------------
 
     if [[ -z "$LEAVE_FILES" ]]; then
         if [[ -d "$TEMP_DIR" ]]; then
-            Log_Print "Removing temporary directory '$TEMP_DIR'..."
+            Log_Info "Removing temporary directory '$TEMP_DIR'..."
             
-            if ! rm -rf "$TEMP_DIR"; then
-                Log_Print "Error Removing temporary directory '$TEMP_DIR'!"
+            if ! Capture_Command "rm" "-rf $TEMP_DIR"; then
+                Log_Warning "Cannot remove temp directory '$TEMP_DIR'!"
             fi
         fi
     else
-        Log_Print "'LEAVE FILES' option specified.  NOT deleting temporary directory '$TEMP_DIR'"
+        Log_Info "'LEAVE FILES' option specified.  NOT deleting temporary directory '$TEMP_DIR'!"
     fi
     
-    unset SCRIPT_NAME SCRIPT_PATH DEBUG_IT LEAVE_FILES LOG_PATH UVSCAN_EXE UVSCAN_DIR MACONFIG_PATH CMDAGENT_PATH TEMP_DIR _VSCL_LIB_LOADED
+    unset SCRIPT_NAME SCRIPT_PATH DEBUG_IT LEAVE_FILES LOG_PATH
+    unset UVSCAN_EXE UVSCAN_DIR MACONFIG_PATH CMDAGENT_PATH TEMP_DIR
+    unset _VSCL_LIB_LOADED
     return 0
 }
 
@@ -100,15 +111,16 @@ function Exit_Script {
     
     Log_Print "Ending with exit code: $1"
     Log_Print "==========================="
-    #Log_Print $SCRIPT_NAME
-    #Log_Print $SCRIPT_PATH
-    #Log_Print $SCRIPT_ABBR
 
     # Clean up temp files
     Do_Cleanup
 
-    # shellcheck disable=SC2086
-    exit $OUTCODE
+    case "$-" in
+        *i*) return $OUTCODE
+            ;;
+        *) exit  $OUTCODE
+            ;;
+    esac
 }
 
 function Exit_WithError {
@@ -119,10 +131,9 @@ function Exit_WithError {
     #----------------------------------------------------------
 
     if [[ -n "$1" ]]; then
-        Log_Print "$1"
+        Log_Error "$1"
     fi
 
-    Do_Cleanup
     Exit_Script 1
 }
 
@@ -143,12 +154,52 @@ function Log_Print {
 
     if [[ -w $LOG_PATH ]]; then
         # log file exists and is writable, append
-        echo "$OUTPUT" | tee --append "$LOG_PATH"
+        echo -e "$OUTPUT" | tee --append "$LOG_PATH"
+        #printf "%s\n" "$OUTPUT" | tee --append "$LOG_PATH"
     else
         # log file absent, create
-        echo "$OUTPUT" | tee "$LOG_PATH"
+        echo -e "$OUTPUT" | tee "$LOG_PATH"
     fi
     
+    return 0
+}
+
+function Log_Info {
+    #----------------------------------------------------------
+    # Print a INFO MESSAGE to the log defined in $LOG_PATH
+    # (by default '/var/McAfee/agent/logs/VSCL_mgmt.log')
+    #----------------------------------------------------------
+    # Params: $1 = info message to print
+    #----------------------------------------------------------
+
+    # Prepend info marker and print
+    Log_Print "[I]:$*"
+    return 0
+}
+
+function Log_Warning {
+    #----------------------------------------------------------
+    # Print a WARNING to the log defined in $LOG_PATH
+    # (by default '/var/McAfee/agent/logs/VSCL_mgmt.log')
+    #----------------------------------------------------------
+    # Params: $1 = warning message to print
+    #----------------------------------------------------------
+
+    # Prepend warning marker and print
+    Log_Print "[W]:$*"
+    return 0
+}
+
+function Log_Error {
+    #----------------------------------------------------------
+    # Print an ERROR to the log defined in $LOG_PATH
+    # (by default '/var/McAfee/agent/logs/VSCL_mgmt.log')
+    #----------------------------------------------------------
+    # Params: $1 = error message to print
+    #----------------------------------------------------------
+
+    # Prepend error marker and print
+    Log_Print "[E]:$*"
     return 0
 }
 
@@ -158,7 +209,10 @@ function Capture_Command {
     #------------------------------------------------------------
     # Params: $1 = command to capture
     #         $2 = arguments of command
-    #----------------------------------------------------------
+    #------------------------------------------------------------
+    # Returns: 0/ok if command ran
+    #          Error code if command failed
+    #------------------------------------------------------------
     local OUT ERR OUTPUT MASK CAPTURECMD CAPTUREARG SAVEIFS
     
     if [[ -z "$1" ]]; then
@@ -173,29 +227,32 @@ function Capture_Command {
         CAPTUREARG="$2"
     fi
     
-    Log_Print ">> cmd = '$1 $2'"
+    Log_Info ">> cmd = '$1 $2'"
     
-    MASK="s/^[[:digit:]][[:digit:]][[:digit:]][[:digit:]]-[[:digit:]][[:digit:]]-[[:digit:]][[:digit:]] [[:digit:]][[:digit:]]:[[:digit:]][[:digit:]]:[[:digit:]][[:digit:]]\.[[:digit:]]* ([[:digit:]]*\.[[:digit:]]*) //g"
-    
+    # sed style mask to remove common text in McAfee error messages
+    MASK="s/^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\ [0-9][0-9]:[0-9][0-9]:[0-9][0-9]\.[0-9]*\ ([0-9]*\.[0-9]*)\ //g"
     SAVEIFS=$IFS
-    # run command and capture output
-    IFS=$'\n' OUT=($(eval $CAPTURECMD $CAPTUREARG))
+    
+    # run command and capture output to array
+    IFS=$'\n' OUT=($(eval $CAPTURECMD $CAPTUREARG "2>&1"))
     ERR=$?
     IFS=$SAVEIFS
 
     for OUTPUT in "${OUT[@]}"; do
+        # loop through each line of output
         # append output to log
         if [[ -n "$MASK" ]]; then
             # mask supplied, apply to each line
-            OUTPUT=$(echo $OUTPUT | sed -e "$MASK")
+            OUTPUT=$(printf "%s\n" "$OUTPUT" | sed -e "$MASK")
         fi
         
-        Log_Print ">> $OUTPUT"
+        Log_Info ">> $OUTPUT"
     done
     
     if [ $ERR -ne 0 ]; then
-        # error, exit sctipt
-        Exit_WithError "Error running command '$CAPTURECMD $CAPTUREARG'"
+        # error running command, return error code
+        #Exit_WithError "Error running command '$CAPTURECMD $CAPTUREARG'"
+        return $ERR
     fi
     
     return 0
@@ -206,36 +263,18 @@ function Refresh_ToEPO {
     #------------------------------------------------------------
     # Function to refresh the agent with EPO
     #------------------------------------------------------------
+    local CMDAGENTFLAGS MASK FLAGNAME
 
     # flags to use with CMDAGENT utility
-    local CMDAGENTFLAGS MASK FLAGNAME
     CMDAGENTFLAGS="-c -f -p -e"
-    Log_Print "Refreshing agent data with EPO..."
+    Log_Info "Refreshing agent data to EPO..."
     
     # loop through provided flags and call one command per
     # (CMDAGENT can't handle more than one)
     for FLAGNAME in $CMDAGENTFLAGS; do
-        Capture_Command "$CMDAGENT_PATH" "$FLAGNAME"
-        # unset OUT
-        # Log_Print ">> cmd = '$CMDAGENT_PATH $FLAG_NAME'"
-        
-        # # run command and capture output
-        # unset OUT
-        # SAVE_IFS=$IFS
-        # IFS=$'\n' OUT=($($CMDAGENT_PATH "$FLAG_NAME"))
-        # ERR=$?
-
-        # for output in "${OUT[@]}"; do
-            # # append output to log
-            # Log_Print ">> $output"
-        # done
-
-        # IFS=$SAVE_IFS
-        
-        # if [ $ERR -ne 0 ]; then
-            # # error, exit sctipt
-            # Exit_WithError "Error running EPO refresh command '$CMDAGENT_PATH $FLAG_NAME'\!"
-        # fi
+        if ! Capture_Command "$CMDAGENT_PATH" "$FLAGNAME"; then
+            Log_Error "Error running EPO refresh command '$CMDAGENT_PATH $FLAG_NAME'\!"
+        fi
     done
     
     return 0
@@ -250,26 +289,43 @@ function Find_INISection {
     #----------------------------------------------------------
     # Params: $1 - Section name
     #----------------------------------------------------------
-    # Output: space-delimited INI entries
+    # Returns: space-delimited INI entries in specified 
+    #          section to to STDOUT
+    #          exit code = 0 if section found
+    #          exit code = 1 if section NOT found
     #----------------------------------------------------------
 
-    local SECTION_FOUND SECTION_NAME LINE
+    local IN_SECTION SECTION_FOUND SECTION_NAME LINE
 
     SECTION_NAME="[$1]"
 
+    # Read each line of the file
     while read -r LINE; do
         if [[ "$LINE" = "$SECTION_NAME" ]]; then
-            SECTION_FOUND="true"
-        elif [[ -n "$SECTION_FOUND" ]]; then
+            # Section header found, go to next line
+            SECTION_FOUND=1
+            IN_SECTION=1
+        elif [[ -n "$IN_SECTION" ]]; then
+            # In correct section
             if [[ "$(echo "$LINE" | cut -c1)" != "[" ]]; then
+                # not a section header
                 if [[ -n "$LINE" ]]; then
+                    # line not empty, append to STDOUT
                     printf "%s\n" "$LINE"
                 fi
             else
-                unset SECTION_FOUND
+                # reached next section
+                unset IN_SECTION
             fi
         fi
     done
+    
+    if [[ -n "$SECTION_FOUND" ]]; then
+        return 0
+    else
+        Log_Error "Section '$1' not found!"
+        return 1
+    fi
 }
 
 
@@ -279,18 +335,19 @@ function Check_For {
     #------------------------------------------------------------
     # Params:  $1 = full path to file
     #          $2 = friendly-name of file
-    #          $3 = (optional) --no-terminate to return always
+    #          $3 = (optional) "--no-terminate" to return always
     #------------------------------------------------------------
-    Log_Print "Checking for '$2' at '$1'..."
+    Log_Info "Checking for '$2' at '$1'..."
 
     if [[ ! -x "$1" ]]; then
         # not available or executable
         if [[ "$3" = "--no-terminate" ]]; then
-            # return error
+            # return error but do not exit script
+            Log_Error "Could not find file '$2' at '$1'!"
             return 1
         else
             # exit script with error
-            Exit_WithError "Could not find '$2' at '$1'!"
+            Exit_WithError "Could not find file '$2' at '$1'!"
         fi
     fi
     
@@ -305,28 +362,12 @@ function Set_CustomProp {
     # Params: $1 = number of property to set (1-8) 
     #         $2 = value to set property
     #------------------------------------------------------------
-    Log_Print "Setting EPO Custom Property #$1 to '$2'..."
-    Capture_Command "$MACONFIG_PATH" "-custom -prop$1 '$2'"
-    # Log_Print ">> cmd = '$MACONFIG_PATH -custom -prop$1 \"$2\"'"
-
-    # # execute command and capture output to array
-    # unset OUT
-    # IFS=$'\n' OUT=($($MACONFIG_PATH -custom "-prop$1" "$2"))
-    # ERR=$?
-
-    # for output in "${OUT[@]}"; do
-        # # append output to log
-        # Log_Print ">> $output"
-    # done
-
-    # unset IFS
-
-    # if [ $ERR -ne 0 ]; then
-        # # error encountered, exit script
-        # Exit_WithError "Error setting EPO Custom Property #$1 to '$2'!"
-    # fi
+    local ERR
     
-    return 0
+    Log_Info "Setting EPO Custom Property #$1 to '$2'..."
+    Capture_Command "$MACONFIG_PATH" "-custom -prop$1 '$2'"
+    ERR=$?
+    return $ERR
 }
 
 
@@ -349,13 +390,25 @@ function Get_CurrentDATVersion {
 
     local UVSCAN_DAT LOCAL_DAT_VERSION LOCAL_ENG_VERSION OUTPUT
 
-    Check_For "$UVSCAN_DIR/$UVSCAN_EXE" "uvscan executable" > /dev/null 2>&1
-    
-    # get text of VSCL --version output
-    if ! UVSCAN_DAT=$("$UVSCAN_DIR/$UVSCAN_EXE" --version 2> /dev/null); then
-        # error getting version, exit script (returns null output)
+    if ! Check_For "$UVSCAN_DIR/$UVSCAN_EXE" "uvscan executable" > /dev/null 2>&1 ; then
+        printf "%s\n" "invalid"
         return 1
     fi
+    
+    RESULT=$("$UVSCAN_DIR/$UVSCAN_EXE" --version 2> /dev/null)
+    
+    if [[ "$?" == "0" ]]; then
+        UVSCAN_DAT=$RESULT
+    else
+        printf "%s\n" "invalid"
+        return 1
+    fi
+        
+    # get text of VSCL --version output
+    #if ! UVSCAN_DAT=$("$UVSCAN_DIR/$UVSCAN_EXE" --version 2> /dev/null); then
+        # error getting version, exit script (returns null output)
+    #    return 1       
+    #fi
 
     # parse DAT version
     LOCAL_DAT_VERSION=$(printf "%s\n" "$UVSCAN_DAT" | grep -i "dat set version:" | cut -d' ' -f4)
@@ -423,9 +476,11 @@ function Download_File {
 
     # download with available download tool
     case $FETCHER in
-        "wget") FETCHER_CMD="wget -q --tries=10 --no-check-certificate ""$DOWNLOAD_URL"" -O ""$FILE_NAME"""
+        "wget") FETCHER_CMD="wget"
+                FETCHER_ARG="-nv --tries=10 --no-check-certificate ""$DOWNLOAD_URL"" -O ""$FILE_NAME"""
             ;;
-        "curl") FETCHER_CMD="curl -s -k ""$DOWNLOAD_URL"" -o ""$FILE_NAME"""
+        "curl") FETCHER_CMD="curl"
+                FETCHER_ARG="-s -k ""$DOWNLOAD_URL"" -o ""$FILE_NAME"""
             ;;
         *) Exit_WithError "No valid URL fetcher available!"
             ;;
@@ -434,9 +489,7 @@ function Download_File {
     
     #FETCH_RESULT="$?"
 
-    if ! $FETCHER_CMD; then
-        return 1
-    else
+    if Capture_Command "$FETCHER_CMD" "$FETCHER_ARG"; then
         # file downloaded OK
         if [[ "$3" = "ascii" ]]; then
             # strip any CR/LF line terminators
