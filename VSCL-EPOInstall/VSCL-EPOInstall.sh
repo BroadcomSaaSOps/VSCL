@@ -59,34 +59,10 @@ done
 #-----------------------------------------
 # Abbreviation of this script name for logging
 # shellcheck disable=SC2034
-SCRIPT_ABBR="VSCLEPOI"
-
-# Default ClamAV location
-#CLAMAV_HOME="/fs0/od/clamav/bin"
-
-# Default path to ClamAV executable
-#CLAMSCAN_EXE="$CLAMAV_HOME/clamscan"
-
-# Path to backup original ClamAV scanner shell file
-#CLAMSCAN_BACKUP="$CLAMSCAN_EXE.orig"
-
-# Pattern for downloaded VSCL binary installer tarball
-#INSTALLER_ZIP="vscl-*.tar.gz"
-
-# Pattern for downloaded DAT .ZIP file
-DAT_ZIP="avvdat-*.zip"
-
-# Raw command to install VSCL from installer tarball
-INSTALL_CMD="install-uvscan"
+__VSCL_SCRIPT_ABBR="VSCLEPOI"
 
 # Command to call to download and update to current .DATs from EPO
-# v---- for integrated download
-#DAT_UPDATE_CMD="update-uvscan-dat.sh"
-# v---- for EPO download
 DAT_UPDATE_CMD="VSCL-Update-DAT.sh"
-
-# Filename of scan wrapper to put in place of ClamAV executable
-WRAPPER="uvwrap.sh"
 
 # Default to updating DATs (if supplied)
 if [[ -z "$DAT_UPDATE" ]]; then
@@ -94,17 +70,14 @@ if [[ -z "$DAT_UPDATE" ]]; then
 fi
 
 # Default filler for Custom Property #1
-NEW_VERSION="VSCL:INVALID DAT"
+NEW_VER="VSCL:INVALID DAT"
 
-INSTALL_PACKAGE="VSCLPACK"
-INSTALL_VERSION="6130"
-VERSION_FILE="vsclpackage.ini"
-LOCAL_VERSION_FILE="$TEMP_DIR/$VERSION_FILE"
-VER_SECTION="VSCL-PACK"
+# full path of downloaded versioning file
+LOCAL_VER_FILE="$__VSCL_TEMP_DIR/$__VSCL_PKG_VER_FILE"
 
 # download site
 # shellcheck disable=SC2153
-DOWNLOAD_SITE="https://${SITE_NAME}${EPO_SERVER}:443/Software/Current/$INSTALL_PACKAGE$INSTALL_VERSION/Install/0000"
+DOWNLOAD_SITE="https://${__VSCL_SITE_NAME}${__VSCL_EPO_SERVER}:443/Software/Current/$__VSCL_INSTALL_PKG$__VSCL_INSTALL_VER/Install/0000"
 
 
 #=============================================================================
@@ -116,25 +89,26 @@ Log_Info "Beginning VSCL installation"
 Log_Info "==========================="
 
 # download latest installer version file from EPO "VSCL Package" directory
-if ! Download_File "$DOWNLOAD_SITE" "$VERSION_FILE" "ascii" "$TEMP_DIR"; then
-    Exit_WithError "Error downloading '$VERSION_FILE' from '$DOWNLOAD_SITE'!"
+if ! Download_File "$DOWNLOAD_SITE" "$__VSCL_PKG_VER_FILE" "ascii" "$__VSCL_TEMP_DIR"; then
+    Exit_WithError "Error downloading '$__VSCL_PKG_VER_FILE' from '$DOWNLOAD_SITE'!"
 fi
 
-if [[ ! -r "$LOCAL_VERSION_FILE" ]]; then
-    Exit_WithError "Error downloading '$VERSION_FILE' from '$DOWNLOAD_SITE'!"
+if [[ ! -r "$LOCAL_VER_FILE" ]]; then
+    # unable to download version file from EPO, abort
+    Exit_WithError "Error downloading '$__VSCL_PKG_VER_FILE' from '$DOWNLOAD_SITE'!"
 fi
 
 # extract DAT info from avvdat.ini
 Log_Info "Determining the available installer version..."
 unset INI_SECTION
-Log_Info "Finding section for current installer version in '$LOCAL_VERSION_FILE'..."
-INI_SECTION=$(Find_INISection $VER_SECTION < "$LOCAL_VERSION_FILE")
+Log_Info "Finding section for current installer version in '$LOCAL_VER_FILE'..."
+INI_SECTION=$(Find_INISection "$__VSCL_PKG_VER_SECTION" < "$LOCAL_VER_FILE")
 
 if [[ -z "$INI_SECTION" ]]; then
-    Exit_WithError "Unable to find section '$INI_SECTION' in '$LOCAL_VERSION_FILE'!"
+    Exit_WithError "Unable to find section '$INI_SECTION' in '$LOCAL_VER_FILE'!"
 fi
 
-unset INI_FIELD PACKAGE_NAME PACKAGE_VERSION FILE_NAME FILE_PATH FILE_SIZE MD5
+unset INI_FIELD PACKAGE_NAME PACKAGE_VER FILE_NAME FILE_PATH FILE_SIZE MD5
 
 # Parse the section and keep what we are interested in.
 for INI_FIELD in $INI_SECTION; do
@@ -144,7 +118,7 @@ for INI_FIELD in $INI_SECTION; do
     case $FIELD_NAME in
         "Name") PACKAGE_NAME="$FIELD_VALUE"  # name of installer
             ;; 
-        "InstallVersion") PACKAGE_VERSION="$FIELD_VALUE" # version of installer
+        "InstallVersion") PACKAGE_VER="$FIELD_VALUE" # version of installer
             ;;
         "FileName") FILE_NAME="$FIELD_VALUE" # file to download
             ;;
@@ -155,48 +129,48 @@ done
 
 # sanity check
 # All extracted fields have values?
-if [[ -z "$PACKAGE_NAME" ]] || [[ -z "$PACKAGE_VERSION" ]] || [[ -z "$FILE_NAME" ]]; then
-    Exit_WithError "Section '[$INI_SECTION]' in '$LOCAL_VERSION_FILE' has incomplete data!"
+if [[ -z "$PACKAGE_NAME" ]] || [[ -z "$PACKAGE_VER" ]] || [[ -z "$FILE_NAME" ]]; then
+    Exit_WithError "Section '[$INI_SECTION]' in '$LOCAL_VER_FILE' has incomplete data!"
 fi
 
-Log_Info "New Installer Version Available: $PACKAGE_VERSION"
+Log_Info "New Installer Version Available: '$PACKAGE_VER'"
 
 # Download the dat files...
 Log_Info "Downloading the current installer '$FILE_NAME' from '$DOWNLOAD_SITE'..."
 
-if ! Download_File "$DOWNLOAD_SITE" "$FILE_NAME" "bin" "$TEMP_DIR"; then
-    Exit_WithError "Error downloading '$TEMP_DIR/$FILE_NAME' from '$DOWNLOAD_SITE'!"
+if ! Download_File "$DOWNLOAD_SITE" "$FILE_NAME" "bin" "$__VSCL_TEMP_DIR"; then
+    Exit_WithError "Error downloading '$__VSCL_TEMP_DIR/$FILE_NAME' from '$DOWNLOAD_SITE'!"
 fi
 
 # move install files to unzip into temp
 # >>> DO NOT add quote below, [ -f ] conditionals don't work with quoting
 # >>> this must stay [..], [[..]] doesnt do globbing
 # shellcheck disable=SC2086
-if [ ! -f $TEMP_DIR/$FILE_NAME ]; then
-    Exit_WithError "ERROR: Installer archive '$TEMP_DIR/$FILE_NAME' does not exist!"
+if [ ! -f $__VSCL_TEMP_DIR/$FILE_NAME ]; then
+    Exit_WithError "ERROR: Installer archive '$__VSCL_TEMP_DIR/$FILE_NAME' does not exist!"
 fi
 
 # untar installer archive in-place and install uvscan with default settings
-Log_Info "Extracting installer '$TEMP_DIR/$FILE_NAME' to directory '$TEMP_DIR'..."
+Log_Info "Extracting installer '$__VSCL_TEMP_DIR/$FILE_NAME' to directory '$__VSCL_TEMP_DIR'..."
 
-if ! cd "$TEMP_DIR"; then
-    Exit_WithError "Unable to change to temp directory '$TEMP_DIR'!"
+if ! cd "$__VSCL_TEMP_DIR"; then
+    Exit_WithError "Unable to change to temp directory '$__VSCL_TEMP_DIR'!"
 fi
 
 if ! Capture_Command "tar" "-xvzf ./$FILE_NAME"; then
-    Exit_WithError "Error extracting installer '$TEMP_DIR/$FILE_NAME' to directory '$TEMP_DIR'!"
+    Exit_WithError "Error extracting installer '$__VSCL_TEMP_DIR/$FILE_NAME' to directory '$__VSCL_TEMP_DIR'!"
 fi
 
 Log_Info "Installing VSCL..."
 
-if ! Capture_Command "./$INSTALL_CMD" "-y"; then
+if ! Capture_Command "./$__VSCL_INSTALL_CMD" "-y"; then
     Exit_WithError "Error installing VirusScan Command Line Scanner!"
 fi
 
 # remove temp directory
 #Log_Info "Removing temp directory..."
 cd ..
-#rm -rf "$TEMP_DIR"
+#rm -rf "$__VSCL_TEMP_DIR"
 
 if [[ "$DAT_UPDATE" = "0" ]]; then
     Log_Info "Option specified to NOT update DAT files.  Continuing..."
@@ -204,70 +178,41 @@ else
     # OK to update DAT files
     
     # Run script to update DAT from EPO
-    ./$DAT_UPDATE_CMD
+    ./"$DAT_UPDATE_CMD"
     
-    #TODO: For now updating only works if .ZIP supplied with installer
-    # if [[ -f "./$DAT_ZIP" ]]; then
-        # # Update the scanner with the latest AV definitions supplied with installer
-        # if ! ./$DAT_UPDATE_CMD "./$DAT_ZIP"; then
-            # Exit_WithError "Error unpacking DAT files to uvscan directory!"
-        # fi
-        
-    NEW_VERSION=$(Get_CurrentDATVersion)
+    NEW_VER=$(Get_CurrDATVer)
     #fi
 fi
 
-if [[ -f "./$WRAPPER" ]]; then
+if [[ -f "./$__VSCL_WRAPPER" ]]; then
     # make uvwrap.sh executable and copy to uvscan directory
-    Log_Info "Setting up shim wrapper for uvscan..."
-    chmod +x "./$WRAPPER"
+    Log_Info "Setting up shim __VSCL_WRAPPER for uvscan..."
+    chmod +x "./$__VSCL_WRAPPER"
 else
-    Exit_WithError "File '$WRAPPER' not available.  Aborting installer!"
+    Exit_WithError "File '$__VSCL_WRAPPER' not available.  Aborting installer!"
 fi
 
-if [[ -f "$UVSCAN_DIR/$WRAPPER" ]]; then
-    Log_Info "Deleting any existing file at '$UVSCAN_DIR/$WRAPPER'..."
+if [[ -f "$__VSCL_UVSCAN_DIR/$__VSCL_WRAPPER" ]]; then
+    Log_Info "Deleting any existing file at '$__VSCL_UVSCAN_DIR/$__VSCL_WRAPPER'..."
     
-    if ! rm -f "$UVSCAN_DIR/$WRAPPER"; then
-        Log_Warning "Existing file '$UVSCAN_DIR/$WRAPPER' could not be deleted!  Continuing..."
+    if ! rm -f "$__VSCL_UVSCAN_DIR/$__VSCL_WRAPPER"; then
+        Log_Warning "Existing file '$__VSCL_UVSCAN_DIR/$__VSCL_WRAPPER' could not be deleted!  Continuing..."
     fi
 fi
 
-if [[ ! -f "$UVSCAN_DIR/$WRAPPER" ]]; then
-    Log_Info "Copying wrapper file './$WRAPPER' to '$UVSCAN_DIR/$WRAPPER'..."
+if [[ ! -f "$__VSCL_UVSCAN_DIR/$__VSCL_WRAPPER" ]]; then
+    Log_Info "Copying wrapper file './$__VSCL_WRAPPER' to '$__VSCL_UVSCAN_DIR/$__VSCL_WRAPPER'..."
     
-    if ! cp -f "./$WRAPPER" "$UVSCAN_DIR"; then
-        Exit_WithError "Could not copy wrapper file './$WRAPPER' to '$UVSCAN_DIR/$WRAPPER'!"
+    if ! cp -f "./$__VSCL_WRAPPER" "$__VSCL_UVSCAN_DIR"; then
+        Exit_WithError "Could not copy wrapper file './$__VSCL_WRAPPER' to '$__VSCL_UVSCAN_DIR/$__VSCL_WRAPPER'!"
     fi
 fi
 
-# if [[ ! -d "$CLAMAV_HOME" ]]; then
-    # Log_Info "WARNING: ClamAV home directory '$CLAMAV_HOME' does not exist.  Creating..."
-    
-    # if ! mkdir -p "$CLAMAV_HOME"; then
-    # fi
-# fi
-
-# if [[ -f "$CLAMSCAN_BACKUP" ]]; then
-    # # save file exists, bypass save
-    # Log_Info "WARNING: Original ClamAV scanner executable already saved to '$CLAMSCAN_BACKUP'.  Skipping save..."
-# else
-    # # no existing save file, save clamscan original file
-    # Log_Info "Saving original ClamAV scanner executable to '$CLAMSCAN_BACKUP'..."
-    # mv "$CLAMSCAN_EXE" "$CLAMSCAN_BACKUP"
-# fi
-
-# # remove existing clamscan file or link
-# Log_Info "Replacing clamscan executable with symlink to '$UVSCAN_DIR/$WRAPPER'..."
-# rm -f "$CLAMSCAN_EXE"
-# ln -s "$UVSCAN_DIR/$WRAPPER" "$CLAMSCAN_EXE"
-
-# Set McAfee Custom Property #1 to '$NEW_VERSION'...
-Set_CustomProp 1 "$NEW_VERSION"
+# Set McAfee Custom Property #1 to '$NEW_VER'...
+Set_CustomProp 1 "$NEW_VER"
 
 # Refresh agent data with EPO
 Refresh_ToEPO
 
 # Clean up global variables and exit cleanly
-unset SCRIPT_ABBR CLAMAV_HOME CLAMSCAN_EXE CLAMSCAN_BACKUP INSTALLER_ZIP DAT_ZIP INSTALL_CMD DAT_UPDATE_CMD WRAPPER DAT_UPDATE NEW_VERSION
 Exit_Script 0

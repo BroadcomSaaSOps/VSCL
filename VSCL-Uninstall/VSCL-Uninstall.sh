@@ -39,10 +39,8 @@
 #-----------------------------------------
 # Abbreviation of this script name for logging
 # shellcheck disable=SC2034
-SCRIPT_ABBR="VSCLUNIN"
+__VSCL_SCRIPT_ABBR="VSCLUNIN"
 
-# Raw command to remove VSCL from system
-UNINSTALL_CMD="$UVSCAN_DIR/uninstall-uvscan"
 
 #=============================================================================
 # MAIN
@@ -53,48 +51,18 @@ Log_Info "Beginning VSCL uninstall"
 Log_Info "==========================="
 
 # uninstall the uvscan product and remove the uninstaller
-if [ ! -d "$UVSCAN_DIR" ]; then
-    Exit_WithError "uvscan software not found in '$UVSCAN_DIR'!"
+if [ ! -d "$__VSCL_UVSCAN_DIR" ]; then
+    Exit_WithError "VSCL software not found in '$__VSCL_UVSCAN_DIR'!"
 fi
 
 Log_Info "Running uvscan uninstaller..."
 
-if Capture_Command "yes" "| ""$UNINSTALL_CMD"" ""$UVSCAN_DIR"""; then
-    if ! rm -rf "$UVSCAN_DIR" &> /dev/null; then
-        Log_Info "WARNING: Unable to remove uvscan directory '$UVSCAN_DIR'!"
+if Capture_Command "yes" "| ""$__VSCL_UNINSTALL_CMD"" ""$__VSCL_UVSCAN_DIR"""; then
+    if ! rm -rf "$__VSCL_UVSCAN_DIR" &> /dev/null; then
+        Log_Warning "Unable to remove VSCL software directory '$__VSCL_UVSCAN_DIR'!"
     fi
 else
-    Exit_WithError "Error: Unable to remove uvscan software!"
+    Exit_WithError "Unable to uninstall VSCL software!"
 fi
 
-# if [ -w "$CLAMSCAN_BACKUP" ]; then
-    # # clamscan was replaced previously
-    # # delete the impersonator file or symlink created for uvwrap
-    # Log_Info "ClamAV scanner backup detected, restoring..."
-    
-    # if ! rm -f "$CLAMSCAN_EXE" &> /dev/null; then
-        # Log_Info "Warning: Unable to restore original ClamAV scanner!"
-    # else
-        # # copy original clamscan file back
-        # if ! mv "$CLAMSCAN_BACKUP" "$CLAMSCAN_EXE" &> /dev/null; then
-            # Log_Info "Warning: Unable to restore original ClamAV scanner!"
-        # else
-            # if ! chmod +x "$CLAMSCAN_EXE" &> /dev/null; then
-                # Log_Info "Warning: Unable to restore original ClamAV scanner!"
-            # else
-                # Log_Info "Original ClamAV scanner restored!"
-            # fi
-        # fi
-    # fi
-# else
-    # Log_Info "Warning: ClamAV scanner backup NOT detected!"
-# fi
-
-# Set McAfee Custom Property #1 to 'NOT INSTALLED'...
-Set_CustomProp 1 "VSCL:NOT INSTALLED"
-
-# Refresh agent data with EPO
-Refresh_ToEPO
-
-# Clean up global variables and exit cleanly
 Exit_Script 0
