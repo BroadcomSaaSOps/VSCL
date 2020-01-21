@@ -3,7 +3,7 @@
 #=============================================================================
 # NAME:     UVWRAP.SH
 #-----------------------------------------------------------------------------
-# Purpose:  Wrapper to redirect PPM command line antivirus call to McAfee 
+# Purpose:  __VSCL_WRAPPER to redirect PPM command line antivirus call to McAfee 
 #           VirusScan Command Line Scanner
 #-----------------------------------------------------------------------------
 # Creator:  Nick Taylor, Pr. Engineer, Broadcom SaaS Ops
@@ -34,7 +34,7 @@
 # Variables
 #-----------------------------------------
 # Abbreviation of this script name for logging
-SCRIPT_ABBR="UVWRAP"
+__VSCL_SCRIPT_ABBR="UVWRAP"
 
 #=============================================================================
 # MAIN
@@ -43,14 +43,13 @@ Log-Print "Beginning command line scan..."
 
 if [[ -z "$@" ]]; then
     # exit if no file specified
-    Log-Print "ERROR: No command line parameters supplied!"
-    Exit_WithError 1
+    Exit_WithError "No command line parameters supplied!"
 else
-    Log-Print "Parameters supplied: '$@'"
+    Log-Info "Parameters supplied: '$@'"
 fi
 
 # call uvscan
-if $UVSCAN_DIR/$UVSCAN_EXE -c -p --afc 512 -e --nocomp --ignore-links --noboot --nodecrypt --noexpire --one-file-system --timeout 10 "$@"; then
+if $__VSCL_UVSCAN_DIR/$__VSCL_UVSCAN_EXE -c -p --afc 512 -e --nocomp --ignore-links --noboot --nodecrypt --noexpire --one-file-system --timeout 10 "$@"; then
     # -c                    clean viruses if found
     # -p                    
     # --afc 512             half-meg buffers
@@ -64,8 +63,7 @@ if $UVSCAN_DIR/$UVSCAN_EXE -c -p --afc 512 -e --nocomp --ignore-links --noboot -
     # --timeout 10          scan for 10 seconds then abort
 
     # uvscan returned anything other than 0, exit and return 1
-    Log-Print "*** Virus found! ***"
-    Exit_WithError 1
+    Exit_WithError "*** Virus found! ***"
 fi
 
 # No virus found, exit successfully

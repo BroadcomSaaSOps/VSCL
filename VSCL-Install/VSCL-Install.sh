@@ -43,7 +43,7 @@
 # shellcheck disable=2034
 while getopts :n OPTION_VAR; do
     case "$OPTION_VAR" in
-        "n") DAT_UPDATE=0    # do NOT update DAT files
+        "n") __VSCL_DAT_UPDATE=0    # do NOT update DAT files
             ;;
         *) Exit_WithError "Unknown option specified!"
             ;;
@@ -55,7 +55,7 @@ done
 #-----------------------------------------
 # Abbreviation of this script name for logging
 # shellcheck disable=SC2034
-SCRIPT_ABBR="VSCLINST"
+__VSCL_SCRIPT_ABBR="VSCLINST"
 
 # Default ClamAV location
 CLAMAV_HOME="/fs0/od/clamav/bin"
@@ -70,23 +70,20 @@ CLAMSCAN_BACKUP="$CLAMSCAN_EXE.orig"
 INSTALLER_ZIP="vscl-*.tar.gz"
 
 # Pattern for downloaded DAT .ZIP file
-DAT_ZIP="avvdat-*.zip"
+__VSCL_DAT_ZIP="avvdat-*.zip"
 
 # Raw command to install VSCL from installer tarball
-INSTALL_CMD="install-uvscan"
+__VSCL_INSTALL_CMD="install-uvscan"
 
 # Command to call to download and update to current .DATs from EPO
-#DAT_UPDATE_CMD="VSCL-Update-DAT.sh"    <--  for EPO download
+#__VSCL_DAT_UPDATE_CMD="VSCL-Update-DAT.sh"    <--  for EPO download
 
 # v---- for integrated download
-DAT_UPDATE_CMD="update-uvscan-dat.sh"
-
-# Filename of scan wrapper to put in place of ClamAV executable
-WRAPPER="uvwrap.sh"
+__VSCL_DAT_UPDATE_CMD="update-uvscan-dat.sh"
 
 # Default to updating DATs (if supplied)
-if [[ -z "$DAT_UPDATE" ]]; then
-    DAT_UPDATE=1
+if [[ -z "$__VSCL_DAT_UPDATE" ]]; then
+    __VSCL_DAT_UPDATE=1
 fi
 
 # Default filler for Custom Property #1
@@ -130,7 +127,7 @@ fi
 
 Log_Print "Installing VSCL..."
 
-if ! "./$INSTALL_CMD" -y; then
+if ! "./$__VSCL_INSTALL_CMD" -y; then
     Exit_WithError "Error installing VirusScan Command Line Scanner!"
 fi
 
@@ -139,7 +136,7 @@ fi
 #cd ..
 #rm -rf "./$TEMP_DIR"
 
-if [[ "$DAT_UPDATE" = "0" ]]; then
+if [[ "$__VSCL_DAT_UPDATE" = "0" ]]; then
     Log_Print "NOTE: Option specified to NOT update DAT files.  Continuing..."
 else
     # OK to update DAT files
@@ -147,9 +144,9 @@ else
     #TODO: Download latest DATs from EPO
     #TODO: For now updating only works if .ZIP supplied with installer
     
-    if [[ -f "./$DAT_ZIP" ]]; then
+    if [[ -f "./$__VSCL_DAT_ZIP" ]]; then
         # Update the scanner with the latest AV definitions supplied with installer
-        if ! ./$DAT_UPDATE_CMD "./$DAT_ZIP"; then
+        if ! ./$__VSCL_DAT_UPDATE_CMD "./$__VSCL_DAT_ZIP"; then
             Exit_WithError "Error unpacking DAT files to uvscan directory!"
         fi
         
@@ -157,27 +154,27 @@ else
     fi
 fi
 
-if [[ -f "./$WRAPPER" ]]; then
+if [[ -f "./$__VSCL_WRAPPER" ]]; then
     # make uvwrap.sh executable and copy to uvscan directory
-    Log_Print "Setting up shim wrapper for uvscan..."
-    chmod +x "./$WRAPPER"
+    Log_Print "Setting up shim __VSCL_WRAPPER for uvscan..."
+    chmod +x "./$__VSCL_WRAPPER"
 else
-    Exit_WithError "File '$WRAPPER' not available.  Aborting installer!"
+    Exit_WithError "File '$__VSCL_WRAPPER' not available.  Aborting installer!"
 fi
 
-if [[ -f "$UVSCAN_DIR/$WRAPPER" ]]; then
-    Log_Print "Deleting any existing file at '$UVSCAN_DIR/$WRAPPER'..."
+if [[ -f "$UVSCAN_DIR/$__VSCL_WRAPPER" ]]; then
+    Log_Print "Deleting any existing file at '$UVSCAN_DIR/$__VSCL_WRAPPER'..."
     
-    if ! rm -f "$UVSCAN_DIR/$WRAPPER"; then
-        Log_Print "WARNING: Existing file '$UVSCAN_DIR/$WRAPPER' could not be deleted!  Continuing..."
+    if ! rm -f "$UVSCAN_DIR/$__VSCL_WRAPPER"; then
+        Log_Print "WARNING: Existing file '$UVSCAN_DIR/$__VSCL_WRAPPER' could not be deleted!  Continuing..."
     fi
 # fi
 
-if [[ ! -f "$UVSCAN_DIR/$WRAPPER" ]]; then
-    Log_Print "Copying wrapper file './$WRAPPER' to '$UVSCAN_DIR/$WRAPPER'..."
+if [[ ! -f "$UVSCAN_DIR/$__VSCL_WRAPPER" ]]; then
+    Log_Print "Copying __VSCL_WRAPPER file './$__VSCL_WRAPPER' to '$UVSCAN_DIR/$__VSCL_WRAPPER'..."
     
-    if ! cp -f "./$WRAPPER" "$UVSCAN_DIR"; then
-        Exit_WithError "Could not copy wrapper file './$WRAPPER' to '$UVSCAN_DIR/$WRAPPER'!"
+    if ! cp -f "./$__VSCL_WRAPPER" "$UVSCAN_DIR"; then
+        Exit_WithError "Could not copy __VSCL_WRAPPER file './$__VSCL_WRAPPER' to '$UVSCAN_DIR/$__VSCL_WRAPPER'!"
     fi
 fi
 
@@ -194,5 +191,5 @@ Set_CustomProp 1 "$NEW_VERSION"
 Refresh_ToEPO
 
 # Clean up global variables and exit cleanly
-unset SCRIPT_ABBR CLAMAV_HOME CLAMSCAN_EXE CLAMSCAN_BACKUP INSTALLER_ZIP DAT_ZIP INSTALL_CMD DAT_UPDATE_CMD WRAPPER DAT_UPDATE NEW_VERSION
+unset __VSCL_SCRIPT_ABBR CLAMAV_HOME CLAMSCAN_EXE CLAMSCAN_BACKUP INSTALLER_ZIP __VSCL_DAT_ZIP __VSCL_INSTALL_CMD __VSCL_DAT_UPDATE_CMD __VSCL_WRAPPER __VSCL_DAT_UPDATE NEW_VERSION
 Exit_Script 0
