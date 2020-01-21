@@ -90,4 +90,11 @@ fi
     # Log_Info "Warning: ClamAV scanner backup NOT detected!"
 # fi
 
+# Set McAfee Custom Property #1 to 'NOT INSTALLED'...
+Set_CustomProp 1 "VSCL:NOT INSTALLED"
+
+# Refresh agent data with EPO
+Refresh_ToEPO
+
+# Clean up global variables and exit cleanly
 Exit_Script 0

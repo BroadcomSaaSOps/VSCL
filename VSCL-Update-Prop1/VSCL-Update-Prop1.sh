@@ -1,25 +1,34 @@
 #!/bin/bash
 
 #=============================================================================
-# NAME:         update-prop1.sh
-# Purpose:      Update the McAfee custom property #1 with the current 
-#               version of the DAT files for the McAfee VirusScan Command Line
-#               Scanner 6.1.0 on SaaS Linux PPM App servers
-# Creator:      Nick Taylor, Sr. Engineer, CA SaaS Ops
-# Original:     Copyright (c) 2009 McAfee, Inc. All Rights Reserved.
-# Date:         21-OCT-2017
-# Version:      1.0
-# PreReqs:      Linux
-#               CA PPM Application Server
-#               VSCL antivirus scanner installed
-#               Latest VSCL DAT .ZIP file
-#               unzip, tar, gunzip, gclib > 2.7 utilities in OS,
-#               awk, echo, cut, ls, printf
-# Params:       none
-# Switches:     -d:  download current DATs and exit
-#               -l:  leave any files extracted intact at exit
+# NAME:     update-prop1.sh
 #-----------------------------------------------------------------------------
-# Imports:      ./VSCL-local.sh:  library functions
+# Purpose:  Update the McAfee custom property #1 with the current 
+#           version of the DAT files for the McAfee VirusScan Command Line
+#           Scanner 6.1.0 on SaaS Linux PPM App servers
+#-----------------------------------------------------------------------------
+# Creator:  Nick Taylor, Pr. Engineer, Broadcom SaaS Ops
+#-----------------------------------------------------------------------------
+# Date:     17-JAN-2020
+#-----------------------------------------------------------------------------
+# Version:  1.2
+#-----------------------------------------------------------------------------
+# PreReqs:  Linux
+#           CA PPM Application Server
+#           VSCL antivirus scanner installed
+#           Latest VSCL DAT .ZIP file
+#           unzip, tar, gunzip, gclib > 2.7 utilities in OS,
+#           awk, echo, cut, ls, printf
+#-----------------------------------------------------------------------------
+# Params:   none
+#-----------------------------------------------------------------------------
+# Switches: none
+#-----------------------------------------------------------------------------
+# Imports:  ./VSCL-lib.sh:  library functions
+#=============================================================================
+
+#=============================================================================
+# VARIABLES
 #=============================================================================
 
 #-----------------------------------------
@@ -29,7 +38,7 @@
 . ./VSCL-lib.sh
 
 #-----------------------------------------
-# Globals variables
+# Global variables
 #-----------------------------------------
 # name of this script
 # shellcheck disable=SC2034
@@ -50,17 +59,17 @@ Check_For "$CMDAGENT_PATH" "CMDAGENT utility"
 if ! Check_For "$UVSCAN_DIR/$UVSCAN_EXE" "uvscan executable" --no-terminate; then
     # uvscan not found
     # set custom property to error value, then exit with error
-    Log_Print "Could not find 'uvscan executable' at '$UVSCAN_DIR/$UVSCAN_EXE'!"
+    Log_Info "Could not find 'uvscan executable' at '$UVSCAN_DIR/$UVSCAN_EXE'!"
     CURRENT_DAT="VSCL:NOT INSTALLED"
 else
     # Get the version of the installed DATs...
-    Log_Print "Determining the current DAT version..."
+    Log_Info "Determining the current DAT version..."
     CURRENT_DAT=$(Get_CurrentDATVersion)
 
     if [[ -z "$CURRENT_DAT" ]]; then
         # Could not determine current value for DAT version from uvscan
         # set custom property to error value, then exit with error
-        Log_Print "Unable to determine currently installed DAT version!"
+        Log_Info "Unable to determine currently installed DAT version!"
         CURRENT_DAT="VSCL:INVALID DAT"
     else
         CURRENT_DAT="VSCL:$CURRENT_DAT"

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #=============================================================================
-# NAME:     VSCL-Install.sh
+# NAME:     VSCL-EPOInstall.sh
 #-----------------------------------------------------------------------------
 # Purpose:  Installer for McAfee VirusScan Command Line Scanner on 
 #           FedRAMP PPM App Servers
@@ -59,7 +59,7 @@ done
 #-----------------------------------------
 # Abbreviation of this script name for logging
 # shellcheck disable=SC2034
-SCRIPT_ABBR="VSCLINST2"
+SCRIPT_ABBR="VSCLEPOI"
 
 # Default ClamAV location
 #CLAMAV_HOME="/fs0/od/clamav/bin"
@@ -86,7 +86,7 @@ INSTALL_CMD="install-uvscan"
 DAT_UPDATE_CMD="VSCL-Update-DAT.sh"
 
 # Filename of scan wrapper to put in place of ClamAV executable
-#WRAPPER="uvwrap.sh"
+WRAPPER="uvwrap.sh"
 
 # Default to updating DATs (if supplied)
 if [[ -z "$DAT_UPDATE" ]]; then
@@ -225,19 +225,19 @@ else
     Exit_WithError "File '$WRAPPER' not available.  Aborting installer!"
 fi
 
-if [[ -f "$UVSCAN_HOME/$WRAPPER" ]]; then
-    Log_Info "Deleting any existing file at '$UVSCAN_HOME/$WRAPPER'..."
+if [[ -f "$UVSCAN_DIR/$WRAPPER" ]]; then
+    Log_Info "Deleting any existing file at '$UVSCAN_DIR/$WRAPPER'..."
     
-    if ! rm -f "$UVSCAN_HOME/$WRAPPER"; then
-        Log_Warning "Existing file '$UVSCAN_HOME/$WRAPPER' could not be deleted!  Continuing..."
+    if ! rm -f "$UVSCAN_DIR/$WRAPPER"; then
+        Log_Warning "Existing file '$UVSCAN_DIR/$WRAPPER' could not be deleted!  Continuing..."
     fi
 fi
 
-if [[ ! -f "$UVSCAN_HOME/$WRAPPER" ]]; then
-    Log_Info "Copying wrapper file './$WRAPPER' to '$UVSCAN_HOME/$WRAPPER'..."
+if [[ ! -f "$UVSCAN_DIR/$WRAPPER" ]]; then
+    Log_Info "Copying wrapper file './$WRAPPER' to '$UVSCAN_DIR/$WRAPPER'..."
     
-    if ! cp -f "./$WRAPPER" "$UVSCAN_HOME"; then
-        Exit_WithError "Could not copy wrapper file './$WRAPPER' to '$UVSCAN_HOME/$WRAPPER'!"
+    if ! cp -f "./$WRAPPER" "$UVSCAN_DIR"; then
+        Exit_WithError "Could not copy wrapper file './$WRAPPER' to '$UVSCAN_DIR/$WRAPPER'!"
     fi
 fi
 
@@ -258,9 +258,9 @@ fi
 # fi
 
 # # remove existing clamscan file or link
-# Log_Info "Replacing clamscan executable with symlink to '$UVSCAN_HOME/$WRAPPER'..."
+# Log_Info "Replacing clamscan executable with symlink to '$UVSCAN_DIR/$WRAPPER'..."
 # rm -f "$CLAMSCAN_EXE"
-# ln -s "$UVSCAN_HOME/$WRAPPER" "$CLAMSCAN_EXE"
+# ln -s "$UVSCAN_DIR/$WRAPPER" "$CLAMSCAN_EXE"
 
 # Set McAfee Custom Property #1 to '$NEW_VERSION'...
 Set_CustomProp 1 "$NEW_VERSION"
