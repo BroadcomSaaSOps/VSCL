@@ -281,7 +281,7 @@ if [[ -n "$PERFORM_UPDATE" ]] || [[ -n "$DOWNLOAD_ONLY" ]]; then
         Exit_WithError "Unable to download DAT file '$DAT_ZIP'!"
     fi
 
-    Validate_File "$__VSCL_DAT_ZIP" "$FILE_SIZE" "$MD5"
+    Validate_File "$DAT_ZIP" "$FILE_SIZE" "$MD5"
     VALIDATE_OUT="$?"
 
     if [[ "$VALIDATE_OUT" != "0" ]]; then
