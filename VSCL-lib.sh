@@ -489,7 +489,7 @@ function Get_CurrDATVer {
     #         engine string
     #----------------------------------------------------------
 
-    local UVSCAN_STATUS LOCAL_DAT_VER LOCAL_ENG_VER OUTTEXT RESULT
+    local UVSCAN_STATUS LOCAL_DAT_VER LOCAL_ENG_VER OUTTEXT RESULT SAVE_IFS
     #echo "c"
     #ls -lAh $LOCAL_VER_FILE
 
@@ -500,7 +500,10 @@ function Get_CurrDATVer {
     #echo "d"
     #ls -lAh $LOCAL_VER_FILE
     
+    #SAVE_IFS=$IFS
+    #IFS=$"\r" 
     RESULT=$("$__VSCL_UVSCAN_CMD" --VERSION 2> /dev/null)
+    #IFS=$SAVE_IFS
     
     #echo "e"
     #ls -lAh $LOCAL_VER_FILE
@@ -519,7 +522,7 @@ function Get_CurrDATVer {
     LOCAL_ENG_VER=$(printf "%s\n" "$UVSCAN_STATUS" | grep -i "av engine version:" | cut -d' ' -f4)
     
     # default to printing entire DAT and engine string, i.e. "9999.0 (9999.9999)"
-    OUTPUT=$(printf "%s.0 (%s)\n" "$LOCAL_DAT_VER" "$LOCAL_ENG_VER")
+    OUTTEXT=$(printf "%s.0 (%s)\n" "$LOCAL_DAT_VER" "$LOCAL_ENG_VER")
 
     if [[ ! -z $1 ]]; then
         case $1 in
