@@ -18,6 +18,8 @@
 # Imports:      none
 #=============================================================================
 
+#echo "\$__VSCL_LIB_LOADED = '$__VSCL_LIB_LOADED'"
+
 # Bypass inclusion if already loaded
 if [[ -z "$__VSCL_LIB_LOADED" ]]; then
     # not already loaded, set flag that it is now
@@ -34,6 +36,8 @@ fi
 unset __VSCL_SCRIPT_NAME __VSCL_SCRIPT_PATH __VSCL_DEBUG_IT __VSCL_LEAVE_FILES __VSCL_LOG_PATH
 unset __VSCL_UVSCAN_EXE __VSCL_UVSCAN_DIR __VSCL_MACONFIG_PATH __VSCL_CMDAGENT_PATH __VSCL_TEMP_DIR
 unset __VSCL_INSTALL_PKG __VSCL_INSTALL_VER __VSCL_PKG_VER_FILE __VSCL_PKG_VER_SECTION
+
+__VSCL_SCRIPT_ABBR="VSCLLIB"
 
 # name of script file (the one that dotsourced this library, not the library itself)
 # shellcheck disable=SC2034
@@ -129,10 +133,10 @@ function Do_Cleanup {
         Log_Info "'LEAVE FILES' option specified.  NOT deleting temporary directory '$__VSCL_TEMP_DIR'!"
     fi
     
-    unset __VSCL_SCRIPT_NAME __VSCL_SCRIPT_PATH __VSCL_DEBUG_IT __VSCL_LEAVE_FILES __VSCL_LOG_PATH
-    unset __VSCL_UVSCAN_EXE __VSCL_UVSCAN_DIR __VSCL_MACONFIG_PATH __VSCL_CMDAGENT_PATH __VSCL_TEMP_DIR
-    unset __VSCL_INSTALL_PKG __VSCL_INSTALL_VER __VSCL_PKG_VER_FILE __VSCL_PKG_VER_SECTION
-    unset __VSCL_LIB_LOADED
+    #unset __VSCL_SCRIPT_NAME __VSCL_SCRIPT_PATH __VSCL_DEBUG_IT __VSCL_LEAVE_FILES __VSCL_LOG_PATH
+    #unset __VSCL_UVSCAN_EXE __VSCL_UVSCAN_DIR __VSCL_MACONFIG_PATH __VSCL_CMDAGENT_PATH __VSCL_TEMP_DIR
+    #unset __VSCL_INSTALL_PKG __VSCL_INSTALL_VER __VSCL_PKG_VER_FILE __VSCL_PKG_VER_SECTION
+    #unset __VSCL_LIB_LOADED
     return 0
 }
 
@@ -262,32 +266,74 @@ function Capture_Command {
     # Returns: 0/ok if command ran
     #          Error code if command failed
     #------------------------------------------------------------
-    local OUTLINES ERR OUTTEXT MASK_REGEXP CAPTURE_CMD CAPTURE_ARG SAVE_IFS
+    local OUT ERR OUTTEXT MASK_REGEXP CAPTURE_CMD CAPTURE_ARG SAVE_IFS OPTION_VAR REDIRECT_CMD
     
-    if [[ -z "$1" ]]; then
+    unset IFS
+    
+    # while [[ "$#" -gt 0 ]]; do
+        # case $1 in
+            # -r:*|--redirect:*)
+                # REDIRECT_CMD=${1##*:}
+                # ;;
+            # -r|--redirect)
+                # REDIRECT_CMD=$2
+                # shift
+                # ;;
+            # -c:*|--command:*)
+                # CAPTURE_CMD=${1##*:}
+                # ;;
+            # -c|--command)
+                # CAPTURE_CMD=$2
+                # shift
+                # ;;
+            # -a:*|--args:*)
+                # CAPTURE_ARG=${1##*:}
+                # ;;
+            # -a|--args)
+                # CAPTURE_ARG=$2
+                # shift
+                # ;;
+        # esac
+        
+        # shift
+    # done
+
+    VAR_EMPTY=""
+    CAPTURE_CMD=${1:-$VAR_EMPTY}
+    CAPTURE_ARG=${2:-$VAR_EMPTY}
+    PRE_CMD=${3:-$VAR_EMPTY}
+
+    #Log_Info "\$CAPTURE_CMD = '$CAPTURE_CMD'"
+    #Log_Info "\$CAPTURE_ARG = '$CAPTURE_ARG'"
+    # Log_Info "\$REDIRECT_CMD = '$REDIRECT_CMD'"
+    
+    # if [[ -z "$REDIRECT_CMD" ]]; then
+        # REDIRECT_CMD=""
+        # Log_Info "\$REDIRECT_CMD not present"
+    # else
+        # Log_Info "\$REDIRECT_CMD = '$REDIRECT_CMD'"
+    # fi
+
+    if [[ -z "$CAPTURE_CMD" ]]; then
         Exit_WithError "Command to capture empty!"
-    else
-        CAPTURE_CMD="$1"
     fi
 
-    if [[ -z "$2" ]]; then
-        Exit_WithError "Arguments of command to capture empty!"
+    if [[ -n "$PRE_CMD" ]]; then
+        Log_Info ">> cmd = '$PRE_CMD | $CAPTURE_CMD ${CAPTURE_ARG[@]}'"
     else
-        CAPTURE_ARG="$2"
+        Log_Info ">> cmd = '$CAPTURE_CMD ${CAPTURE_ARG[@]}'"
     fi
     
-    Log_Info ">> cmd = '$1 $2'"
+    #for OUTTEXT in "${CAPTURE_ARG[@]}"; do echo "$OUTTEXT"; done
     
     # sed style mask to remove common text in McAfee error messages
     MASK_REGEXP="s/^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\ [0-9][0-9]:[0-9][0-9]:[0-9][0-9]\.[0-9]*\ ([0-9]*\.[0-9]*)\ //g"
-    SAVE_IFS=$IFS
     
     # run command and capture OUTTEXT to array
-    IFS=$'\n' OUTLINES=($(eval $CAPTURE_CMD $CAPTURE_ARG "2>&1"))
+    OUT=("$($PRE_CMD | $CAPTURE_CMD $CAPTURE_ARG 2>&1)")
     ERR=$?
-    IFS=$SAVE_IFS
-
-    for OUTTEXT in "${OUTLINES[@]}"; do
+    
+    for OUTTEXT in "${OUT[@]}"; do
         # loop through each line of OUTTEXT
         # append OUTTEXT to log
         if [[ -n "$MASK_REGEXP" ]]; then
@@ -300,7 +346,7 @@ function Capture_Command {
     
     if [ $ERR -ne 0 ]; then
         # error running command, return error code
-        #Exit_WithError "Error running command '$CAPTURE_CMD $CAPTURE_ARG'"
+        #Exit_WithError "Error running command '$CAPTURE_CMD ${CAPTURE_ARG[@]} $REDIRECT_CMD'"
         return $ERR
     fi
     
@@ -347,9 +393,11 @@ function Find_INISection {
     local IN_SECTION SECTION_FOUND SECTION_NAME LINE
 
     SECTION_NAME="[$1]"
+    echo "\$SECTION_NAME = '$SECTION_NAME'" 2>&1
 
     # Read each line of the file
-    while read -r LINE; do
+    while read -rs LINE; do
+        echo "\$LINE = '$LINE'" 2>&1
         if [[ "$LINE" = "$SECTION_NAME" ]]; then
             # Section header found, go to next line
             SECTION_FOUND=1
@@ -372,7 +420,7 @@ function Find_INISection {
     if [[ -n "$SECTION_FOUND" ]]; then
         return 0
     else
-        Log_Error "Section '$1' not found!"
+        Log_Error "Section '$1' not found"
         return 1
     fi
 }
@@ -442,14 +490,21 @@ function Get_CurrDATVer {
     #----------------------------------------------------------
 
     local UVSCAN_STATUS LOCAL_DAT_VER LOCAL_ENG_VER OUTTEXT RESULT
+    #echo "c"
+    #ls -lAh $LOCAL_VER_FILE
 
-    if ! Check_For "__VSCL_UVSCAN_CMD" "uvscan executable" > /dev/null 2>&1 ; then
+    if ! Check_For "$__VSCL_UVSCAN_CMD" "uvscan executable" > /dev/null 2>&1 ; then
         printf "%s\n" "invalid"
         return 1
     fi
+    #echo "d"
+    #ls -lAh $LOCAL_VER_FILE
     
-    RESULT=$("__VSCL_UVSCAN_CMD" --VERSION 2> /dev/null)
+    RESULT=$("$__VSCL_UVSCAN_CMD" --VERSION 2> /dev/null)
     
+    #echo "e"
+    #ls -lAh $LOCAL_VER_FILE
+
     if [[ "$?" == "0" ]]; then
         UVSCAN_STATUS=$RESULT
     else
@@ -524,7 +579,7 @@ function Download_File {
     # download with available download tool
     case $FETCHER in
         "wget") FETCHER_CMD="wget"
-                FETCHER_ARG="-nv --tries=10 --no-check-certificate ""$DOWNLOAD_URL"" -O ""$FILE_NAME"""
+                FETCHER_ARG="--no-verbose --tries=10 --no-check-certificate --output-document=""$FILE_NAME"" $DOWNLOAD_URL"
             ;;
         "curl") FETCHER_CMD="curl"
                 FETCHER_ARG="-s -k ""$DOWNLOAD_URL"" -o ""$FILE_NAME"""
@@ -540,10 +595,16 @@ function Download_File {
         # file downloaded OK
         if [[ "$3" = "ascii" ]]; then
             # strip any CR/LF line terminators
-            tr -d '\r' < "$FILE_NAME" > "$FILE_NAME.tmp"
+            echo "\$FILE_NAME = '$FILE_NAME'"
+            ls -lAh $FILE_NAME
+            file $FILE_NAME
+            cat "$FILE_NAME" | tr -d '\r' > $FILE_NAME.tmp
+            ls -lAh "$FILE_NAME.tmp"
+            file "$FILE_NAME.tmp"
             rm -f "$FILE_NAME"
             mv "$FILE_NAME.tmp" "$FILE_NAME"
         fi
+        Log_Info "ok"
     else
         Exit_WithError "Unable to download '$DOWNLOAD_URL' to '$FILE_NAME'!"
     fi
@@ -604,13 +665,22 @@ function Copy_Files_With_Modes {
     #--------------------------------------------------------------------
     local FILES_TO_COPY FNAME_MODES FILE_NAME FILE_MODE
 
+    echo "\$1 = '$1'"
+    echo "\$2 = '$2'"
+
+    if [[ ! -d $2 ]]; then
+        Exit_WithError "'$2' is not a directory!"
+    fi
+
     # strip filename to a list
     for FNAME_MODES in $1; do
-        FILE_NAME=$(printf "%s\n" "$FNAME_PERMS" | awk -F':' ' { print $1 } ')
+        echo "\$FNAME_MODES = '$FNAME_MODES'"
+        FILE_NAME=$(printf "%s\n" "$FNAME_MODES" | awk -F':' ' { print $1 } ')
         FILES_TO_COPY="$FILES_TO_COPY $FILE_NAME"
+        echo "\$FILES_TO_COPY = '$FILES_TO_COPY'"
     done
 
-    if ! Capture_Command "cp" "$FILES_TO_COPY $2"; then
+    if ! Capture_Command "\\cp" "$FILES_TO_COPY $2"; then
         Exit_WithError "Error copying '$FILES_TO_COPY' to '$2'!"
     fi
 
@@ -619,8 +689,8 @@ function Copy_Files_With_Modes {
         FILE_NAME=$(printf "%s\n" "$FNAME_MODES" | awk -F':' ' { print $1 } ')
         FILE_MODE=$(printf "%s\n" "$FNAME_MODES" | awk -F':' ' { print $NF } ')
         
-        if ! Capture_Command "chmod" "$FILE_MODE $2/$FILE_NAME"; then
-            Exit_WithError "Error setting mode '$FILE_MODE' on '$2/$FILE_NAME'!"
+        if ! Capture_Command "chmod" "$FILE_MODE $2/${FILE_NAME##*/}"; then
+            Exit_WithError "Error setting mode '$FILE_MODE' on '$2/${FILE_NAME##*/}'!"
         fi
     done
 
@@ -630,14 +700,15 @@ function Copy_Files_With_Modes {
 #-----------------------------------------
 # VSCL Library initialization code
 #-----------------------------------------
+#echo "\$__VSCL_TEMP_DIR = '$__VSCL_TEMP_DIR'"
 
-if [[ -z "__VSCL_TEMP_DIR" ]]
+if [[ -z "$__VSCL_TEMP_DIR" ]]; then
     # no current temp directory specified in environment
     # __VSCL_TEMP_DIR must be a directory and writable
     __VSCL_TEMP_DIR=$(mktemp -d -p "$__VSCL_SCRIPT_PATH" 2> /dev/null)
 fi
 
-if [[ -w "$__VSCL_TEMP_DIR" ]]; then
+if [[ -d "$__VSCL_TEMP_DIR" ]]; then
     Log_Info "Temporary directory: '$__VSCL_TEMP_DIR'"
 else
     Exit_WithError "Unable to use temporary directory '$__VSCL_TEMP_DIR'"

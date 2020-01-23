@@ -169,31 +169,47 @@ if [[ ! -r "$LOCAL_VER_FILE" ]]; then
     Exit_WithError "***Error downloading '$__VSCL_EPO_VER_FILE' from '$DOWNLOAD_SITE'!"
 fi
 
+#cat $LOCAL_VER_FILE 
+#ls -lAh $LOCAL_VER_FILE
+
 if [[ -z "$DOWNLOAD_ONLY" ]]; then
+    #ls -lAh $LOCAL_VER_FILE
     # Get the version of the installed DATs...
     Log_Info "Determining the currently installed DAT version..."
+    #ls -lAh $LOCAL_VER_FILE
 
     unset CURR_DAT
+    #ls -lAh $LOCAL_VER_FILE
+    #echo "a"
     CURR_DAT=$(Get_CurrDATVer)
+    #echo "b"
+    #ls -lAh $LOCAL_VER_FILE
 
     if [[ -z "$CURR_DAT" ]] ; then
         Log_Info "Unable to determine currently installed DAT version!"
         CURR_DAT="0000.0"
+    else
+        unset CURR_MAJOR CURR_MINOR
+        CURR_MAJOR=$(Get_CurrDATVer "DATMAJ")
+        CURR_MINOR=$(Get_CurrDATVer "DATMIN")
     fi
-
-    unset CURR_MAJOR CURR_MINOR
-    CURR_MAJOR=$(Get_CurrDATVer "DATMAJ")
-    CURR_MINOR=$(Get_CurrDATVer "DATMIN")
 fi
-
+#ls -lAh $LOCAL_VER_FILE
 # extract DAT info from avvdat.ini
 Log_Info "Determining the available DAT version..."
 unset INI_SECTION
 Log_Info "Finding section for current DAT version in '$LOCAL_VER_FILE'..."
+echo "pwd = '`pwd`'"
+echo "\$LOCAL_VER_FILE = '$LOCAL_VER_FILE'"
+echo "\$__VSCL_EPO_VER_SECTION = '$__VSCL_EPO_VER_SECTION'"
+cat $LOCAL_VER_FILE 
+ls -lAh $LOCAL_VER_FILE
+echo "\$__VSCL_TEMP_DIR = '$__VSCL_TEMP_DIR'"
+ls -lAh $__VSCL_TEMP_DIR
 INI_SECTION=$(Find_INISection "$__VSCL_EPO_VER_SECTION" < "$LOCAL_VER_FILE")
 
 if [[ -z "$INI_SECTION" ]]; then
-    Exit_WithError "Unable to find section '$INI_SECTION' in '$LOCAL_VER_FILE'!"
+    Exit_WithError "Unable to find section '$__VSCL_EPO_VER_SECTION' in '$LOCAL_VER_FILE'!"
 fi
 
 unset INI_FIELD AVAIL_MAJOR AVAIL_MINOR FILE_NAME FILE_PATH FILE_SIZE MD5

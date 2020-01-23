@@ -63,7 +63,7 @@ else
 fi
 
 # call uvscan
-if ! Capture_Command "__VSCL_UVSCAN_CMD" "$SCAN_OPTIONS $@"; then
+if ! Capture_Command "$__VSCL_UVSCAN_CMD" "$SCAN_OPTIONS $@"; then
     # uvscan returned error, exit and return 1
     Exit_WithError "*** Virus found! ***"
 fi

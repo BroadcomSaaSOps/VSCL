@@ -50,14 +50,17 @@ Log_Info "==========================="
 Log_Info "Beginning VSCL uninstall"
 Log_Info "==========================="
 
+#echo "\$__VSCL_UVSCAN_DIR = '$__VSCL_UVSCAN_DIR'"
+
 # uninstall the uvscan product and remove the uninstaller
 if [ ! -d "$__VSCL_UVSCAN_DIR" ]; then
-    Exit_WithError "VSCL software not found in '$__VSCL_UVSCAN_DIR'!"
+    Exit_WithError "VSCL software directory not found in '$__VSCL_UVSCAN_DIR'!"
 fi
 
-Log_Info "Running uvscan uninstaller..."
+Log_Info "Running VSCL uninstaller..."
 
-if Capture_Command "yes" "| ""$__VSCL_UNINSTALL_CMD"" ""$__VSCL_UVSCAN_DIR"""; then
+if Capture_Command "$__VSCL_UNINSTALL_CMD" "" "/usr/bin/yes"; then
+    #echo "\$__VSCL_UVSCAN_DIR = '$__VSCL_UVSCAN_DIR'"
     if ! rm -rf "$__VSCL_UVSCAN_DIR" &> /dev/null; then
         Log_Warning "Unable to remove VSCL software directory '$__VSCL_UVSCAN_DIR'!"
     fi

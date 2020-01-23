@@ -102,10 +102,11 @@ fi
 Log_Info "Determining the available installer version..."
 unset INI_SECTION
 Log_Info "Finding section for current installer version in '$LOCAL_VER_FILE'..."
+echo "pwd = '`pwd`'"
 INI_SECTION=$(Find_INISection "$__VSCL_PKG_VER_SECTION" < "$LOCAL_VER_FILE")
 
 if [[ -z "$INI_SECTION" ]]; then
-    Exit_WithError "Unable to find section '$INI_SECTION' in '$LOCAL_VER_FILE'!"
+    Exit_WithError "Unable to find section '$__VSCL_PKG_VER_SECTION' in '$LOCAL_VER_FILE'!"
 fi
 
 unset INI_FIELD PACKAGE_NAME PACKAGE_VER FILE_NAME FILE_PATH FILE_SIZE MD5
@@ -176,9 +177,12 @@ if [[ "$DAT_UPDATE" = "0" ]]; then
     Log_Info "Option specified to NOT update DAT files.  Continuing..."
 else
     # OK to update DAT files
+    "./$DAT_UPDATE_CMD"
     
     # Run script to update DAT from EPO
-    ./"$DAT_UPDATE_CMD"
+    #if ! Capture_Command "./$DAT_UPDATE_CMD" "dummyarg"; then
+    #    Exit_WithError "Error updating DATs for VirusScan Command Line Scanner!"
+    #fi
     
     NEW_VER=$(Get_CurrDATVer)
     #fi
