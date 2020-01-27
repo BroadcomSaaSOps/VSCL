@@ -197,7 +197,10 @@ function Log_Print {
     # Params: $1 = error message to print
     #----------------------------------------------------------
 
-    local OUTTEXT
+    local OUTTEXT SAVE_OPTS
+    
+    SAVE_OPTS=$SHELLOPTS
+    set +x
     
     # Prepend date/time, which script, then the log message
     # i.e.  "11/12/2019 11:14:10 AM:VSCL_UP1:Refreshing agent data with EPO..."
@@ -212,6 +215,10 @@ function Log_Print {
         # log file absent, create
         #echo -e "$OUTPUT" | tee "$__VSCL_LOG_PATH"
         printf "%s\n" "$OUTTEXT" | tee "$__VSCL_LOG_PATH"
+    fi
+    
+    if [[ "$SAVE_OPTS" == *"xtrace"* ]]; then
+        set -x
     fi
     
     return 0
