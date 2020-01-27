@@ -184,7 +184,7 @@ else
     #    Exit_WithError "Error updating DATs for VirusScan Command Line Scanner!"
     #fi
     
-    NEW_VER=$(Get_CurrDATVer)
+    #NEW_VER=$(Get_CurrDATVer)
     #fi
 fi
 
@@ -213,7 +213,7 @@ if [[ ! -f "$__VSCL_UVSCAN_DIR/$__VSCL_WRAPPER" ]]; then
 fi
 
 # Set McAfee Custom Property #1 to '$NEW_VER'...
-Set_CustomProp 1 "$NEW_VER"
+#Set_CustomProp 1 "$NEW_VER"
 
 # Refresh agent data with EPO
 Refresh_ToEPO

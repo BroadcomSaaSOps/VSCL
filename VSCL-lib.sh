@@ -273,7 +273,7 @@ function Capture_Command {
     # Returns: 0/ok if command ran
     #          Error code if command failed
     #------------------------------------------------------------
-    local OUT ERR OUTTEXT MASK_REGEXP CAPTURE_CMD CAPTURE_ARG SAVE_IFS OPTION_VAR REDIRECT_CMD
+    local OUT ERR OUTTEXT MASK_REGEXP CAPTURE_CMD SAVE_IFS OPTION_VAR REDIRECT_CMD CAPTURE_ARG
     
     unset IFS
     
@@ -326,9 +326,9 @@ function Capture_Command {
     fi
 
     if [[ -n "$PRE_CMD" ]]; then
-        Log_Info ">> cmd = '$PRE_CMD | $CAPTURE_CMD ${CAPTURE_ARG[@]}'"
+        Log_Info ">> cmd = '$PRE_CMD | $CAPTURE_CMD $CAPTURE_ARG2'"
     else
-        Log_Info ">> cmd = '$CAPTURE_CMD ${CAPTURE_ARG[@]}'"
+        Log_Info ">> cmd = '$CAPTURE_CMD $CAPTURE_ARG2'"
     fi
     
     #for OUTTEXT in "${CAPTURE_ARG[@]}"; do echo "$OUTTEXT"; done
@@ -337,7 +337,13 @@ function Capture_Command {
     MASK_REGEXP="s/^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\ [0-9][0-9]:[0-9][0-9]:[0-9][0-9]\.[0-9]*\ ([0-9]*\.[0-9]*)\ //g"
     
     # run command and capture OUTTEXT to array
-    OUT=("$($PRE_CMD | $CAPTURE_CMD $CAPTURE_ARG 2>&1)")
+    #OUT=("$($PRE_CMD | $CAPTURE_CMD ${CAPTURE_ARG[*]} 2>&1)")
+    if [[ -n "$PRE_CMD" ]]; then
+        OUT=("$($PRE_CMD | $CAPTURE_CMD ""${CAPTURE_ARG[*]}"" 2>&1)")
+    else
+        OUT=("$($CAPTURE_CMD ""${CAPTURE_ARG[*]}"" 2>&1)")
+    fi
+    
     ERR=$?
     
     for OUTTEXT in "${OUT[@]}"; do
@@ -360,7 +366,6 @@ function Capture_Command {
     return 0
 }
 
-
 function Refresh_ToEPO {
     #------------------------------------------------------------
     # Function to refresh the agent with EPO
@@ -381,7 +386,6 @@ function Refresh_ToEPO {
     
     return 0
 }
-
 
 function Find_INISection {
     #----------------------------------------------------------
@@ -432,7 +436,6 @@ function Find_INISection {
     fi
 }
 
-
 function Check_For {
     #------------------------------------------------------------
     # Function to check that a file is available and executable
@@ -458,7 +461,6 @@ function Check_For {
     return 0
 }
 
-
 function Set_CustomProp {
     #------------------------------------------------------------
     # Set the value of a McAfee custom property
@@ -466,18 +468,20 @@ function Set_CustomProp {
     # Params: $1 = number of property to set (1-8) 
     #         $2 = value to set property
     #------------------------------------------------------------
-    local ERR
+    local ERR NEW_LABEL MA_OPTIONS
     
-    Log_Info "Setting EPO Custom Property #$1 to '$2'..."
-    Capture_Command "$__VSCL_MACONFIG_PATH" "-custom -prop$1 '$2'"
-    ERR=$?
-
-    if [ $ERR -ne 0 ]; then
-        # error running command, return error code
+    MA_OPTIONS[0]="-custom"
+    MA_OPTIONS[1]="-prop$1"
+    MA_OPTIONS[2]="""$2"""
+    
+    Log_Info "Setting EPO Custom Property #$1 to '$NEW_LABEL'..."
+    
+    if ! $__VSCL_MACONFIG_PATH "${MA_OPTIONS[@]}"; then
         return $ERR
     fi
+    
+    return 0
 }
-
 
 function Get_CurrDATVer {
     #------------------------------------------------------------
@@ -663,7 +667,6 @@ function Validate_File {
 
     return 0
 }
-
 
 function Copy_Files_With_Modes {
     #--------------------------------------------------------------------
