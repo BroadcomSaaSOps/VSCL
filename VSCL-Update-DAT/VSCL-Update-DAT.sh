@@ -199,13 +199,13 @@ fi
 Log_Info "Determining the available DAT version..."
 unset INI_SECTION
 Log_Info "Finding section for current DAT version in '$LOCAL_VER_FILE'..."
-echo "pwd = '`pwd`'"
-echo "\$LOCAL_VER_FILE = '$LOCAL_VER_FILE'"
-echo "\$__VSCL_EPO_VER_SECTION = '$__VSCL_EPO_VER_SECTION'"
-cat $LOCAL_VER_FILE 
-ls -lAh $LOCAL_VER_FILE
-echo "\$__VSCL_TEMP_DIR = '$__VSCL_TEMP_DIR'"
-ls -lAh $__VSCL_TEMP_DIR
+#echo "pwd = '`pwd`'"
+#echo "\$LOCAL_VER_FILE = '$LOCAL_VER_FILE'"
+#echo "\$__VSCL_EPO_VER_SECTION = '$__VSCL_EPO_VER_SECTION'"
+#cat $LOCAL_VER_FILE 
+#ls -lAh $LOCAL_VER_FILE
+#echo "\$__VSCL_TEMP_DIR = '$__VSCL_TEMP_DIR'"
+#ls -lAh $__VSCL_TEMP_DIR
 INI_SECTION=$(Find_INISection "$__VSCL_EPO_VER_SECTION" < "$LOCAL_VER_FILE")
 
 if [[ -z "$INI_SECTION" ]]; then

@@ -53,13 +53,13 @@ SCAN_OPTIONS="-c -p --afc 512 -e --nocomp --ignore-links --noboot --nodecrypt --
 #=============================================================================
 # MAIN
 #=============================================================================
-Log-Print "Beginning command line scan..."
+Log_Info "Beginning command line scan..."
 
 if [[ -z "$@" ]]; then
     # exit if no file specified
     Exit_WithError "No command line parameters supplied!"
 else
-    Log-Info "Parameters supplied: '$@'"
+    Log_Info "Parameters supplied: '$@'"
 fi
 
 # call uvscan
@@ -69,5 +69,5 @@ if ! Capture_Command "$__VSCL_UVSCAN_CMD" "$SCAN_OPTIONS $@"; then
 fi
 
 # No virus found, exit successfully
-Log-Info "*** No virus found! ***"
+Log_Info "*** No virus found! ***"
 Exit_Script 0

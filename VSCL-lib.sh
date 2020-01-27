@@ -273,7 +273,7 @@ function Capture_Command {
     # Returns: 0/ok if command ran
     #          Error code if command failed
     #------------------------------------------------------------
-    local OUT ERR OUTTEXT MASK_REGEXP CAPTURE_CMD SAVE_IFS OPTION_VAR REDIRECT_CMD CAPTURE_ARG
+    local OUT ERR OUTTEXT MASK_REGEXP CAPTURE_CMD SAVE_IFS OPTION_VAR REDIRECT_CMD CAPTURE_ARG VAR_EMPTY PRE_CMD
     
     unset IFS
     
@@ -310,41 +310,33 @@ function Capture_Command {
     CAPTURE_ARG=${2:-$VAR_EMPTY}
     PRE_CMD=${3:-$VAR_EMPTY}
 
-    #Log_Info "\$CAPTURE_CMD = '$CAPTURE_CMD'"
-    #Log_Info "\$CAPTURE_ARG = '$CAPTURE_ARG'"
-    # Log_Info "\$REDIRECT_CMD = '$REDIRECT_CMD'"
-    
-    # if [[ -z "$REDIRECT_CMD" ]]; then
-        # REDIRECT_CMD=""
-        # Log_Info "\$REDIRECT_CMD not present"
-    # else
-        # Log_Info "\$REDIRECT_CMD = '$REDIRECT_CMD'"
-    # fi
-
-    if [[ -z "$CAPTURE_CMD" ]]; then
+     if [[ -z "$CAPTURE_CMD" ]]; then
         Exit_WithError "Command to capture empty!"
     fi
 
     if [[ -n "$PRE_CMD" ]]; then
-        Log_Info ">> cmd = '$PRE_CMD | $CAPTURE_CMD $CAPTURE_ARG2'"
+        Log_Info ">> cmd = '$PRE_CMD | $CAPTURE_CMD ${CAPTURE_ARG[*]}'"
     else
-        Log_Info ">> cmd = '$CAPTURE_CMD $CAPTURE_ARG2'"
+        Log_Info ">> cmd = '$CAPTURE_CMD ${CAPTURE_ARG[*]}'"
     fi
     
-    #for OUTTEXT in "${CAPTURE_ARG[@]}"; do echo "$OUTTEXT"; done
-    
     # sed style mask to remove common text in McAfee error messages
+    # example "2020-01-25 14:22:44.456234 (2010.2739) maconfig.Info: configuration finished"
+    # will be logged as  ">> maconfig.Info: configuration finished"
     MASK_REGEXP="s/^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\ [0-9][0-9]:[0-9][0-9]:[0-9][0-9]\.[0-9]*\ ([0-9]*\.[0-9]*)\ //g"
     
     # run command and capture OUTTEXT to array
     #OUT=("$($PRE_CMD | $CAPTURE_CMD ${CAPTURE_ARG[*]} 2>&1)")
+    #SAVE_IFS="$IFS"
+    #IFS=$'\r'
     if [[ -n "$PRE_CMD" ]]; then
-        OUT=("$($PRE_CMD | $CAPTURE_CMD ""${CAPTURE_ARG[*]}"" 2>&1)")
+        OUT=($($PRE_CMD | $CAPTURE_CMD ""${CAPTURE_ARG[*]}"" 2>&1))
     else
-        OUT=("$($CAPTURE_CMD ""${CAPTURE_ARG[*]}"" 2>&1)")
+        OUT=($($CAPTURE_CMD ""${CAPTURE_ARG[*]}"" 2>&1))
     fi
     
     ERR=$?
+    #IFS="$SAVE_IFS"
     
     for OUTTEXT in "${OUT[@]}"; do
         # loop through each line of OUTTEXT
@@ -470,11 +462,15 @@ function Set_CustomProp {
     #------------------------------------------------------------
     local ERR NEW_LABEL MA_OPTIONS
     
-    MA_OPTIONS[0]="-custom"
-    MA_OPTIONS[1]="-prop$1"
-    MA_OPTIONS[2]="""$2"""
+    MA_OPTIONS=("-custom" "-prop$1" """$2""")
     
-    Log_Info "Setting EPO Custom Property #$1 to '$NEW_LABEL'..."
+    #echo "\${MA_OPTIONS[0]} = '${MA_OPTIONS[0]}'"
+    #echo "\${MA_OPTIONS[1]} = '${MA_OPTIONS[1]}'"
+    #echo "\${MA_OPTIONS[2]} = '${MA_OPTIONS[2]}'"
+    #echo "\$1 = '$1'"
+    #echo "\$2 = '$2'"
+
+    Log_Info "Setting EPO Custom Property #$1 to '${MA_OPTIONS[2]}'..."
     
     if ! $__VSCL_MACONFIG_PATH "${MA_OPTIONS[@]}"; then
         return $ERR
@@ -593,7 +589,7 @@ function Download_File {
     # download with available download tool
     case $FETCHER in
         "wget") FETCHER_CMD="wget"
-                FETCHER_ARG="--no-verbose --tries=10 --no-check-certificate --output-document=""$FILE_NAME"" $DOWNLOAD_URL"
+                FETCHER_ARG="--quiet --tries=10 --no-check-certificate --output-document=""$FILE_NAME"" $DOWNLOAD_URL"
             ;;
         "curl") FETCHER_CMD="curl"
                 FETCHER_ARG="-s -k ""$DOWNLOAD_URL"" -o ""$FILE_NAME"""
@@ -609,16 +605,16 @@ function Download_File {
         # file downloaded OK
         if [[ "$3" = "ascii" ]]; then
             # strip any CR/LF line terminators
-            echo "\$FILE_NAME = '$FILE_NAME'"
-            ls -lAh $FILE_NAME
-            file $FILE_NAME
+            #echo "\$FILE_NAME = '$FILE_NAME'"
+            #ls -lAh $FILE_NAME
+            #file $FILE_NAME
             cat "$FILE_NAME" | tr -d '\r' > $FILE_NAME.tmp
-            ls -lAh "$FILE_NAME.tmp"
-            file "$FILE_NAME.tmp"
+            #ls -lAh "$FILE_NAME.tmp"
+            #file "$FILE_NAME.tmp"
             rm -f "$FILE_NAME"
             mv "$FILE_NAME.tmp" "$FILE_NAME"
         fi
-        Log_Info "ok"
+        #Log_Info "ok"
     else
         Exit_WithError "Unable to download '$DOWNLOAD_URL' to '$FILE_NAME'!"
     fi

@@ -59,11 +59,11 @@ Check_For "$__VSCL_CMDAGENT_PATH" "CMDAGENT utility"
 if ! Check_For "$__VSCL_UVSCAN_DIR/$__VSCL_UVSCAN_EXE" "uvscan executable" --no-terminate; then
     # uvscan not found
     # set custom property to error value, then exit with error
-    Log_Print "Could not find 'uvscan executable' at '$__VSCL_UVSCAN_DIR/$__VSCL_UVSCAN_EXE'!"
+    Log_Info "Could not find 'uvscan executable' at '$__VSCL_UVSCAN_DIR/$__VSCL_UVSCAN_EXE'!"
     CURRENT_DAT="VSCL:NOT INSTALLED"
 else
     # Get the version of the installed DATs...
-    Log_Print "Determining the current DAT version..."
+    Log_Info "Determining the current DAT version..."
     CURRENT_DAT=$(Get_CurrDATVer)
 
     if [[ -z "$CURRENT_DAT" ]]; then
@@ -74,6 +74,8 @@ else
     else
         CURRENT_DAT="VSCL:$CURRENT_DAT"
     fi
+    
+    Log_Info "Current DAT Version is '$CURRENT_DAT'"
 fi
 
 # Set custom property #1 and push to EPO, then exit cleanly

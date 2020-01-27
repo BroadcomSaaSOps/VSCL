@@ -68,4 +68,7 @@ else
     Exit_WithError "Unable to uninstall VSCL software!"
 fi
 
+Log_Info "Setting McAfee Custom Property #1 to 'VSCL:NOT INSTALLED'..."
+Set_CustomProp 1 "VSCL:NOT INSTALLED"
+Refresh_ToEPO
 Exit_Script 0

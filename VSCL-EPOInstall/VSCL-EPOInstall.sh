@@ -190,7 +190,7 @@ fi
 
 if [[ -f "./$__VSCL_WRAPPER" ]]; then
     # make uvwrap.sh executable and copy to uvscan directory
-    Log_Info "Setting up shim __VSCL_WRAPPER for uvscan..."
+    Log_Info "Setting up shim '$__VSCL_WRAPPER' for uvscan..."
     chmod +x "./$__VSCL_WRAPPER"
 else
     Exit_WithError "File '$__VSCL_WRAPPER' not available.  Aborting installer!"
