@@ -330,15 +330,15 @@ function Capture_Command {
     #SAVE_IFS="$IFS"
     #IFS=$'\r'
     if [[ -n "$PRE_CMD" ]]; then
-        OUT=($($PRE_CMD | $CAPTURE_CMD ""${CAPTURE_ARG[*]}"" 2>&1))
+        OUT="$($PRE_CMD | $CAPTURE_CMD ${CAPTURE_ARG[*]} 2>&1)"
     else
-        OUT=($($CAPTURE_CMD ""${CAPTURE_ARG[*]}"" 2>&1))
+        OUT="$($CAPTURE_CMD ${CAPTURE_ARG[*]} 2>&1)"
     fi
     
     ERR=$?
     #IFS="$SAVE_IFS"
     
-    for OUTTEXT in "${OUT[@]}"; do
+    for OUTTEXT in "${OUT[*]}"; do
         # loop through each line of OUTTEXT
         # append OUTTEXT to log
         if [[ -n "$MASK_REGEXP" ]]; then
@@ -396,11 +396,11 @@ function Find_INISection {
     local IN_SECTION SECTION_FOUND SECTION_NAME LINE
 
     SECTION_NAME="[$1]"
-    echo "\$SECTION_NAME = '$SECTION_NAME'" 2>&1
+    #echo "\$SECTION_NAME = '$SECTION_NAME'" 2>&1
 
     # Read each line of the file
     while read -rs LINE; do
-        echo "\$LINE = '$LINE'" 2>&1
+        #echo "\$LINE = '$LINE'" 2>&1
         if [[ "$LINE" = "$SECTION_NAME" ]]; then
             # Section header found, go to next line
             SECTION_FOUND=1

@@ -102,7 +102,7 @@ fi
 Log_Info "Determining the available installer version..."
 unset INI_SECTION
 Log_Info "Finding section for current installer version in '$LOCAL_VER_FILE'..."
-echo "pwd = '`pwd`'"
+#echo "pwd = '`pwd`'"
 INI_SECTION=$(Find_INISection "$__VSCL_PKG_VER_SECTION" < "$LOCAL_VER_FILE")
 
 if [[ -z "$INI_SECTION" ]]; then
