@@ -307,7 +307,7 @@ function Capture_Command {
 
     VAR_EMPTY=""
     CAPTURE_CMD=${1:-$VAR_EMPTY}
-    CAPTURE_ARG=${2:-$VAR_EMPTY}
+    CAPTURE_ARG=(${2:-$VAR_EMPTY})
     PRE_CMD=${3:-$VAR_EMPTY}
 
      if [[ -z "$CAPTURE_CMD" ]]; then
@@ -330,9 +330,9 @@ function Capture_Command {
     #SAVE_IFS="$IFS"
     #IFS=$'\r'
     if [[ -n "$PRE_CMD" ]]; then
-        OUT="$($PRE_CMD | $CAPTURE_CMD ${CAPTURE_ARG[*]} 2>&1)"
+        OUT="$($PRE_CMD | $CAPTURE_CMD ""${CAPTURE_ARG[@]}"" 2>&1)"
     else
-        OUT="$($CAPTURE_CMD ${CAPTURE_ARG[*]} 2>&1)"
+        OUT="$($CAPTURE_CMD ""${CAPTURE_ARG[@]}"" 2>&1)"
     fi
     
     ERR=$?
