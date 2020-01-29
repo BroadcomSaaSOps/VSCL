@@ -1,0 +1,214 @@
+<dashboard id="1">
+  <name>SaaSOps Overview</name>
+  <filteringEnabled>false</filteringEnabled>
+  <monitor>
+    <uid>2</uid>
+    <width>1</width>
+    <height>1</height>
+    <x>0</x>
+    <y>0</y>
+    <refreshInterval>5</refreshInterval>
+    <refreshIntervalUnit>MIN</refreshIntervalUnit>
+    <customConfigOptions>dashboardElement:config?database=</customConfigOptions>
+    <filteringEnabled>true</filteringEnabled>
+    <customExport factory="core.queryFactory">
+      <query id="2">
+        <dictionary id="3"/>
+        <name>Agents not updating in the last 2 hours</name>
+        <description></description>
+        <target>EPOLeafNode</target>
+        <table-uri>query:table?orion.table.columns=EPOLeafNode.NodeName%3AEPOLeafNode.LastUpdate&amp;orion.table.order=az&amp;orion.table.order.by=EPOLeafNode.NodeName%3AEPOLeafNode.LastUpdate</table-uri>
+        <condition-uri>query:condition?orion.condition.sexp=%28+where+%28+or+%28+olderThan+EPOLeafNode.LastUpdate+7200000++%29+%28+isBlank+EPOLeafNode.LastUpdate+%29+%29+%29</condition-uri>
+        <summary-uri>query:summary?orion.sum.query=true&amp;orion.query.type=bar.bar&amp;orion.sum.group.by=EPOLeafNode.LastUpdate&amp;orion.sum.time.cols=true&amp;orion.sum.time.unit=day&amp;orion.sum.order=oldest&amp;orion.sum.limit.count=200&amp;orion.sum.aggregation=count&amp;orion.sum.aggregation.showTotal=true</summary-uri>
+      </query>
+    </customExport>
+  </monitor>
+  <monitor>
+    <uid>3</uid>
+    <width>1</width>
+    <height>1</height>
+    <x>1</x>
+    <y>0</y>
+    <refreshInterval>5</refreshInterval>
+    <refreshIntervalUnit>MIN</refreshIntervalUnit>
+    <customConfigOptions>dashboardElement:config?database=</customConfigOptions>
+    <filteringEnabled>true</filteringEnabled>
+    <customExport factory="core.queryFactory">
+      <query id="4">
+        <dictionary id="5"/>
+        <name>ENS: Version Report by OS</name>
+        <description></description>
+        <target>EPOLeafNode</target>
+        <table-uri>query:table?orion.table.columns=EPOLeafNode.LastUpdate%3AEPOLeafNode.NodeName%3AEPOProdPropsView_THREATPREVENTION.productversion&amp;orion.table.order=az&amp;orion.table.order.by=EPOLeafNode.LastUpdate%3AEPOLeafNode.NodeName%3AEPOProdPropsView_THREATPREVENTION.productversion</table-uri>
+        <condition-uri>query:condition?orion.condition.sexp=%28+where+%28+doesNotHaveTag+EPOLeafNode.AppliedTags+%228%22+%29+%29</condition-uri>
+        <summary-uri>query:summary?orion.sum.query=true&amp;orion.query.type=bar.stackedbar&amp;orion.sum.group.by=EPOComputerProperties.OSType%3AEPOProdPropsView_THREATPREVENTION.productversion&amp;orion.sum.order=az%3Aasc&amp;orion.sum.limit.count=100%3A100&amp;orion.sum.aggregation=count&amp;orion.sum.aggregation.showTotal=true</summary-uri>
+      </query>
+    </customExport>
+  </monitor>
+  <monitor>
+    <uid>10</uid>
+    <width>1</width>
+    <height>1</height>
+    <x>2</x>
+    <y>0</y>
+    <refreshInterval>5</refreshInterval>
+    <refreshIntervalUnit>MIN</refreshIntervalUnit>
+    <customConfigOptions>dashboardElement:config?database=</customConfigOptions>
+    <filteringEnabled>true</filteringEnabled>
+    <customExport factory="core.queryFactory">
+      <query id="6">
+        <dictionary id="7"/>
+        <name>Agent Versions by OS</name>
+        <description>Displays a pie chart of installed agents by version number on managed systems. Slice sizes indicate the relative number of agents of each version in the environment. Click any slice to view or take actions on those systems.</description>
+        <target>EPOLeafNode</target>
+        <table-uri>query:table?orion.table.columns=EPOLeafNode.NodeName%3AEPOComputerProperties.UserName%3AEPOProdPropsView_EPOAGENT.productversion%3AEPOComputerProperties.IPV6%3AEPOComputerProperties.DomainName%3AEPOComputerProperties.OSVersion%3AEPOComputerProperties.OSType%3AEPOLeafNode.LastUpdate&amp;orion.table.order=az&amp;orion.table.order.by=EPOLeafNode.NodeName%3AEPOComputerProperties.UserName%3AEPOProdPropsView_EPOAGENT.productversion%3AEPOComputerProperties.IPV6%3AEPOComputerProperties.DomainName%3AEPOComputerProperties.OSVersion%3AEPOComputerProperties.OSType%3AEPOLeafNode.LastUpdate</table-uri>
+        <condition-uri>query:condition?orion.condition.sexp=</condition-uri>
+        <summary-uri>query:summary?orion.sum.query=true&amp;orion.query.type=bar.stackedbar&amp;orion.sum.group.by=EPOComputerProperties.OSType%3AEPOProdPropsView_EPOAGENT.productversion&amp;orion.sum.order=az%3Aaz&amp;orion.sum.limit.count=100%3A100&amp;orion.sum.aggregation=count&amp;orion.sum.aggregation.showTotal=true</summary-uri>
+      </query>
+    </customExport>
+  </monitor>
+  <monitor>
+    <uid>4</uid>
+    <width>1</width>
+    <height>1</height>
+    <x>0</x>
+    <y>1</y>
+    <refreshInterval>5</refreshInterval>
+    <refreshIntervalUnit>MIN</refreshIntervalUnit>
+    <customConfigOptions>dashboardElement:config?database=</customConfigOptions>
+    <filteringEnabled>true</filteringEnabled>
+    <customExport factory="core.queryFactory">
+      <query id="8">
+        <dictionary id="9"/>
+        <name>ENS TP (Linux): DAT Content Status</name>
+        <description>This is the Content Status Report for Threat Prevention.</description>
+        <target>EPOLeafNode</target>
+        <table-uri>query:table?orion.table.columns=EPOLeafNode.NodeName%3AEPOLeafNode.os%3AEPOComputerProperties.IPV6%3AAM_CustomProps.ManifestVersion%3AEPOProdPropsView_THREATPREVENTION.productversion%3AEPOLeafNode.LastUpdate%3AAM_CustomProps.V2DATVersion&amp;orion.table.order=az&amp;orion.table.order.by=EPOLeafNode.NodeName%3AEPOLeafNode.os%3AEPOComputerProperties.IPV6%3AAM_CustomProps.ManifestVersion%3AEPOProdPropsView_THREATPREVENTION.productversion%3AEPOLeafNode.LastUpdate</table-uri>
+        <condition-uri>query:condition?orion.condition.sexp=%28+where+%28+not_isBlank+AM_CustomProps.V2DATVersion+%29+%29</condition-uri>
+        <summary-uri>query:summary?orion.sum.query=true&amp;orion.query.type=pie.pie&amp;show.percentage=false&amp;orion.sum.group.by=AM_CustomProps.V2DATVersion&amp;orion.sum.order=desc&amp;orion.sum.limit.count=360&amp;orion.sum.aggregation=count&amp;orion.sum.aggregation.showTotal=true</summary-uri>
+      </query>
+    </customExport>
+  </monitor>
+  <monitor>
+    <uid>8</uid>
+    <width>1</width>
+    <height>1</height>
+    <x>1</x>
+    <y>1</y>
+    <refreshInterval>5</refreshInterval>
+    <refreshIntervalUnit>MIN</refreshIntervalUnit>
+    <customConfigOptions>dashboardElement:config?database=</customConfigOptions>
+    <filteringEnabled>true</filteringEnabled>
+    <customExport factory="core.queryFactory">
+      <query id="10">
+        <dictionary id="11"/>
+        <name>VSEL: Version Report by OS</name>
+        <description></description>
+        <target>EPOLeafNode</target>
+        <table-uri>query:table?orion.table.columns=EPOLeafNode.LastUpdate%3AEPOLeafNode.NodeName%3AEPOProdPropsView_THREATPREVENTION.productversion&amp;orion.table.order=az&amp;orion.table.order.by=EPOLeafNode.LastUpdate%3AEPOLeafNode.NodeName%3AEPOProdPropsView_THREATPREVENTION.productversion</table-uri>
+        <condition-uri>query:condition?orion.condition.sexp=%28+where+%28+and+%28+hasTag+EPOLeafNode.AppliedTags+%228%22+%29+%28+eq+EPOComputerProperties.OSType+%22Linux%22+%29+%29+%29</condition-uri>
+        <summary-uri>query:summary?orion.sum.query=true&amp;orion.query.type=bar.stackedbar&amp;orion.sum.group.by=EPOComputerProperties.OSType%3AEPOProdPropsView_LSH.productversion&amp;orion.sum.order=az%3Aasc&amp;orion.sum.limit.count=100%3A100&amp;orion.sum.aggregation=count&amp;orion.sum.aggregation.showTotal=true</summary-uri>
+      </query>
+    </customExport>
+  </monitor>
+  <monitor>
+    <uid>11</uid>
+    <width>1</width>
+    <height>1</height>
+    <x>2</x>
+    <y>1</y>
+    <refreshInterval>5</refreshInterval>
+    <refreshIntervalUnit>MIN</refreshIntervalUnit>
+    <customConfigOptions>dashboardElement:config?database=</customConfigOptions>
+    <filteringEnabled>true</filteringEnabled>
+    <customExport factory="core.queryFactory">
+      <query id="12">
+        <dictionary id="13"/>
+        <name>Agent Communication Summary</name>
+        <description>Displays a pie chart of managed systems indicating whether the agents have communicated with the ePO server within the past day. Click either slice to view or take actions on those systems.</description>
+        <target>EPOLeafNode</target>
+        <table-uri>query:table?orion.table.columns=EPOLeafNode.NodeName%3AEPOComputerProperties.UserName%3AEPOProdPropsView_EPOAGENT.productversion%3AEPOComputerProperties.IPV6%3AEPOComputerProperties.DomainName%3AEPOComputerProperties.OSVersion%3AEPOComputerProperties.OSType%3AEPOLeafNode.LastUpdate&amp;orion.table.order=az&amp;orion.table.order.by=EPOLeafNode.NodeName%3AEPOComputerProperties.UserName%3AEPOProdPropsView_EPOAGENT.productversion%3AEPOComputerProperties.IPV6%3AEPOComputerProperties.DomainName%3AEPOComputerProperties.OSVersion%3AEPOComputerProperties.OSType%3AEPOLeafNode.LastUpdate</table-uri>
+        <condition-uri>query:condition?orion.condition.sexp=</condition-uri>
+        <summary-uri>query:summary?bool.red.text=agent.comm.nonCompliant&amp;orion.sum.query=true&amp;bool.green.text=agent.comm.compliant&amp;orion.query.type=pie.bool&amp;bool.show.criteria=false&amp;bool.green.criteria=%28+where+%28+and+%28+newerThan+EPOLeafNode.LastUpdate+604800000++%29+%28+version_ge+EPOProdPropsView_EPOAGENT.productversion+%221%22+%29+%29+%29&amp;show.percentage=false&amp;orion.sum.aggregation=count&amp;orion.sum.aggregation.showTotal=true</summary-uri>
+      </query>
+    </customExport>
+  </monitor>
+  <monitor>
+    <uid>6</uid>
+    <width>1</width>
+    <height>1</height>
+    <x>0</x>
+    <y>2</y>
+    <refreshInterval>5</refreshInterval>
+    <refreshIntervalUnit>MIN</refreshIntervalUnit>
+    <customConfigOptions>dashboardElement:config?database=</customConfigOptions>
+    <filteringEnabled>true</filteringEnabled>
+    <customExport factory="core.queryFactory">
+      <query id="14">
+        <dictionary id="15"/>
+        <name>VSEL Content Status</name>
+        <description></description>
+        <target>EPOLeafNode</target>
+        <table-uri>query:table?orion.table.order=asc&amp;orion.table.columns=EPOLeafNode.NodeName%3AEPOProductPropertyProducts.Products%3AEPOLeafNode.LastUpdate%3AEPOProdPropsView_LSH.datver&amp;orion.table.order.by=EPOLeafNode.NodeName</table-uri>
+        <condition-uri>query:condition?orion.condition.sexp=%28+where+%28+contains+EPOProductPropertyProducts.Products+%22VirusScan%22+%29+%29</condition-uri>
+        <summary-uri>query:summary?orion.sum.query=true&amp;orion.query.type=pie.pie&amp;show.percentage=false&amp;orion.sum.group.by=EPOProdPropsView_LSH.datver&amp;orion.sum.order=desc&amp;orion.sum.limit.count=360&amp;orion.show.other=true&amp;orion.sum.aggregation=count&amp;orion.sum.aggregation.showTotal=true</summary-uri>
+      </query>
+    </customExport>
+  </monitor>
+  <monitor>
+    <uid>5</uid>
+    <width>1</width>
+    <height>1</height>
+    <x>1</x>
+    <y>2</y>
+    <refreshInterval>5</refreshInterval>
+    <refreshIntervalUnit>MIN</refreshIntervalUnit>
+    <customConfigOptions>dashboardElement:config?database=</customConfigOptions>
+    <filteringEnabled>true</filteringEnabled>
+    <customExport factory="core.queryFactory">
+      <query id="16">
+        <dictionary id="17"/>
+        <name>ENS TP (Windows): AMCore Content Status</name>
+        <description>This is the Content Status Report for Threat Prevention.</description>
+        <target>EPOLeafNode</target>
+        <table-uri>query:table?orion.table.columns=EPOLeafNode.NodeName%3AEPOLeafNode.os%3AEPOComputerProperties.IPV6%3AAM_CustomProps.ManifestVersion%3AEPOProdPropsView_THREATPREVENTION.productversion%3AEPOLeafNode.LastUpdate%3AAM_CustomProps.V2DATVersion&amp;orion.table.order=az&amp;orion.table.order.by=EPOLeafNode.NodeName%3AEPOLeafNode.os%3AEPOComputerProperties.IPV6%3AAM_CustomProps.ManifestVersion%3AEPOProdPropsView_THREATPREVENTION.productversion%3AEPOLeafNode.LastUpdate</table-uri>
+        <condition-uri>query:condition?orion.condition.sexp=%28+where+%28+startsWith+EPOComputerProperties.OSType+%22Windows%22+%29+%29</condition-uri>
+        <summary-uri>query:summary?orion.sum.query=true&amp;orion.query.type=pie.pie&amp;show.percentage=false&amp;orion.sum.group.by=AM_CustomProps.ManifestVersion&amp;orion.sum.order=desc&amp;orion.sum.limit.count=360&amp;orion.sum.aggregation=count&amp;orion.sum.aggregation.showTotal=true</summary-uri>
+      </query>
+    </customExport>
+  </monitor>
+  <monitor>
+    <uid>13</uid>
+    <width>1</width>
+    <height>1</height>
+    <x>2</x>
+    <y>2</y>
+    <refreshInterval>0</refreshInterval>
+    <refreshIntervalUnit>MIN</refreshIntervalUnit>
+    <customConfigOptions></customConfigOptions>
+    <filteringEnabled>false</filteringEnabled>
+    <elementURI>AvertAlerts.avertFactory:avert</elementURI>
+  </monitor>
+  <monitor>
+    <uid>15</uid>
+    <width>1</width>
+    <height>1</height>
+    <x>1</x>
+    <y>3</y>
+    <refreshInterval>5</refreshInterval>
+    <refreshIntervalUnit>MIN</refreshIntervalUnit>
+    <customConfigOptions>dashboardElement:config?database=</customConfigOptions>
+    <filteringEnabled>true</filteringEnabled>
+    <customExport factory="core.queryFactory">
+      <query id="18">
+        <dictionary id="19"/>
+        <name>VirusScan Command Line Status</name>
+        <description>VirusScan Command Line Status</description>
+        <target>EPOLeafNode</target>
+        <table-uri>query:table?orion.table.columns=EPOLeafNode.LastUpdate%3AEPOLeafNode.NodeName&amp;orion.table.order=az&amp;orion.table.order.by=EPOLeafNode.LastUpdate%3AEPOLeafNode.NodeName</table-uri>
+        <condition-uri>query:condition?orion.condition.sexp=</condition-uri>
+        <summary-uri>query:summary?orion.sum.query=true&amp;orion.query.type=pie.pie&amp;show.percentage=false&amp;orion.sum.group.by=EPOComputerProperties.UserProperty1&amp;orion.sum.order=desc&amp;orion.sum.limit.count=360&amp;orion.sum.aggregation=count&amp;orion.sum.aggregation.showTotal=true</summary-uri>
+      </query>
+    </customExport>
+  </monitor>
+</dashboard>
