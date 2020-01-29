@@ -1,0 +1,11 @@
+<list id="1">
+  <query id="2">
+    <dictionary id="3"/>
+    <name>VirusScan Command Line Status</name>
+    <description>VirusScan Command Line Status</description>
+    <target>EPOLeafNode</target>
+    <table-uri>query:table?orion.table.columns=EPOLeafNode.LastUpdate%3AEPOLeafNode.NodeName&amp;orion.table.order=az&amp;orion.table.order.by=EPOLeafNode.LastUpdate%3AEPOLeafNode.NodeName</table-uri>
+    <condition-uri>query:condition?orion.condition.sexp=</condition-uri>
+    <summary-uri>query:summary?orion.sum.query=true&amp;orion.query.type=pie.pie&amp;show.percentage=false&amp;orion.sum.group.by=EPOComputerProperties.UserProperty1&amp;orion.sum.order=desc&amp;orion.sum.limit.count=360&amp;orion.sum.aggregation=count&amp;orion.sum.aggregation.showTotal=true</summary-uri>
+  </query>
+</list>
