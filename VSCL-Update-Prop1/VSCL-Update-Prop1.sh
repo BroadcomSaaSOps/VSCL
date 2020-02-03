@@ -60,17 +60,17 @@ if ! Check_For "$__VSCL_UVSCAN_DIR/$__VSCL_UVSCAN_EXE" "uvscan executable" --no-
     # uvscan not found
     # set custom property to error value, then exit with error
     Log_Info "Could not find 'uvscan executable' at '$__VSCL_UVSCAN_DIR/$__VSCL_UVSCAN_EXE'!"
-    CURRENT_DAT="VSCL:NOT INSTALLED"
+    CURRENT_DAT=$__VSCL_NOTINST_CODE
 else
     # Get the version of the installed DATs...
     Log_Info "Determining the current DAT version..."
     CURRENT_DAT=$(Get_CurrDATVer)
 
-    if [[ -z "$CURRENT_DAT" ]]; then
+    if [[ "$CURRENT_DAT" = "$__VSCL_INVALID_CODE" ]]; then
         # Could not determine current value for DAT version from uvscan
         # set custom property to error value, then exit with error
         Log_Info "Unable to determine currently installed DAT version!"
-        CURRENT_DAT="VSCL:INVALID DAT"
+        CURRENT_DAT="$__VSCL_INVALID_CODE"
     else
         CURRENT_DAT="VSCL:$CURRENT_DAT"
     fi

@@ -13,21 +13,59 @@
 #-----------------------------------------------------------------------------
 # PreReqs:      none
 #-----------------------------------------------------------------------------  
-# Switches:     none
+# Switches:     -f: force library to load even if already loaded
 #-----------------------------------------------------------------------------  
 # Imports:      none
 #=============================================================================
 
-#echo "\$__VSCL_LIB_LOADED = '$__VSCL_LIB_LOADED'"
+# echo --------------------------------
+# set | grep -i bash
+# echo --------------------------------
+# echo "\$0 = '$0'"
+# echo "\$1 = '$1'"
+# echo --------------------------------
+echo "VSCL-lib called"
 
 # Bypass inclusion if already loaded
 if [[ -z "$__VSCL_LIB_LOADED" ]]; then
     # not already loaded, set flag that it is now
+    #echo "not loaded, loading..."
     __VSCL_LIB_LOADED=1
 else
     # already loaded, exit gracefully
+    #echo "loaded already"
     return 0
 fi
+
+#-----------------------------------------
+# Process command line options
+#-----------------------------------------
+# shellcheck disable=2034
+#OPTIND=1
+
+unset OPTION_VAR
+
+while getopts :fu OPTION_VAR; do
+    echo "\$OPTION_VAR = '$OPTION_VAR'"
+    case "$OPTION_VAR" in
+        # force library to load even if already loaded
+        "f") #echo "force"
+             unset __VSCL_LIB_LOADED
+            ;;
+        "u") #echo "unload"
+             unset -f  $( set | grep -i '^__vscl.*\ ()' | awk '{print $1}' )
+             unset $( set | grep -i '^__vscl.*=.*' | awk -F"=" '{print $1}' )
+             return 0
+            ;;
+        *)   echo "Unknown option '$OPTION_VAR' specified!"
+             exit 1
+            ;;
+    esac
+done
+
+#shift "$((OPTIND-1))"
+
+# echo "\$__VSCL_LIB_LOADED = '$__VSCL_LIB_LOADED'"
 
 #=============================================================================
 # GLOBALS: Global variables used by all scripts that import this library
@@ -35,7 +73,8 @@ fi
 
 unset __VSCL_SCRIPT_NAME __VSCL_SCRIPT_PATH __VSCL_DEBUG_IT __VSCL_LEAVE_FILES __VSCL_LOG_PATH
 unset __VSCL_UVSCAN_EXE __VSCL_UVSCAN_DIR __VSCL_MACONFIG_PATH __VSCL_CMDAGENT_PATH __VSCL_TEMP_DIR
-unset __VSCL_INSTALL_PKG __VSCL_INSTALL_VER __VSCL_PKG_VER_FILE __VSCL_PKG_VER_SECTION
+unset __VSCL_INSTALL_PKG __VSCL_INSTALL_VER __VSCL_PKG_VER_FILE __VSCL_PKG_VER_SECTION __VSCL_MASK_REGEXP
+unset __VSCL_SAVE_IFS
 
 __VSCL_SCRIPT_ABBR="VSCLLIB"
 
@@ -79,6 +118,9 @@ __VSCL_WRAPPER="uvwrap.sh"
 # Filename of VSCL library to copy to VSCL software directory (i.e. this file)
 __VSCL_LIBRARY="VSCL-lib.sh"
 
+# Filename for site localization
+__VSCL_LOCALIZATION="VSCL-local.sh"
+
 # path to MACONFIG program
 __VSCL_MACONFIG_PATH="/opt/McAfee/agent/bin/maconfig"
 
@@ -109,7 +151,16 @@ __VSCL_EPO_FILE_LIST="avvscan.dat:444 avvnames.dat:444 avvclean.dat:444"
 
 # space-delimited list of files to unzip from downloaded EPO .ZIP file
 # format => <filename>:<permissions>
-__VSCL_UTIL_FILE_LIST="./$__VSCL_WRAPPER:+x ./$__VSCL_LIBRARY:+x"
+__VSCL_TOOLBOX_FILES="./$__VSCL_WRAPPER:+x ./$__VSCL_LIBRARY:+x ./$__VSCL_LOCALIZATION:+x "
+
+# sed style mask to remove common text in McAfee error messages
+# example "2020-01-25 14:22:44.456234 (2010.2739) maconfig.Info: configuration finished"
+# will be logged as  ">> maconfig.Info: configuration finished"
+__VSCL_MASK_REGEXP="s/^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\ [0-9][0-9]:[0-9][0-9]:[0-9][0-9]\.[0-9]*\ ([0-9]*\.[0-9]*)\ //g"
+
+# default return codes for Custom 1 property fields
+__VSCL_NOTINST_CODE="VSCL:NOT_INSTALLED"
+__VSCL_INVALID_CODE="VSCL:INVALID_DAT"
 
 #=============================================================================
 # FUNCTIONS: VSCL Library functions
@@ -123,22 +174,26 @@ function Do_Cleanup {
 
     if [[ -z "$__VSCL_LEAVE_FILES" ]]; then
         if [[ -d "$__VSCL_TEMP_DIR" ]]; then
-            Log_Info "Removing temporary directory '$__VSCL_TEMP_DIR'..."
+            Log_Info "Removing temp dir '$__VSCL_TEMP_DIR'..."
             
             if ! Capture_Command "rm" "-rf $__VSCL_TEMP_DIR"; then
-                Log_Warning "Cannot remove temp directory '$__VSCL_TEMP_DIR'!"
+                Log_Warning "Cannot remove temp dir '$__VSCL_TEMP_DIR'!"
+            fi
+
+            Log_Info "Removing temp file '$__VSCL_TEMP_FILE'..."
+            
+            if ! Capture_Command "rm" "-rf $__VSCL_TEMP_FILE"; then
+                Log_Warning "Cannot remove temp file '$__VSCL_TEMP_FILE'!"
             fi
         fi
     else
-        Log_Info "'LEAVE FILES' option specified.  NOT deleting temporary directory '$__VSCL_TEMP_DIR'!"
+        Log_Info "'LEAVE FILES' option specified.  NOT deleting temp dir '$__VSCL_TEMP_DIR' or file '$__VSCL_TEMP_FILE'!"
     fi
     
-    #unset __VSCL_SCRIPT_NAME __VSCL_SCRIPT_PATH __VSCL_DEBUG_IT __VSCL_LEAVE_FILES __VSCL_LOG_PATH
-    #unset __VSCL_UVSCAN_EXE __VSCL_UVSCAN_DIR __VSCL_MACONFIG_PATH __VSCL_CMDAGENT_PATH __VSCL_TEMP_DIR
-    #unset __VSCL_INSTALL_PKG __VSCL_INSTALL_VER __VSCL_PKG_VER_FILE __VSCL_PKG_VER_SECTION
-    #unset __VSCL_LIB_LOADED
     return 0
 }
+
+#-----------------------------------------------------------------------------
 
 function Exit_Script {
     #------------------------------------------------------------
@@ -175,6 +230,8 @@ function Exit_Script {
     esac
 }
 
+#-----------------------------------------------------------------------------
+
 function Exit_WithError {
     #----------------------------------------------------------
     # Exit script with error code 1
@@ -188,6 +245,8 @@ function Exit_WithError {
 
     Exit_Script 1
 }
+
+#-----------------------------------------------------------------------------
 
 function Log_Print {
     #----------------------------------------------------------
@@ -224,6 +283,8 @@ function Log_Print {
     return 0
 }
 
+#-----------------------------------------------------------------------------
+
 function Log_Info {
     #----------------------------------------------------------
     # Print a INFO MESSAGE to the log defined in $__VSCL_LOG_PATH
@@ -236,6 +297,8 @@ function Log_Info {
     Log_Print "[I]:$*"
     return 0
 }
+
+#-----------------------------------------------------------------------------
 
 function Log_Warning {
     #----------------------------------------------------------
@@ -250,6 +313,8 @@ function Log_Warning {
     return 0
 }
 
+#-----------------------------------------------------------------------------
+
 function Log_Error {
     #----------------------------------------------------------
     # Print an ERROR to the log defined in $__VSCL_LOG_PATH
@@ -263,91 +328,63 @@ function Log_Error {
     return 0
 }
 
+#-----------------------------------------------------------------------------
+
 function Capture_Command {
     #------------------------------------------------------------
     # Function to capture output of command to log
     #------------------------------------------------------------
     # Params: $1 = command to capture
     #         $2 = arguments of command
+    #         $3 = command to run and pipe into captured command
     #------------------------------------------------------------
     # Returns: 0/ok if command ran
     #          Error code if command failed
     #------------------------------------------------------------
-    local OUT ERR OUTTEXT MASK_REGEXP CAPTURE_CMD SAVE_IFS OPTION_VAR REDIRECT_CMD CAPTURE_ARG VAR_EMPTY PRE_CMD
+    local OUT ERR OUTTEXT MASK_REGEXP CAPTURE_CMD REDIRECT_CMD CAPTURE_ARG VAR_EMPTY PRE_CMD
     
-    unset IFS
-    
-    # while [[ "$#" -gt 0 ]]; do
-        # case $1 in
-            # -r:*|--redirect:*)
-                # REDIRECT_CMD=${1##*:}
-                # ;;
-            # -r|--redirect)
-                # REDIRECT_CMD=$2
-                # shift
-                # ;;
-            # -c:*|--command:*)
-                # CAPTURE_CMD=${1##*:}
-                # ;;
-            # -c|--command)
-                # CAPTURE_CMD=$2
-                # shift
-                # ;;
-            # -a:*|--args:*)
-                # CAPTURE_ARG=${1##*:}
-                # ;;
-            # -a|--args)
-                # CAPTURE_ARG=$2
-                # shift
-                # ;;
-        # esac
-        
-        # shift
-    # done
-
     VAR_EMPTY=""
-    CAPTURE_CMD=${1:-$VAR_EMPTY}
-    CAPTURE_ARG=(${2:-$VAR_EMPTY})
-    PRE_CMD=${3:-$VAR_EMPTY}
+    CAPTURE_CMD="${1:-$VAR_EMPTY}"
+    CAPTURE_ARG="${2:-$VAR_EMPTY}"
+    PRE_CMD="${3:-$VAR_EMPTY}"
 
-     if [[ -z "$CAPTURE_CMD" ]]; then
+    if [[ -z "$CAPTURE_CMD" ]]; then
         Exit_WithError "Command to capture empty!"
     fi
 
     if [[ -n "$PRE_CMD" ]]; then
-        Log_Info ">> cmd = '$PRE_CMD | $CAPTURE_CMD ${CAPTURE_ARG[*]}'"
+        Log_Info ">> cmd = '$PRE_CMD | $CAPTURE_CMD $CAPTURE_ARG'"
     else
-        Log_Info ">> cmd = '$CAPTURE_CMD ${CAPTURE_ARG[*]}'"
+        Log_Info ">> cmd = '$CAPTURE_CMD $CAPTURE_ARG'"
     fi
     
-    # sed style mask to remove common text in McAfee error messages
-    # example "2020-01-25 14:22:44.456234 (2010.2739) maconfig.Info: configuration finished"
-    # will be logged as  ">> maconfig.Info: configuration finished"
-    MASK_REGEXP="s/^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\ [0-9][0-9]:[0-9][0-9]:[0-9][0-9]\.[0-9]*\ ([0-9]*\.[0-9]*)\ //g"
-    
-    # run command and capture OUTTEXT to array
-    #OUT=("$($PRE_CMD | $CAPTURE_CMD ${CAPTURE_ARG[*]} 2>&1)")
-    #SAVE_IFS="$IFS"
-    #IFS=$'\r'
     if [[ -n "$PRE_CMD" ]]; then
-        OUT="$($PRE_CMD | $CAPTURE_CMD ""${CAPTURE_ARG[@]}"" 2>&1)"
+        $PRE_CMD | $CAPTURE_CMD $CAPTURE_ARG 2>&1 > "$__VSCL_TEMP_FILE"
     else
-        OUT="$($CAPTURE_CMD ""${CAPTURE_ARG[@]}"" 2>&1)"
+        $CAPTURE_CMD $CAPTURE_ARG 2>&1 > "$__VSCL_TEMP_FILE"
     fi
     
     ERR=$?
-    #IFS="$SAVE_IFS"
+    IFS=$__VSCL_SAVE_IFS
+    OUTARRAY=()
     
-    for OUTTEXT in "${OUT[*]}"; do
+    IFS=$'\n' read -r -d '' -a OUTARRAY < <( cat "$__VSCL_TEMP_FILE" && printf '\0' )
+    # while read -r line; do
+        # OUTARRAY+=( "$line" )
+    # done < <( echo "${OUT[*]}" )
+
+    for OUTTEXT in "${OUTARRAY[@]}"; do
         # loop through each line of OUTTEXT
         # append OUTTEXT to log
-        if [[ -n "$MASK_REGEXP" ]]; then
+        if [[ -n "$__VSCL_MASK_REGEXP" ]]; then
             # mask supplied, apply to each line
-            OUTTEXT=$(printf "%s\n" "$OUTTEXT" | sed -e "$MASK_REGEXP")
+            OUTTEXT=$(printf "%s\n" "$OUTTEXT" | sed -e "$__VSCL_MASK_REGEXP")
         fi
         
         Log_Info ">> $OUTTEXT"
     done
+
+    
     
     if [ $ERR -ne 0 ]; then
         # error running command, return error code
@@ -357,6 +394,8 @@ function Capture_Command {
     
     return 0
 }
+
+#-----------------------------------------------------------------------------
 
 function Refresh_ToEPO {
     #------------------------------------------------------------
@@ -378,6 +417,8 @@ function Refresh_ToEPO {
     
     return 0
 }
+
+#-----------------------------------------------------------------------------
 
 function Find_INISection {
     #----------------------------------------------------------
@@ -428,6 +469,8 @@ function Find_INISection {
     fi
 }
 
+#-----------------------------------------------------------------------------
+
 function Check_For {
     #------------------------------------------------------------
     # Function to check that a file is available and executable
@@ -453,6 +496,8 @@ function Check_For {
     return 0
 }
 
+#-----------------------------------------------------------------------------
+
 function Set_CustomProp {
     #------------------------------------------------------------
     # Set the value of a McAfee custom property
@@ -462,22 +507,20 @@ function Set_CustomProp {
     #------------------------------------------------------------
     local ERR NEW_LABEL MA_OPTIONS
     
-    MA_OPTIONS=("-custom" "-prop$1" """$2""")
+    NEW_LABEL="${2/ /_}"
     
-    #echo "\${MA_OPTIONS[0]} = '${MA_OPTIONS[0]}'"
-    #echo "\${MA_OPTIONS[1]} = '${MA_OPTIONS[1]}'"
-    #echo "\${MA_OPTIONS[2]} = '${MA_OPTIONS[2]}'"
-    #echo "\$1 = '$1'"
-    #echo "\$2 = '$2'"
-
-    Log_Info "Setting EPO Custom Property #$1 to '${MA_OPTIONS[2]}'..."
+    MA_OPTIONS=("-custom"  "-prop$1" "$NEW_LABEL")
     
-    if ! $__VSCL_MACONFIG_PATH "${MA_OPTIONS[@]}"; then
-        return $ERR
+    Log_Info "Setting EPO Custom Property #$1 to '$2'..."
+    
+    if ! Capture_Command "$__VSCL_MACONFIG_PATH" "${MA_OPTIONS[*]}"; then
+        return 1
     fi
     
     return 0
 }
+
+#-----------------------------------------------------------------------------
 
 function Get_CurrDATVer {
     #------------------------------------------------------------
@@ -496,21 +539,18 @@ function Get_CurrDATVer {
     #         engine string
     #----------------------------------------------------------
 
-    local UVSCAN_STATUS LOCAL_DAT_VER LOCAL_ENG_VER OUTTEXT RESULT SAVE_IFS
+    local UVSCAN_STATUS LOCAL_DAT_VER LOCAL_ENG_VER OUTTEXT RESULT 
     #echo "c"
     #ls -lAh $LOCAL_VER_FILE
 
     if ! Check_For "$__VSCL_UVSCAN_CMD" "uvscan executable" > /dev/null 2>&1 ; then
-        printf "%s\n" "invalid"
+        printf "%s\n" "$__VSCL_INVALID_CODE"
         return 1
     fi
     #echo "d"
     #ls -lAh $LOCAL_VER_FILE
     
-    #SAVE_IFS=$IFS
-    #IFS=$"\r" 
     RESULT=$("$__VSCL_UVSCAN_CMD" --VERSION 2> /dev/null)
-    #IFS=$SAVE_IFS
     
     #echo "e"
     #ls -lAh $LOCAL_VER_FILE
@@ -518,7 +558,7 @@ function Get_CurrDATVer {
     if [[ "$?" == "0" ]]; then
         UVSCAN_STATUS=$RESULT
     else
-        printf "%s\n" "invalid"
+        printf "%s\n" "$__VSCL_INVALID_CODE"
         return 1
     fi
         
@@ -555,6 +595,8 @@ function Get_CurrDATVer {
 
     return 0
 }
+
+#-----------------------------------------------------------------------------
 
 function Download_File {
     #------------------------------------------------------------
@@ -622,6 +664,8 @@ function Download_File {
     return 0
 }
 
+#-----------------------------------------------------------------------------
+
 function Validate_File {
     #------------------------------------------------------------
     # Function to check the specified file against its expected
@@ -664,6 +708,8 @@ function Validate_File {
     return 0
 }
 
+#-----------------------------------------------------------------------------
+
 function Copy_Files_With_Modes {
     #--------------------------------------------------------------------
     # Function to copy one file from source to destination
@@ -674,8 +720,8 @@ function Copy_Files_With_Modes {
     #--------------------------------------------------------------------
     local FILES_TO_COPY FNAME_MODES FILE_NAME FILE_MODE
 
-    echo "\$1 = '$1'"
-    echo "\$2 = '$2'"
+    # echo "\$1 = '$1'"
+    # echo "\$2 = '$2'"
 
     if [[ ! -d $2 ]]; then
         Exit_WithError "'$2' is not a directory!"
@@ -683,7 +729,7 @@ function Copy_Files_With_Modes {
 
     # strip filename to a list
     for FNAME_MODES in $1; do
-        echo "\$FNAME_MODES = '$FNAME_MODES'"
+        # echo "\$FNAME_MODES = '$FNAME_MODES'"
         FILE_NAME=$(printf "%s\n" "$FNAME_MODES" | awk -F':' ' { print $1 } ')
         FILES_TO_COPY="$FILES_TO_COPY $FILE_NAME"
         echo "\$FILES_TO_COPY = '$FILES_TO_COPY'"
@@ -706,6 +752,65 @@ function Copy_Files_With_Modes {
     return 0
 }
 
+#-----------------------------------------------------------------------------
+
+function Update_FromZip {
+    #---------------------------------------------------------------
+    # Function to extract the listed files from the given zip file.
+    #---------------------------------------------------------------
+    # Params: $1 - Directory to unzip to
+    #         $2 - Downloaded zip file
+    #         $3 - List of files to unzip
+    #              (format => <filename>:<chmod>)
+    #---------------------------------------------------------------
+
+    local FILES_TO_DOWNLOAD FNAME FILE_NAME UNZIPOPTIONS PERMISSIONS BACKUP_DIR
+
+    # strip filename to a list
+    for FNAME in $3; do
+        FILE_NAME=$(printf "%s\n" "$FNAME" | awk -F':' ' { print $1 } ')
+        FILES_TO_DOWNLOAD="$FILES_TO_DOWNLOAD $FILE_NAME"
+    done
+
+    # BACKUP_DIR="./backup"
+
+    #Backup any files about to be updated...
+    # if [[ ! -d "$BACKUP_DIR" ]]; then
+        # Log_Info "Creating backup directory files to be updated..."
+        # mkdir -d -p "$BACKUP_DIR" 2> /dev/null
+    # fi
+
+    # if [[ -d "$BACKUP_DIR" ]]; then
+        # cp "$FILES_TO_DOWNLOAD" "backup" 2>/dev/null
+    # fi
+
+    # Update the DAT files.
+    Log_Info "Uncompressing '$2' to '$1'..."
+    UNZIPOPTIONS="-o -d $1 $2 $FILES_TO_DOWNLOAD"
+
+    if ! unzip $UNZIPOPTIONS 2> /dev/null; then
+        Exit_WithError "Error unzipping '$2' to '$1'!"
+    fi
+
+    # apply chmod permissions from list
+    for FNAME in $3; do
+        FILE_NAME=$(printf "%s\n" "$FNAME" | awk -F':' ' { print $1 } ')
+        PERMISSIONS=$(printf "%s\n" "$FNAME" | awk -F':' ' { print $NF } ')
+        chmod "$PERMISSIONS" "$1/$FILE_NAME"
+    done
+
+    return 0
+}
+
+#=============================================================================
+# MAIN: Code execution begins here
+#=============================================================================
+# echo --------------------------------
+# set | grep -i bash
+# echo --------------------------------
+# echo "\$0 = '$0'"
+# echo --------------------------------
+
 #-----------------------------------------
 # VSCL Library initialization code
 #-----------------------------------------
@@ -715,6 +820,7 @@ if [[ -z "$__VSCL_TEMP_DIR" ]]; then
     # no current temp directory specified in environment
     # __VSCL_TEMP_DIR must be a directory and writable
     __VSCL_TEMP_DIR=$(mktemp -d -p "$__VSCL_SCRIPT_PATH" 2> /dev/null)
+    __VSCL_TEMP_FILE=$(mktemp -p "$__VSCL_SCRIPT_PATH" 2> /dev/null)
 fi
 
 if [[ -d "$__VSCL_TEMP_DIR" ]]; then
@@ -722,3 +828,6 @@ if [[ -d "$__VSCL_TEMP_DIR" ]]; then
 else
     Exit_WithError "Unable to use temporary directory '$__VSCL_TEMP_DIR'"
 fi
+
+__VSCL_SAVE_IFS=$IFS
+

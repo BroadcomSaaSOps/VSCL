@@ -39,6 +39,8 @@
 # Process command line options
 #-----------------------------------------
 # shellcheck disable=2034
+OPTIND=1
+
 while getopts :dl OPTION_VAR; do
     case "$OPTION_VAR" in
         "d") DOWNLOAD_ONLY=1    # only download most current DAT from EPO and exit
@@ -50,6 +52,8 @@ while getopts :dl OPTION_VAR; do
     esac
 done
 
+shift "$((OPTIND-1))"
+
 #-----------------------------------------
 # Global variables
 #-----------------------------------------
@@ -57,6 +61,9 @@ done
 # shellcheck disable=2034
 __VSCL_SCRIPT_ABBR="VCSLUDAT"
 
+#-----------------------------------------
+# Local variables
+#-----------------------------------------
 # Name of the file in the repository to extract current DAT version from
 LOCAL_VER_FILE="$__VSCL_TEMP_DIR/$__VSCL_EPO_VER_FILE"
 
@@ -64,57 +71,6 @@ LOCAL_VER_FILE="$__VSCL_TEMP_DIR/$__VSCL_EPO_VER_FILE"
 # shellcheck disable=SC2153
 DOWNLOAD_SITE="https://${__VSCL_SITE_NAME}${__VSCL_EPO_SERVER}:443/Software/Current/VSCANDAT1000/DAT/0000"
 
-#=============================================================================
-# FUNCTIONS
-#=============================================================================
-
-function Update_FromZip {
-    #---------------------------------------------------------------
-    # Function to extract the listed files from the given zip file.
-    #---------------------------------------------------------------
-    # Params: $1 - Directory to unzip to
-    #         $2 - Downloaded zip file
-    #         $3 - List of files to unzip
-    #              (format => <filename>:<chmod>)
-    #---------------------------------------------------------------
-
-    local FILES_TO_DOWNLOAD FNAME FILE_NAME UNZIPOPTIONS PERMISSIONS BACKUP_DIR
-
-    # strip filename to a list
-    for FNAME in $3; do
-        FILE_NAME=$(printf "%s\n" "$FNAME" | awk -F':' ' { print $1 } ')
-        FILES_TO_DOWNLOAD="$FILES_TO_DOWNLOAD $FILE_NAME"
-    done
-
-    # BACKUP_DIR="./backup"
-
-    #Backup any files about to be updated...
-    # if [[ ! -d "$BACKUP_DIR" ]]; then
-        # Log_Info "Creating backup directory files to be updated..."
-        # mkdir -d -p "$BACKUP_DIR" 2> /dev/null
-    # fi
-
-    # if [[ -d "$BACKUP_DIR" ]]; then
-        # cp "$FILES_TO_DOWNLOAD" "backup" 2>/dev/null
-    # fi
-
-    # Update the DAT files.
-    Log_Info "Uncompressing '$2' to '$1'..."
-    UNZIPOPTIONS="-o -d $1 $2 $FILES_TO_DOWNLOAD"
-
-    if ! unzip $UNZIPOPTIONS 2> /dev/null; then
-        Exit_WithError "Error unzipping '$2' to '$1'!"
-    fi
-
-    # apply chmod permissions from list
-    for FNAME in $3; do
-        FILE_NAME=$(printf "%s\n" "$FNAME" | awk -F':' ' { print $1 } ')
-        PERMISSIONS=$(printf "%s\n" "$FNAME" | awk -F':' ' { print $NF } ')
-        chmod "$PERMISSIONS" "$1/$FILE_NAME"
-    done
-
-    return 0
-}
 
 #=============================================================================
 #  MAIN PROGRAM
@@ -133,8 +89,8 @@ if [[ -z "$DOWNLOAD_ONLY" ]]; then
         # uvscan not found
         # set custom property to error value, then exit
         Log_Info "Could not find 'uvscan executable' at '$__VSCL_UVSCAN_DIR/$__VSCL_UVSCAN_EXE'!"
-        Log_Info "Setting McAfee Custom Property #1 to 'VSCL:NOT INSTALLED'..."
-        Set_CustomProp 1 "VSCL:NOT INSTALLED"
+        Log_Info "Setting McAfee Custom Property #1 to '$__VSCL_NOTINST_CODE'..."
+        Set_CustomProp 1 "$__VSCL_NOTINST_CODE"
         Refresh_ToEPO
         Exit_WithError "Cannot update DATs, VSCL not installed!"
     fi
@@ -252,8 +208,10 @@ Log_Info "New DAT Version Available: '$AVAIL_MAJOR.$AVAIL_MINOR'"
 unset PERFORM_UPDATE
 
 if [[ -z "$DOWNLOAD_ONLY" ]]; then
+    if [[ "$CURR_MAJOR" = "$__VSCL_INVALID_CODE" ]]; then
+        PERFORM_UPDATE="yes";
     # Installed version is less than current DAT version?
-    if (( $CURR_MAJOR < $AVAIL_MAJOR )) || ( (( $CURR_MAJOR == $AVAIL_MAJOR )) && (( $CURR_MINOR < $AVAIL_MINOR )) ); then
+    elif (( $CURR_MAJOR < $AVAIL_MAJOR )) || ( (( $CURR_MAJOR == $AVAIL_MAJOR )) && (( $CURR_MINOR < $AVAIL_MINOR )) ); then
         PERFORM_UPDATE="yes"
     fi
 fi
@@ -310,7 +268,7 @@ if [[ -n "$PERFORM_UPDATE" ]] || [[ -n "$DOWNLOAD_ONLY" ]]; then
         # Could not determine current value for DAT version from uvscan
         # set custom property to error value, then exit with error
         Log_Info "Unable to determine currently installed DAT version!"
-        NEW_VER="VSCL:INVALID DAT"
+        NEW_VER="$__VSCL_INVALID_CODE"
     else
         Log_Info "Checking that the installed DAT matches the available DAT version..."
         NEW_MAJOR=$(Get_CurrDATVer "DATMAJ")

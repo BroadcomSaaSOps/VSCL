@@ -35,16 +35,12 @@
 #=============================================================================
 
 #-----------------------------------------
-#  Imports
-#-----------------------------------------
-# shellcheck disable=SC1091
-. ./VSCL-local.sh
-. ./VSCL-lib.sh
-
-#-----------------------------------------
 # Process command line options
 #-----------------------------------------
 # shellcheck disable=2034
+#OPTIND=1
+unset OPTION_VAR
+
 while getopts :n OPTION_VAR; do
     case "$OPTION_VAR" in
         "n") DAT_UPDATE=0    # do NOT update DAT files
@@ -53,6 +49,16 @@ while getopts :n OPTION_VAR; do
             ;;
     esac
 done
+
+#shift "$((OPTIND-1))"
+
+#-----------------------------------------
+#  Imports
+#-----------------------------------------
+# shellcheck disable=SC1091
+echo "VSCL_EPOInstall called"
+. ./VSCL-local.sh
+. ./VSCL-lib.sh
 
 #-----------------------------------------
 # Global variables
@@ -70,7 +76,7 @@ if [[ -z "$DAT_UPDATE" ]]; then
 fi
 
 # Default filler for Custom Property #1
-NEW_VER="VSCL:INVALID DAT"
+NEW_VER="$__VSCL_INVALID_CODE"
 
 # full path of downloaded versioning file
 LOCAL_VER_FILE="$__VSCL_TEMP_DIR/$__VSCL_PKG_VER_FILE"

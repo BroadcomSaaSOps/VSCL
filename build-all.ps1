@@ -10,14 +10,31 @@ Param
 
 Begin {
     # variables
+    cd $PSScriptRoot
     . ./build-all-vars.ps1
+
+    If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+      # Relaunch as an elevated process:
+      Start-Process powershell.exe "-File",('"{0}"' -f $MyInvocation.MyCommand.Path) -Verb RunAs
+      exit
+    }
 }
 
 Process {
     Set-Location -Path $sourceDir
 
     # delete old builds
-    Remove-Item -Path "$buildDir\VSCL*.*" -Force
+    $error.clear()
+    
+    try { 
+        Remove-Item -Path "$buildDir\VSCL*.*" -Force -ea Ignore
+    } 
+    catch { 
+        if ( $error ) { 
+            "Error deleting target EEDK files! Exiting..."
+            exit 1
+        }
+    }
 
     # rebuild .EEDKs
     $buildOutput = @()
@@ -57,7 +74,25 @@ Process {
     [System.Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
     # get user credentials for upload
-    $cred = Get-Credential
+    $error.clear()
+    
+    # try { 
+        # $cred = (Get-Credential "" -ErrorAction Ignore | Out-Null)
+    # } 
+    # catch { 
+        # if ( $error ) { 
+            # "Error!"
+            # exit 1
+        # }
+    # }
+    
+    $cred = Get-Credential -ea SilentlyContinue
+    
+    if ( -not $cred ) {
+        "No credentials supplied! Exiting..."
+        exit 1
+    }
+    
     $uploadOutput = @()
 
     # upload built .ZIP files
