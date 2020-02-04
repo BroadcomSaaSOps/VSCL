@@ -34,6 +34,7 @@
 # Variables
 #-----------------------------------------
 # Abbreviation of this script name for logging
+# shellcheck disable=SC2034
 __VSCL_SCRIPT_ABBR="UVWRAP"
 
 # Options passed to VSCL scanner
@@ -55,15 +56,15 @@ SCAN_OPTIONS="-c -p --afc 512 -e --nocomp --ignore-links --noboot --nodecrypt --
 #=============================================================================
 Log_Info "Beginning command line scan..."
 
-if [[ -z "$@" ]]; then
+if [[ -z "$*" ]]; then
     # exit if no file specified
     Exit_WithError "No command line parameters supplied!"
 else
-    Log_Info "Parameters supplied: '$@'"
+    Log_Info "Parameters supplied: '$*'"
 fi
 
 # call uvscan
-if ! Capture_Command "$__VSCL_UVSCAN_CMD" "$SCAN_OPTIONS $@"; then
+if ! Capture_Command "$__VSCL_UVSCAN_CMD" "$SCAN_OPTIONS $*"; then
     # uvscan returned error, exit and return 1
     Exit_WithError "*** Virus found! ***"
 fi

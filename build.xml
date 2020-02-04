@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Project name="VSCL Project">
+    <Source path="E:\Software\McAfee\EEDK\Development\VSCL" id="P1">
+        <File name="VSCL-EPOInstall.eedk" type="EEDK" id="F1"/>
+        <File name="VSCL-Uninstall.eedk" type="EEDK" id="F2"/>
+        <File name="VSCL-Update-DAT.eedk" type="EEDK" id="F3"/>
+        <File name="VSCL-Update-Prop1.eedk" type="EEDK" id="F4"/>
+        <File name="VSCL-Package.eedk" type="EEDK" id="F5"/>
+        <File name="VSCL-local.sh" type="ShellCode" id="F6"/>
+        <File name="VSCL-lib.sh" type="ShellCode" id="F7">
+            <IncludeFile name="VSCL-local.sh" id="I1" targetid="F6"/>
+        </File>
+        <Directory name="VSCL-EPOInstall" id="D1">
+            <File name="VSCL-EPOInstall.sh" type="ShellCode" id="F8">
+                <IncludeFile name="VSCL-lib.sh" id="I2" targetid="L1"/>
+                <includeile name="VSCL-Update-DAT.sh" id="I3" targetid="L3"/>
+            </File>
+            <File name="uvwrap.sh" type="ShellCode" id="F9">
+                <IncludeFile name="VSCL-lib.sh" id="I4" targetid="L1"/>
+            </File>
+            <Link name="VSCL-lib.sh"  type="SymLink" id="L1" targetid="F6"/>
+            <Link name="VSCL-local.sh" type="SymLink" id="L2" targetid="F7"/>
+            <Link name="VSCL-Update-DAT.sh" type="SymLink" id="L3" targetid="F10"/>
+            <Link name="VSCL-Update-Prop1.sh" type="SymLink" id="L4" targetid="F12"/>
+        </Directory>
+        <Directory name="VSCL-Update-DAT" id="D2">
+            <File name="VSCL-Update-DAT.sh" id="F10">
+                <IncludeFile name="VSCL-lib.sh" id="I5" targetid="F7"/>
+                <IncludeFile name="VSCL-Update-Prop1.sh" id="I6" targetid="F12"/>
+            </File>
+            <Link name="VSCL-lib.sh" type="SymLink" id="L5" targetid="F6"/>
+            <Link name="VSCL-local.sh" type="SymLink" id="L6" targetid="F7"/>
+            <Link name="VSCL-Update-Prop1.sh" type="SymLink" id="L7" targetid="F12"/>
+        </Directory>
+        <Directory name="VSCL-Uninstall" id="D3">
+            <File name="VSCL-Uninstall.sh" id="F11">
+                <IncludeFile name="VSCL-lib.sh" id="I7" targetid="F7"/>
+                <IncludeFile name="VSCL-Update-Prop1.sh" id="I7" targetid="F12"/>
+            </File>
+            <Link name="VSCL-lib.sh" type="SymLink" id="L8" targetid="F6"/>
+            <Link name="VSCL-local.sh" type="SymLink" id="L9" targetid="F7"/>
+            <Link name="VSCL-Update-Prop1.sh" type="SymLink" id="L10" targetid="F12"/>
+        </Directory>
+        <Directory name="VSCL-Update-Prop1" id="D4">
+            <File name="VSCL-Update-Prop1.sh" id="F12">
+                <IncludeFile name="VSCL-lib.sh" id="I8" targetid="F7"/>
+            </File>
+            <Link name="VSCL-lib.sh" type="SymLink" id="L10" targetid="F6"/>
+            <Link name="VSCL-local.sh" type="SymLink" id="L11" targetid="F7"/>
+        </Directory>
+        <Directory name="VSCL-Package" id="D5">
+            <File name="vsclpackage.ini" id="F13"/>
+            <File name="Dummy.sh" id="F14"/>
+            <File name="vscl-l64-613-l.tar.gz" id="F15"/>
+        </Directory>
+    </Source>
+    <Target path="E:\Software\McAfee\EEDK\Builds" id="P2">
+        <Component name="VSCL-EPOInstall" outputzip="VSCLEPOI1200.zip" id="C1">
+            <OutputFile name="VSCL-EPOInstall.sh" id="O1" targetid="F8"/>
+            <OutputFile name="VSCL-lib.sh" id="O3" targetid="F7"/>
+            <OutputFile name="VSCL-local.sh" id="O3" targetid="F6"/>
+            <OutputFile name="VSCL-Update-DAT.sh" id="O4" targetid="Fl0"/>
+            <OutputFile name="VSCL-Update-Prop1.sh" id="O5" targetid="F9"/>
+            <OutputFile name="uvwrap.sh" id="O6" targetid="F9"/>
+        </Component> 
+        <Component name="VSCL-Update-DAT" outputzip="VSCLUDAT1200.zip" id="C2">
+            <OutputFile name="VSCL-lib.sh" id="O7" targetid="F7"/>
+            <OutputFile name="VSCL-local.sh" id="O8" targetid="F6"/>
+            <OutputFile name="VSCL-Update-DAT.sh" id="O9" targetid="Fl0"/>
+            <OutputFile name="VSCL-Update-Prop1.sh" id="O10" targetid="F12"/>
+        </Component> 
+        <Component name="VSCL-Update-Prop1" outputzip="VSCL_UP11200.zip" id="C3">
+            <OutputFile name="VSCL-Update-Prop1.sh" id="O11" targetid="F12"/>
+            <OutputFile name="VSCL-lib.sh" id="O12" targetid="F7"/>
+            <OutputFile name="VSCL-local.sh" id="O13" targetid="F6"/>
+        </Component> 
+        <Component name="VSCL-Uninstall" outputzip="VSCLUNIN1200.zip" id="C4">
+            <OutputFile name="VSCL-Uninstall.sh" id="O14" targetid="F12"/>
+            <OutputFile name="VSCL-lib.sh" id="O15" targetid="F7"/>
+            <OutputFile name="VSCL-local.sh" id="O16" targetid="F6"/>
+            <OutputFile name="VSCL-Update-DAT.sh" id="O17" targetid="Fl0"/>
+        </Component> 
+        <Component name="VSCL-Package" outputzip="VSCLPACK6130.zip" id="C5">
+            <OutputFile name="vsclpackage.ini" id="O18" targetid="F13"/>
+            <OutputFile name="vscl-l64-613-l.tar.gz" id="O19" targetid="F15"/>
+            <OutputFile name="dummy.sh" id="O20" targetid="F14"/>
+        </Component> 
+    </Target>
+</Project>

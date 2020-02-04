@@ -7,7 +7,7 @@
 #-----------------------------------------------------------------------------
 # Creator:      Nick Taylor, Pr. Engineer, Broadcom SaaS Ops
 #-----------------------------------------------------------------------------
-# Date:         14-JAN-2020
+# Date:         03-FEB-2020
 #-----------------------------------------------------------------------------
 # Version:      1.2
 #-----------------------------------------------------------------------------
@@ -15,17 +15,23 @@
 #-----------------------------------------------------------------------------  
 # Switches:     -f: force library to load even if already loaded
 #-----------------------------------------------------------------------------  
-# Imports:      none
+# Imports:      ./VSCL-local.sh:    local per-site variables
 #=============================================================================
 
-# echo --------------------------------
-# set | grep -i bash
-# echo --------------------------------
-# echo "\$0 = '$0'"
-# echo "\$1 = '$1'"
-# echo --------------------------------
-echo "VSCL-lib called"
 
+#=============================================================================
+# PREPROCESS: Bypass inclusion of this file if it is already loaded
+#=============================================================================
+# If this file is NOT sourced, return error
+echo a
+if ! $(return 0 2>/dev/null); then
+    echo b
+    echo ">> ERROR! VSCL Library must be sourced.  It cannot be run standalone!"
+    echo c
+    exit 1
+fi
+
+echo d
 # Bypass inclusion if already loaded
 if [[ -z "$__VSCL_LIB_LOADED" ]]; then
     # not already loaded, set flag that it is now
@@ -37,46 +43,26 @@ else
     return 0
 fi
 
-#-----------------------------------------
-# Process command line options
-#-----------------------------------------
-# shellcheck disable=2034
-#OPTIND=1
 
-unset OPTION_VAR
+#=============================================================================
+#  IMPORTS: Import any required libraries/files
+#=============================================================================
+# shellcheck disable=SC1091
+#echo "VSCL_EPOInstall called"
+. ./VSCL-local.sh
 
-while getopts :fu OPTION_VAR; do
-    echo "\$OPTION_VAR = '$OPTION_VAR'"
-    case "$OPTION_VAR" in
-        # force library to load even if already loaded
-        "f") #echo "force"
-             unset __VSCL_LIB_LOADED
-            ;;
-        "u") #echo "unload"
-             unset -f  $( set | grep -i '^__vscl.*\ ()' | awk '{print $1}' )
-             unset $( set | grep -i '^__vscl.*=.*' | awk -F"=" '{print $1}' )
-             return 0
-            ;;
-        *)   echo "Unknown option '$OPTION_VAR' specified!"
-             exit 1
-            ;;
-    esac
-done
-
-#shift "$((OPTIND-1))"
-
-# echo "\$__VSCL_LIB_LOADED = '$__VSCL_LIB_LOADED'"
 
 #=============================================================================
 # GLOBALS: Global variables used by all scripts that import this library
 #=============================================================================
-
-unset __VSCL_SCRIPT_NAME __VSCL_SCRIPT_PATH __VSCL_DEBUG_IT __VSCL_LEAVE_FILES __VSCL_LOG_PATH
-unset __VSCL_UVSCAN_EXE __VSCL_UVSCAN_DIR __VSCL_MACONFIG_PATH __VSCL_CMDAGENT_PATH __VSCL_TEMP_DIR
-unset __VSCL_INSTALL_PKG __VSCL_INSTALL_VER __VSCL_PKG_VER_FILE __VSCL_PKG_VER_SECTION __VSCL_MASK_REGEXP
-unset __VSCL_SAVE_IFS
-
-__VSCL_SCRIPT_ABBR="VSCLLIB"
+unset __VSCL_SCRIPT_ABBR __VSCL_SCRIPT_NAME __VSCL_SCRIPT_PATH __VSCL_DEBUG_IT
+unset __VSCL_LEAVE_FILES __VSCL_LOG_PATH __VSCL_UVSCAN_EXE __VSCL_UNINSTALL_EXE 
+unset __VSCL_UVSCAN_DIR __VSCL_UVSCAN_CMD __VSCL_INSTALL_CMD __VSCL_UNINSTALL_CMD 
+unset __VSCL_WRAPPER __VSCL_LIBRARY __VSCL_LOCALIZATION __VSCL_MACONFIG_PATH 
+unset __VSCL_CMDAGENT_PATH __VSCL_INSTALL_PKG __VSCL_INSTALL_VER __VSCL_PKG_VER_FILE 
+unset __VSCL_PKG_VER_SECTION __VSCL_EPO_VER_FILE __VSCL_EPO_VER_SECTION 
+unset __VSCL_EPO_FILE_LIST __VSCL_TOOLBOX_FILES __VSCL_MASK_REGEXP 
+unset __VSCL_NOTINST_CODE __VSCL_INVALID_CODE 
 
 # name of script file (the one that dotsourced this library, not the library itself)
 # shellcheck disable=SC2034
@@ -107,9 +93,11 @@ __VSCL_UVSCAN_DIR="/usr/local/uvscan"
 __VSCL_UVSCAN_CMD="$__VSCL_UVSCAN_DIR/$__VSCL_UVSCAN_EXE"
 
 # Raw command to install VSCL from installer tarball
+# shellcheck disable=SC2034
 __VSCL_INSTALL_CMD="install-uvscan"
 
 # Raw command to remove VSCL from system
+# shellcheck disable=SC2034
 __VSCL_UNINSTALL_CMD="$__VSCL_UVSCAN_DIR/$__VSCL_UNINSTALL_EXE"
 
 # Filename of scan wrapper to copy to VSCL software directory
@@ -128,29 +116,37 @@ __VSCL_MACONFIG_PATH="/opt/McAfee/agent/bin/maconfig"
 __VSCL_CMDAGENT_PATH="/opt/McAfee/agent/bin/cmdagent"
 
 # EPO package name of uploaded VSCL installer
+# shellcheck disable=SC2034
 __VSCL_INSTALL_PKG="VSCLPACK"
 
 # Version of EPO package name of uploaded VSCL installer
+# shellcheck disable=SC2034
 __VSCL_INSTALL_VER="6130"
 
 # Name of versioning file in EPO installer package
+# shellcheck disable=SC2034
 __VSCL_PKG_VER_FILE="vsclpackage.ini"
 
 # Section name of versioning file to search for
+# shellcheck disable=SC2034
 __VSCL_PKG_VER_SECTION="VSCL-PACK"
 
 # name of the repo file with current DAT version
+# shellcheck disable=SC2034
 __VSCL_EPO_VER_FILE="avvdat.ini"
 
 # section of avvdat.ini from repository to examine for DAT version
+# shellcheck disable=SC2034
 __VSCL_EPO_VER_SECTION="AVV-ZIP"
 
 # space-delimited list of files to unzip from downloaded EPO .ZIP file
 # format => <filename>:<permissions>
+# shellcheck disable=SC2034
 __VSCL_EPO_FILE_LIST="avvscan.dat:444 avvnames.dat:444 avvclean.dat:444"
 
 # space-delimited list of files to unzip from downloaded EPO .ZIP file
 # format => <filename>:<permissions>
+# shellcheck disable=SC2034
 __VSCL_TOOLBOX_FILES="./$__VSCL_WRAPPER:+x ./$__VSCL_LIBRARY:+x ./$__VSCL_LOCALIZATION:+x "
 
 # sed style mask to remove common text in McAfee error messages
@@ -159,8 +155,10 @@ __VSCL_TOOLBOX_FILES="./$__VSCL_WRAPPER:+x ./$__VSCL_LIBRARY:+x ./$__VSCL_LOCALI
 __VSCL_MASK_REGEXP="s/^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\ [0-9][0-9]:[0-9][0-9]:[0-9][0-9]\.[0-9]*\ ([0-9]*\.[0-9]*)\ //g"
 
 # default return codes for Custom 1 property fields
+# shellcheck disable=SC2034
 __VSCL_NOTINST_CODE="VSCL:NOT_INSTALLED"
 __VSCL_INVALID_CODE="VSCL:INVALID_DAT"
+
 
 #=============================================================================
 # FUNCTIONS: VSCL Library functions
@@ -174,15 +172,15 @@ function Do_Cleanup {
 
     if [[ -z "$__VSCL_LEAVE_FILES" ]]; then
         if [[ -d "$__VSCL_TEMP_DIR" ]]; then
-            Log_Info "Removing temp dir '$__VSCL_TEMP_DIR'..."
+            # Log_Info "Removing temp dir '$__VSCL_TEMP_DIR'..."
             
-            if ! Capture_Command "rm" "-rf $__VSCL_TEMP_DIR"; then
+            if ! rm -rf "$__VSCL_TEMP_DIR"; then
                 Log_Warning "Cannot remove temp dir '$__VSCL_TEMP_DIR'!"
             fi
 
-            Log_Info "Removing temp file '$__VSCL_TEMP_FILE'..."
+            # Log_Info "Removing temp file '$__VSCL_TEMP_FILE'..."
             
-            if ! Capture_Command "rm" "-rf $__VSCL_TEMP_FILE"; then
+            if ! rm -rf "$__VSCL_TEMP_FILE"; then
                 Log_Warning "Cannot remove temp file '$__VSCL_TEMP_FILE'!"
             fi
         fi
@@ -262,8 +260,9 @@ function Log_Print {
     set +x
     
     # Prepend date/time, which script, then the log message
-    # i.e.  "11/12/2019 11:14:10 AM:VSCL_UP1:Refreshing agent data with EPO..."
-    #        <- date -------------> <script> <-- message -->
+    # i.e.  "11/12/2019 11:14:10 AM:VSCL_UP1:[x]Refreshing agent data with EPO..."
+    #        <- date -------------> <script> <+><-- message -->
+    #                                         ^-- log mode "I": info, "W": warning, "E": errror
     OUTTEXT="$(date +'%x %X'):$__VSCL_SCRIPT_ABBR:$*"
 
     if [[ -w $__VSCL_LOG_PATH ]]; then
@@ -341,7 +340,7 @@ function Capture_Command {
     # Returns: 0/ok if command ran
     #          Error code if command failed
     #------------------------------------------------------------
-    local OUT ERR OUTTEXT MASK_REGEXP CAPTURE_CMD REDIRECT_CMD CAPTURE_ARG VAR_EMPTY PRE_CMD
+    local ERR OUTTEXT CAPTURE_CMD CAPTURE_ARG VAR_EMPTY PRE_CMD
     
     VAR_EMPTY=""
     CAPTURE_CMD="${1:-$VAR_EMPTY}"
@@ -358,10 +357,11 @@ function Capture_Command {
         Log_Info ">> cmd = '$CAPTURE_CMD $CAPTURE_ARG'"
     fi
     
+    # shellcheck disable=SC2086
     if [[ -n "$PRE_CMD" ]]; then
-        $PRE_CMD | $CAPTURE_CMD $CAPTURE_ARG 2>&1 > "$__VSCL_TEMP_FILE"
+        $PRE_CMD | $CAPTURE_CMD $CAPTURE_ARG > "$__VSCL_TEMP_FILE" 2>&1
     else
-        $CAPTURE_CMD $CAPTURE_ARG 2>&1 > "$__VSCL_TEMP_FILE"
+        $CAPTURE_CMD $CAPTURE_ARG > "$__VSCL_TEMP_FILE" 2>&1
     fi
     
     ERR=$?
@@ -409,7 +409,7 @@ function Refresh_ToEPO {
     
     # loop through provided flags and call one command per
     # (CMDAGENT can't handle more than one)
-    for FLAG_NAME in $CMDAGENTFLAGS; do
+    for FLAG_NAME in $CMDAGENT_FLAGS; do
         if ! Capture_Command "$__VSCL_CMDAGENT_PATH" "$FLAG_NAME"; then
             Log_Error "Error running EPO refresh command '$__VSCL_CMDAGENT_PATH $FLAG_NAME'\!"
         fi
@@ -555,6 +555,7 @@ function Get_CurrDATVer {
     #echo "e"
     #ls -lAh $LOCAL_VER_FILE
 
+    # shellcheck disable=SC2181
     if [[ "$?" == "0" ]]; then
         UVSCAN_STATUS=$RESULT
     else
@@ -571,7 +572,7 @@ function Get_CurrDATVer {
     # default to printing entire DAT and engine string, i.e. "9999.0 (9999.9999)"
     OUTTEXT=$(printf "%s.0 (%s)\n" "$LOCAL_DAT_VER" "$LOCAL_ENG_VER")
 
-    if [[ ! -z $1 ]]; then
+    if [[ -n $1 ]]; then
         case $1 in
             # Extract everything up to first '.'
             "DATMAJ") OUTTEXT="$(echo "$LOCAL_DAT_VER" | cut -d. -f-1)"
@@ -650,7 +651,7 @@ function Download_File {
             #echo "\$FILE_NAME = '$FILE_NAME'"
             #ls -lAh $FILE_NAME
             #file $FILE_NAME
-            cat "$FILE_NAME" | tr -d '\r' > $FILE_NAME.tmp
+            tr -d '\r' < "$FILE_NAME" > "$FILE_NAME.tmp"
             #ls -lAh "$FILE_NAME.tmp"
             #file "$FILE_NAME.tmp"
             rm -f "$FILE_NAME"
@@ -764,7 +765,7 @@ function Update_FromZip {
     #              (format => <filename>:<chmod>)
     #---------------------------------------------------------------
 
-    local FILES_TO_DOWNLOAD FNAME FILE_NAME UNZIPOPTIONS PERMISSIONS BACKUP_DIR
+    local FILES_TO_DOWNLOAD FNAME FILE_NAME UNZIPOPTIONS PERMISSIONS
 
     # strip filename to a list
     for FNAME in $3; do
@@ -788,6 +789,7 @@ function Update_FromZip {
     Log_Info "Uncompressing '$2' to '$1'..."
     UNZIPOPTIONS="-o -d $1 $2 $FILES_TO_DOWNLOAD"
 
+    # shellcheck disable=SC2086
     if ! unzip $UNZIPOPTIONS 2> /dev/null; then
         Exit_WithError "Error unzipping '$2' to '$1'!"
     fi
@@ -802,32 +804,82 @@ function Update_FromZip {
     return 0
 }
 
+function Init_Library {
+    #---------------------------------------------------------------
+    # Initialize the library functions
+    #---------------------------------------------------------------
+    # Switches:     -f: force library to load even if already loaded
+    #---------------------------------------------------------------
+
+    # echo --------------------------------
+    # set | grep -i bash
+    # echo --------------------------------
+    # echo "\$0 = '$0'"
+    # echo --------------------------------
+
+    #-----------------------------------------
+    # Process command line options
+    #-----------------------------------------
+    unset OPTION_VAR
+
+    while getopts :fu OPTION_VAR; do
+        echo "\$OPTION_VAR = '$OPTION_VAR'"
+        case "$OPTION_VAR" in
+            # force library to load even if already loaded
+            "f") #echo "force"
+                 unset __VSCL_LIB_LOADED
+                ;;
+            #"u") #echo "unload"
+            #     unset -f  $( set | grep -i '^__vscl.*\ ()' | awk '{print $1}' )
+            #     unset $( set | grep -i '^__vscl.*=.*' | awk -F"=" '{print $1}' )
+            #     return 0
+            #    ;;
+            *)   echo "Unknown option '$OPTION_VAR' specified!"
+                 exit 1
+                ;;
+        esac
+    done
+
+    #shift "$((OPTIND-1))"
+
+    # echo "\$__VSCL_LIB_LOADED = '$__VSCL_LIB_LOADED'"
+    #-----------------------------------------
+    # VSCL Library initialization code
+    #-----------------------------------------
+    #echo "\$__VSCL_TEMP_DIR = '$__VSCL_TEMP_DIR'"
+    __VSCL_SCRIPT_ABBR="VSCLLIB"
+
+    if [[ -z "$__VSCL_TEMP_DIR" ]]; then
+        # no current temp directory specified in environment
+        # __VSCL_TEMP_DIR must be a directory and writable
+        __VSCL_TEMP_DIR=$(mktemp -d -p "$__VSCL_SCRIPT_PATH" 2> /dev/null)
+    fi
+
+    if [[ ! -d "$__VSCL_TEMP_DIR" ]]; then
+        # Log_Info "Temporary directory: '$__VSCL_TEMP_DIR'"
+    # else
+        Exit_WithError "Unable to use temporary directory '$__VSCL_TEMP_DIR'"
+    fi
+
+    if [[ -z "$__VSCL_TEMP_FILE" ]]; then
+        # no current temp file specified in environment
+        # __VSCL_TEMP_FILE must be a file and writable
+        __VSCL_TEMP_FILE=$(mktemp -p "$__VSCL_SCRIPT_PATH" 2> /dev/null)
+    fi
+
+    if [[ ! -f "$__VSCL_TEMP_FILE" ]]; then
+        # Log_Info "Temporary file: '$__VSCL_TEMP_FILE'"
+    # else
+        Exit_WithError "Unable to use temporary file '$__VSCL_TEMP_FILE'"
+    fi
+
+    __VSCL_SAVE_IFS=$IFS
+    return 0
+}
+
 #=============================================================================
 # MAIN: Code execution begins here
 #=============================================================================
-# echo --------------------------------
-# set | grep -i bash
-# echo --------------------------------
-# echo "\$0 = '$0'"
-# echo --------------------------------
-
-#-----------------------------------------
-# VSCL Library initialization code
-#-----------------------------------------
-#echo "\$__VSCL_TEMP_DIR = '$__VSCL_TEMP_DIR'"
-
-if [[ -z "$__VSCL_TEMP_DIR" ]]; then
-    # no current temp directory specified in environment
-    # __VSCL_TEMP_DIR must be a directory and writable
-    __VSCL_TEMP_DIR=$(mktemp -d -p "$__VSCL_SCRIPT_PATH" 2> /dev/null)
-    __VSCL_TEMP_FILE=$(mktemp -p "$__VSCL_SCRIPT_PATH" 2> /dev/null)
-fi
-
-if [[ -d "$__VSCL_TEMP_DIR" ]]; then
-    Log_Info "Temporary directory: '$__VSCL_TEMP_DIR'"
-else
-    Exit_WithError "Unable to use temporary directory '$__VSCL_TEMP_DIR'"
-fi
-
-__VSCL_SAVE_IFS=$IFS
-
+# File is sourced, execute initialization and return to sourcing code
+Init_Library "$@"
+return $?
