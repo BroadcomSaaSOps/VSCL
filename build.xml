@@ -1,58 +1,42 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<Project name="VSCL Project">
-    <Source path="E:\Software\McAfee\EEDK\Development\VSCL" id="P1">
-        <File name="VSCL-EPOInstall.eedk" type="EEDK" id="F1"/>
-        <File name="VSCL-Uninstall.eedk" type="EEDK" id="F2"/>
-        <File name="VSCL-Update-DAT.eedk" type="EEDK" id="F3"/>
-        <File name="VSCL-Update-Prop1.eedk" type="EEDK" id="F4"/>
-        <File name="VSCL-Package.eedk" type="EEDK" id="F5"/>
-        <File name="VSCL-local.sh" type="ShellCode" id="F6"/>
-        <File name="VSCL-lib.sh" type="ShellCode" id="F7">
-            <IncludeFile name="VSCL-local.sh" id="I1" targetid="F6"/>
-        </File>
+<Project name="VSCL Project" id="P1">
+    <Source path="E:\Software\McAfee\EEDK\Development\VSCL\" id="S1">
+        <File name="VSCL-EPOInstall.eedk" type="EEDK" targetdir="D1" id="F1"/>
+        <File name="VSCL-Uninstall.eedk" type="EEDK" targetdir="D3" id="F2"/>
+        <File name="VSCL-Update-DAT.eedk" type="EEDK" targetdir="D2" id="F3"/>
+        <File name="VSCL-Update-Prop1.eedk" type="EEDK" targetdir="D4" id="F4"/>
+        <File name="VSCL-Package.eedk" type="EEDK" targetdir="D5" id="F5"/>
+        <File name="VSCL-local.sh" type="Code" id="F6"/>
+        <File name="VSCL-lib.sh" type="Code" id="F7"/>
+
         <Directory name="VSCL-EPOInstall" id="D1">
-            <File name="VSCL-EPOInstall.sh" type="ShellCode" id="F8">
-                <IncludeFile name="VSCL-lib.sh" id="I2" targetid="L1"/>
-                <includeile name="VSCL-Update-DAT.sh" id="I3" targetid="L3"/>
-            </File>
-            <File name="uvwrap.sh" type="ShellCode" id="F9">
-                <IncludeFile name="VSCL-lib.sh" id="I4" targetid="L1"/>
-            </File>
-            <Link name="VSCL-lib.sh"  type="SymLink" id="L1" targetid="F6"/>
-            <Link name="VSCL-local.sh" type="SymLink" id="L2" targetid="F7"/>
-            <Link name="VSCL-Update-DAT.sh" type="SymLink" id="L3" targetid="F10"/>
-            <Link name="VSCL-Update-Prop1.sh" type="SymLink" id="L4" targetid="F12"/>
+            <File name="VSCL-EPOInstall.sh" type="Code" id="F8"/>
+            <File name="uvwrap.sh" type="Code" id="F9"/>
         </Directory>
         <Directory name="VSCL-Update-DAT" id="D2">
-            <File name="VSCL-Update-DAT.sh" id="F10">
-                <IncludeFile name="VSCL-lib.sh" id="I5" targetid="F7"/>
-                <IncludeFile name="VSCL-Update-Prop1.sh" id="I6" targetid="F12"/>
-            </File>
-            <Link name="VSCL-lib.sh" type="SymLink" id="L5" targetid="F6"/>
-            <Link name="VSCL-local.sh" type="SymLink" id="L6" targetid="F7"/>
-            <Link name="VSCL-Update-Prop1.sh" type="SymLink" id="L7" targetid="F12"/>
+            <File name="VSCL-Update-DAT.sh" type="Code" id="F10"/>
         </Directory>
         <Directory name="VSCL-Uninstall" id="D3">
-            <File name="VSCL-Uninstall.sh" id="F11">
-                <IncludeFile name="VSCL-lib.sh" id="I7" targetid="F7"/>
-                <IncludeFile name="VSCL-Update-Prop1.sh" id="I7" targetid="F12"/>
-            </File>
-            <Link name="VSCL-lib.sh" type="SymLink" id="L8" targetid="F6"/>
-            <Link name="VSCL-local.sh" type="SymLink" id="L9" targetid="F7"/>
-            <Link name="VSCL-Update-Prop1.sh" type="SymLink" id="L10" targetid="F12"/>
+            <File name="VSCL-Uninstall.sh" type="Code" id="F11"/>
         </Directory>
         <Directory name="VSCL-Update-Prop1" id="D4">
-            <File name="VSCL-Update-Prop1.sh" id="F12">
-                <IncludeFile name="VSCL-lib.sh" id="I8" targetid="F7"/>
-            </File>
-            <Link name="VSCL-lib.sh" type="SymLink" id="L10" targetid="F6"/>
-            <Link name="VSCL-local.sh" type="SymLink" id="L11" targetid="F7"/>
+            <File name="VSCL-Update-Prop1.sh" type="Code" id="F12"/>
         </Directory>
         <Directory name="VSCL-Package" id="D5">
-            <File name="vsclpackage.ini" id="F13"/>
-            <File name="Dummy.sh" id="F14"/>
-            <File name="vscl-l64-613-l.tar.gz" id="F15"/>
+            <File name="vsclpackage.ini" type="INI" id="F13"/>
+            <File name="Dummy.sh" type="Code" id="F14"/>
+            <File name="vscl-l64-613-l.tar.gz" type="Tarball" id="F15"/>
         </Directory>
+
+        <Dependency id="P0" parentid="F7" childID="F6"/>
+        <Dependency id="P1" parentid="F8" childID="F6"/>
+        <Dependency id="P2" parentid="F8" childID="F10"/>
+        <Dependency id="P3" parentid="F9" childID="F6"/>
+        <Dependency id="P4" parentid="F10" childID="F7"/>
+        <Dependency id="P5" parentid="F10" childID="F12"/>
+        <Dependency id="P6" parentid="F11" childID="F7"/>
+        <Dependency id="P7" parentid="F11" childID="F12"/>
+        <Dependency id="P8" parentid="F12" childID="F7"/>
     </Source>
     <Target path="E:\Software\McAfee\EEDK\Builds" id="P2">
         <Component name="VSCL-EPOInstall" outputzip="VSCLEPOI1200.zip" id="C1">

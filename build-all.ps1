@@ -18,6 +18,9 @@ Begin {
       Start-Process powershell.exe "-File",('"{0}"' -f $MyInvocation.MyCommand.Path) -Verb RunAs
       exit
     }
+
+    . ./_RemoteFunctions_v3.ps1
+    $cred = Get-UserCredential
 }
 
 Process {
@@ -85,8 +88,6 @@ Process {
             # exit 1
         # }
     # }
-    
-    $cred = Get-Credential -ea SilentlyContinue
     
     if ( -not $cred ) {
         "No credentials supplied! Exiting..."

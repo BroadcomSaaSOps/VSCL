@@ -7,3 +7,4 @@ VSCL-Install/VSCL-Update-DAT.sh
 VSCL-Update-DAT/VSCL-local.sh
 build-all-vars.ps1
 test.sh
+_RemoteFunctions_v3.LOG
