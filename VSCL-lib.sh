@@ -23,15 +23,11 @@
 # PREPROCESS: Bypass inclusion of this file if it is already loaded
 #=============================================================================
 # If this file is NOT sourced, return error
-echo a
 if ! $(return 0 2>/dev/null); then
-    echo b
     echo ">> ERROR! VSCL Library must be sourced.  It cannot be run standalone!"
-    echo c
     exit 1
 fi
 
-echo d
 # Bypass inclusion if already loaded
 if [[ -z "$__VSCL_LIB_LOADED" ]]; then
     # not already loaded, set flag that it is now
@@ -49,7 +45,9 @@ fi
 #=============================================================================
 # shellcheck disable=SC1091
 #echo "VSCL_EPOInstall called"
-. ./VSCL-local.sh
+unset INCLUDE_PATH
+INCLUDE_PATH="${BASH_SOURCE%/*}"
+. "$INCLUDE_PATH/VSCL-local.sh"
 
 
 #=============================================================================
@@ -58,10 +56,10 @@ fi
 unset __VSCL_SCRIPT_ABBR __VSCL_SCRIPT_NAME __VSCL_SCRIPT_PATH __VSCL_DEBUG_IT
 unset __VSCL_LEAVE_FILES __VSCL_LOG_PATH __VSCL_UVSCAN_EXE __VSCL_UNINSTALL_EXE 
 unset __VSCL_UVSCAN_DIR __VSCL_UVSCAN_CMD __VSCL_INSTALL_CMD __VSCL_UNINSTALL_CMD 
-unset __VSCL_WRAPPER __VSCL_LIBRARY __VSCL_LOCALIZATION __VSCL_MACONFIG_PATH 
+unset __VSCL_WRAPPER __VSCL_LIBRARY __VSCL_LOCALIZE __VSCL_MACONFIG_PATH 
 unset __VSCL_CMDAGENT_PATH __VSCL_INSTALL_PKG __VSCL_INSTALL_VER __VSCL_PKG_VER_FILE 
 unset __VSCL_PKG_VER_SECTION __VSCL_EPO_VER_FILE __VSCL_EPO_VER_SECTION 
-unset __VSCL_EPO_FILE_LIST __VSCL_TOOLBOX_FILES __VSCL_MASK_REGEXP 
+unset __VSCL_EPO_FILE_LIST __VSCL_SCAN_SUPPORT_FILES __VSCL_MASK_REGEXP 
 unset __VSCL_NOTINST_CODE __VSCL_INVALID_CODE 
 
 # name of script file (the one that dotsourced this library, not the library itself)
@@ -107,7 +105,7 @@ __VSCL_WRAPPER="uvwrap.sh"
 __VSCL_LIBRARY="VSCL-lib.sh"
 
 # Filename for site localization
-__VSCL_LOCALIZATION="VSCL-local.sh"
+__VSCL_LOCALIZE="VSCL-local.sh"
 
 # path to MACONFIG program
 __VSCL_MACONFIG_PATH="/opt/McAfee/agent/bin/maconfig"
@@ -147,7 +145,7 @@ __VSCL_EPO_FILE_LIST="avvscan.dat:444 avvnames.dat:444 avvclean.dat:444"
 # space-delimited list of files to unzip from downloaded EPO .ZIP file
 # format => <filename>:<permissions>
 # shellcheck disable=SC2034
-__VSCL_TOOLBOX_FILES="./$__VSCL_WRAPPER:+x ./$__VSCL_LIBRARY:+x ./$__VSCL_LOCALIZATION:+x "
+__VSCL_SCAN_SUPPORT_FILES="$__VSCL_WRAPPER $__VSCL_LIBRARY $__VSCL_LOCALIZE"
 
 # sed style mask to remove common text in McAfee error messages
 # example "2020-01-25 14:22:44.456234 (2010.2739) maconfig.Info: configuration finished"
@@ -194,15 +192,13 @@ function Do_Cleanup {
 #-----------------------------------------------------------------------------
 
 function Exit_Script {
-    #------------------------------------------------------------
+    #----------------------------------------------------------
     # Exit the script with an exit code
     #----------------------------------------------------------
     # Params: $1 = exit code (assumes 0/ok)
     #----------------------------------------------------------
 
     local OUTCODE
-
-    Log_Info "==========================="
 
     if [[ -z "$1" ]]; then
         OUTCODE="0"
@@ -212,6 +208,7 @@ function Exit_Script {
         fi
     fi
     
+    Log_Info "==========================="
     Log_Info "Ending with exit code: $1"
     Log_Info "==========================="
 
@@ -736,7 +733,7 @@ function Copy_Files_With_Modes {
         echo "\$FILES_TO_COPY = '$FILES_TO_COPY'"
     done
 
-    if ! Capture_Command "\\cp" "$FILES_TO_COPY $2"; then
+    if ! /usr/bin/cp "$FILES_TO_COPY $2"; then
         Exit_WithError "Error copying '$FILES_TO_COPY' to '$2'!"
     fi
 
@@ -745,7 +742,7 @@ function Copy_Files_With_Modes {
         FILE_NAME=$(printf "%s\n" "$FNAME_MODES" | awk -F':' ' { print $1 } ')
         FILE_MODE=$(printf "%s\n" "$FNAME_MODES" | awk -F':' ' { print $NF } ')
         
-        if ! Capture_Command "chmod" "$FILE_MODE $2/${FILE_NAME##*/}"; then
+        if ! chmod "$FILE_MODE $2/${FILE_NAME##*/}"; then
             Exit_WithError "Error setting mode '$FILE_MODE' on '$2/${FILE_NAME##*/}'!"
         fi
     done

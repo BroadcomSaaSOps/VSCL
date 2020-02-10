@@ -1,0 +1,180 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+Generated: 2/6/2020 3:46:21 PM
+EEDK.exe
+-Build:"E:\Software\McAfee\EEDK\Builds" -Folder:"E:\Software\McAfee\EEDK\Development\VSCL\VSCL-EPOPatch" -ProdName:"VSCLEPAT" -ProdID:"1200" -ProdVer:"1.2.0.0" -ProdDesc:"VSCL - Install VSCL Patch from EPO (VSCLEPAT)" -Install:"./VSCL-EPOPatch.sh" -Reboot:"3010" -Platform:"LINUX" 
+-->
+<ePO.Endpoint.Deployment.Kit.Settings>
+  <File>false</File>
+  <Folder>true</Folder>
+  <SourcePackages>E:\Software\McAfee\EEDK\Development\VSCL\VSCL-EPOPatch</SourcePackages>
+  <BuildFolder>E:\Software\McAfee\EEDK\Builds</BuildFolder>
+  <ProductName>VSCLEPAT</ProductName>
+  <ProductID>1200</ProductID>
+  <ProductDescription>VSCL - Install VSCL Patch from EPO (VSCLEPAT)</ProductDescription>
+  <ProductVersion>1.2.0.0</ProductVersion>
+  <InstallCommand>./VSCL-EPOPatch.sh</InstallCommand>
+  <DetectionKey />
+  <DetectionValue />
+  <LocationKey />
+  <LocationValue />
+  <UninstallCommand />
+  <RebootReturnCode>3010</RebootReturnCode>
+  <OSTypes>
+    <OSType>
+      <Name>Windows (All Versions)</Name>
+      <Type>W2KW|WXPHE|WXPW|WXPE|WVST|WNT7W|W2KS|W2KAS|W2KDC|WXPS|WVSTS|WIN8W|WIN8S|WINXW|WINXS</Type>
+      <Selected>false</Selected>
+    </OSType>
+    <OSType>
+      <Name>Windows 2000 Workstation</Name>
+      <Type>W2KW</Type>
+      <Selected>false</Selected>
+    </OSType>
+    <OSType>
+      <Name>Windows XP</Name>
+      <Type>WXPHE|WXPW</Type>
+      <Selected>false</Selected>
+    </OSType>
+    <OSType>
+      <Name>Windows XP Embedded</Name>
+      <Type>WXPE</Type>
+      <Selected>false</Selected>
+    </OSType>
+    <OSType>
+      <Name>Windows Vista</Name>
+      <Type>WVST</Type>
+      <Selected>false</Selected>
+    </OSType>
+    <OSType>
+      <Name>Windows 7</Name>
+      <Type>WNT7W</Type>
+      <Selected>false</Selected>
+    </OSType>
+    <OSType>
+      <Name>Windows 8</Name>
+      <Type>WIN8W</Type>
+      <Selected>false</Selected>
+    </OSType>
+    <OSType>
+      <Name>Windows 10</Name>
+      <Type>WINXW</Type>
+      <Selected>false</Selected>
+    </OSType>
+    <OSType>
+      <Name>Windows Server 2000</Name>
+      <Type>W2KS|W2KAS|W2KDC</Type>
+      <Selected>false</Selected>
+    </OSType>
+    <OSType>
+      <Name>Windows Server 2003</Name>
+      <Type>WXPS</Type>
+      <Selected>false</Selected>
+    </OSType>
+    <OSType>
+      <Name>Windows Server 2008</Name>
+      <Type>WVSTS</Type>
+      <Selected>false</Selected>
+    </OSType>
+    <OSType>
+      <Name>Windows Server 2012</Name>
+      <Type>WIN8S</Type>
+      <Selected>false</Selected>
+    </OSType>
+    <OSType>
+      <Name>Windows 10 Server</Name>
+      <Type>WINXS</Type>
+      <Selected>false</Selected>
+    </OSType>
+    <OSType>
+      <Name>Macintosh</Name>
+      <Type>MAC</Type>
+      <Selected>false</Selected>
+    </OSType>
+    <OSType>
+      <Name>Linux</Name>
+      <Type>LINUX</Type>
+      <Selected>true</Selected>
+    </OSType>
+    <OSType>
+      <Name>AIX</Name>
+      <Type>AIX</Type>
+      <Selected>false</Selected>
+    </OSType>
+    <OSType>
+      <Name>HP-UX</Name>
+      <Type>HPUX|HPIA</Type>
+      <Selected>false</Selected>
+    </OSType>
+    <OSType>
+      <Name>Solaris</Name>
+      <Type>SLR</Type>
+      <Selected>false</Selected>
+    </OSType>
+  </OSTypes>
+  <MCSTemplate>;*********************************
+;Torry Campbell McAfee Inc.
+;August 2010
+;August 2011: e^2
+
+;All rights reseverved
+;*********************************
+
+[InitializeVariables]
+SetGlobal       gPointProductDetectionKey = $CUSTOMPRODDETKEY$
+SetGlobal       gPointProductDetectionValue = $CUSTOMPRODDETVAL$
+SetGlobal       gPointProductLocationKey = $CUSTOMPRODLOCKEY$
+SetGlobal       gPointProductLocationValue = $CUSTOMPRODLOCVAL$
+SetGlobal       gCustomUninstallString = $CUSTOMUNINSTALL$
+SetGlobal       INSTALLED = 1
+SetGlobal       NOTINSTALLED = 0
+SetGlobal       UpdateError = -1
+SetGlobal       REBOOT_NOW = 0
+
+[ScriptMain]
+ReportStatus    Called ScriptMain
+Call            InitializeVariables
+Return          %%INSTALLED%%
+
+[IsProductInstalled]
+Call            InitializeVariables
+FindRegValue    bRet = %%gPointProductDetectionKey%%, %%gPointProductDetectionValue%%
+SetGlobal       gInstalledProductProduct = FALSE
+ReturnIf        %%bRet%% == FALSE, %%NOTINSTALLED%%
+SetGlobal       gInstalledProductProduct = %%szPointProductName%%
+Return          %%INSTALLED%%
+
+[GetUninstallCommand]
+Call            bRet = IsProductInstalled
+ReturnIf        %%bRet%% == %%NOTINSTALLED%%, %%NOTINSTALLED%%
+SetGlobal       gProductUninstallCommand = %%gCustomUninstallString%%
+Return          %%INSTALLED%%
+
+[GetInstalledLanguage]
+SetGlobal       gPointProductInstalledLanguage = FFFF
+Call            bRet = IsProductInstalled
+ReturnIf        %%bRet%% == %%NOTINSTALLED%%, %%NOTINSTALLED%%
+SetGlobal       gPointProductInstalledLanguage = 0000
+Return          %%INSTALLED%%
+
+[GetUninstallRebootReturnCode]
+Call            bRet = IsProductInstalled
+ReturnIf        %%bRet%% == %%NOTINSTALLED%%, %%NOTINSTALLED%%
+SetGlobal       gRebootReturnCode = 3010
+Return          %%INSTALLED%%
+
+[GetInstallDirectory]
+SetGlobal       gPointProductInstallationDirectory = UNKNOWN
+Call            bRet = IsProductInstalled
+ReturnIf        %%bRet%% == %%NOTINSTALLED%%, %%NOTINSTALLED%%
+Set             RegKeyToFind = %%gPointProductLocationKey%%
+Call            bRet = DoesRegKeyExist
+ReturnIf        %%bRet%% == FALSE, %%NOTINSTALLED%%
+Set             szValue = %%gPointProductLocationValue%%
+FindRegValue    bRet = %%RegKeyToFind%%, %%szValue%%
+ReturnIf        %%bRet%% == FALSE, FALSE
+GetRegValue     InstallDirectory = %%RegKeyToFind%%, %%szValue%%
+ReturnIf        %%InstallDirectory%% == FALSE, %%NOTINSTALLED%%
+SetGlobal       gPointProductInstallationDirectory = %%InstallDirectory%%
+Return          %%INSTALLED%%</MCSTemplate>
+</ePO.Endpoint.Deployment.Kit.Settings>

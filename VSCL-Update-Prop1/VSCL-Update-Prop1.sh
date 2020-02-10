@@ -46,7 +46,9 @@ fi
 #  IMPORTS: Import any required libraries/files
 #=============================================================================
 # shellcheck disable=SC1091
-. ./VSCL-lib.sh
+unset INCLUDE_PATH
+INCLUDE_PATH="${BASH_SOURCE%/*}"
+. "$INCLUDE_PATH/VSCL-lib.sh"
 
 
 #=============================================================================
