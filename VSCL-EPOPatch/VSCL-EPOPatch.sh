@@ -98,6 +98,11 @@ function Install_Patch {
         fi
     done
 
+    if ! chmod 646 "$__VSCL_LOG_PATH"; then
+        # unable to make target support file executable, error
+        Exit_WithError "Unable to set permisions on '$__VSCL_LOG_PATH'. Aborting installer!"
+    fi
+
     # Clean up global variables and exit cleanly
     Exit_Script $?
 }

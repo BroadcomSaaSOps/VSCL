@@ -41,7 +41,7 @@ fi
 unset INCLUDE_PATH THIS_FILE
 THIS_FILE="${BASH_SOURCE[0]}"
 THIS_FILE=$(while [[ -L "$THIS_FILE" ]]; do THIS_FILE="$(readlink "$THIS_FILE")"; done; echo $THIS_FILE)
-INCLUDE_PATH="${THIS_FILE%/*}"
+#INCLUDE_PATH="${THIS_FILE%/*}"
 #. "$INCLUDE_PATH/VSCL-lib.sh"
 
 #=============================================================================
