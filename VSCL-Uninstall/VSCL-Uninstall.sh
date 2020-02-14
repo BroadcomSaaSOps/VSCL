@@ -3,7 +3,7 @@
 #=============================================================================
 # NAME:     UNINSTALL-VSCL.SH
 #-----------------------------------------------------------------------------
-# Purpose:  Uninstall the McAfee VirusScan Command Line Scanner v6.1.0
+# Purpose:  Uninstall the McAfee VirusScan Command line Scanner v6.1.0
 #           from SaaS Linux PPM App servers
 #-----------------------------------------------------------------------------
 # Creator:  Nick Taylor, Pr. Engineer, Broadcom SaaS Ops
@@ -40,11 +40,12 @@ fi
 #  IMPORTS: Import any required libraries/files
 #=============================================================================
 # shellcheck disable=SC1091
-unset INCLUDE_PATH
-INCLUDE_PATH="${BASH_SOURCE%/*}"
-. "$INCLUDE_PATH/VSCL-lib.sh"
+unset include_path this_file
+this_file="${BASH_SOURCE[0]}"
+this_file=$(while [[ -L "$this_file" ]]; do this_file="$(readlink "$this_file")"; done; echo $this_file)
+include_path="${this_file%/*}"
 # shellcheck disable=SC1091
-. "$INCLUDE_PATH/VSCL-Update-Prop1.sh"
+. "$include_path/VSCL-Update-Prop1.sh"
 
 
 #=============================================================================
@@ -52,40 +53,40 @@ INCLUDE_PATH="${BASH_SOURCE%/*}"
 #=============================================================================
 # Abbreviation of this script name for logging
 # shellcheck disable=SC2034
-__VSCL_SCRIPT_ABBR="VSCLUNIN"
+declare -x __vscl_script_abbr="VSCLUNIN"
 
 
 #=============================================================================
 # MAIN FUNCTION: primary function of this script
 #=============================================================================
-function Uninstall_VSCL {
-    Log_Info "==========================="
-    Log_Info "Beginning VSCL uninstall"
-    Log_Info "==========================="
+function uninstall_vscl {
+    log_info "==========================="
+    log_info "Beginning VSCL uninstall"
+    log_info "==========================="
 
-    #echo "\$__VSCL_UVSCAN_DIR = '$__VSCL_UVSCAN_DIR'"
+    #echo "\$__vscl_uvscan_dir = '$__vscl_uvscan_dir'"
 
     # uninstall the uvscan product and remove the uninstaller
-    if [ ! -d "$__VSCL_UVSCAN_DIR" ]; then
-        Exit_WithError "VSCL software directory not found in '$__VSCL_UVSCAN_DIR'!"
+    if [ ! -d "$__vscl_uvscan_dir" ]; then
+        exit_with_error "VSCL software directory not found in '$__vscl_uvscan_dir'!"
     fi
 
-    Log_Info "Running VSCL uninstaller..."
+    log_info "Running VSCL uninstaller..."
 
-    if Capture_Command "$__VSCL_UNINSTALL_CMD" "" "/usr/bin/yes"; then
-        #echo "\$__VSCL_UVSCAN_DIR = '$__VSCL_UVSCAN_DIR'"
-        if ! rm -rf "$__VSCL_UVSCAN_DIR" &> /dev/null; then
-            Log_Warning "Unable to remove VSCL software directory '$__VSCL_UVSCAN_DIR'!"
+    if capture_command "$__vscl_uninstall_cmd" "" "/usr/bin/yes"; then
+        #echo "\$__vscl_uvscan_dir = '$__vscl_uvscan_dir'"
+        if ! rm -rf "$__vscl_uvscan_dir" &> /dev/null; then
+            log_warning "Unable to remove VSCL software directory '$__vscl_uvscan_dir'!"
         fi
     else
-        Exit_WithError "Unable to uninstall VSCL software!"
+        exit_with_error "Unable to uninstall VSCL software!"
     fi
 
     # Update the first custom property
-    Update_Prop1
+    update_prop1
 
     # Clean up global variables and exit cleanly
-    Exit_Script $?
+    exit_script $?
 }
 
 
@@ -93,4 +94,4 @@ function Uninstall_VSCL {
 # MAIN: Code execution begins here
 #=============================================================================
 # File is NOT sourced, execute like any other shell file
-Uninstall_VSCL
+uninstall_vscl

@@ -3,14 +3,14 @@
 #=============================================================================
 # NAME:     VSCL-EPOPatch.sh
 #-----------------------------------------------------------------------------
-# Purpose:  Patch for McAfee VirusScan Command Line Scanner on 
+# Purpose:  Patch for McAfee VirusScan Command line Scanner on 
 #           FedRAMP PPM App Servers
 #-----------------------------------------------------------------------------
 # Creator:  Nick Taylor, Pr. Engineer, Broadcom SaaS Ops
 #-----------------------------------------------------------------------------
-# Date:     06-FEB-2020
+# Date:     13-Feb-2020
 #-----------------------------------------------------------------------------
-# Version:  1.2
+# Version:  1.25
 #-----------------------------------------------------------------------------
 # PreReqs:  Linux
 #           PPM Application Server
@@ -26,7 +26,10 @@
 #-----------------------------------------------------------------------------
 # Switches: none
 #-----------------------------------------------------------------------------
-# Imports:  ./VSCL-lib.sh:              library functions
+# Imports:  ./VSCL-lib.sh:  library functions
+#-----------------------------------------------------------------------------
+# NOTES: Fixed for Commercial to not require the VSCL library
+#        Fixed permissions for log file (chmod 646)
 #=============================================================================
 
 
@@ -44,8 +47,12 @@ fi
 #  IMPORTS: Import any required libraries/files
 #=============================================================================
 # shellcheck disable=SC1091
-INCLUDE_PATH="${BASH_SOURCE%/*}"
-. "$INCLUDE_PATH/VSCL-lib.sh"
+unset include_path this_file
+declare include_path this_file
+this_file="${BASH_SOURCE[0]}"
+this_file=$(while [[ -L "$this_file" ]]; do this_file="$(readlink "$this_file")"; done; echo $this_file)
+include_path="${this_file%/*}"
+. "$include_path/VSCL-lib.sh"
 
 
 #=============================================================================
@@ -53,58 +60,58 @@ INCLUDE_PATH="${BASH_SOURCE%/*}"
 #=============================================================================
 # Abbreviation of this script name for logging
 # shellcheck disable=SC2034
-__VSCL_SCRIPT_ABBR="VSCLEPAT"
+declare -x __vscl_script_abbr="VSCLEPAT"
 
 
 #=============================================================================
 # MAIN FUNCTION: primary function of this script
 #=============================================================================
-function Install_Patch {
+function install_patch {
     #----------------------------------------------------------
     # Download the latest installer from EPO and run it
     #----------------------------------------------------------
     # Params: $@ - all arguments passed to script
     #----------------------------------------------------------
-    local SUPPORT_FILE TARGET_FILE
+    declare support_file target_file
 
     # Copy support files to uvscan directory
-    for SUPPORT_FILE in $__VSCL_SCAN_SUPPORT_FILES; do
-        TARGET_FILE="$__VSCL_UVSCAN_DIR/$SUPPORT_FILE"
-        Log_Info "Copying support file '$SUPPORT_FILE' to '$TARGET_FILE'..."
+    for support_file in $__vscl_scan_support_files; do
+        target_file="$__vscl_uvscan_dir/$support_file"
+        log_info "Copying support file '$support_file' to '$target_file'..."
 
-        if [[ ! -f "./$SUPPORT_FILE" ]]; then
+        if [[ ! -f "./$support_file" ]]; then
             # source support file not available, error
-            Exit_WithError "File '$SUPPORT_FILE' not available. Aborting installer!"
+            exit_with_error "File '$support_file' not available. Aborting installer!"
         fi
 
-        if [[ -f "$TARGET_FILE" ]]; then
+        if [[ -f "$target_file" ]]; then
             # delete any existing copy of support file
-            Log_Info "Deleting existing file '$TARGET_FILE'..."
+            log_info "Deleting existing file '$target_file'..."
             
-            if ! rm -f "$TARGET_FILE"; then
+            if ! rm -f "$target_file"; then
                 # unable to remove target file, error
-                Log_Error "Existing file '$TARGET_FILE' could not be deleted! Aborting installer!"
+                log_error "Existing file '$target_file' could not be deleted! Aborting installer!"
             fi
         fi
 
-        if ! cp -f "./$SUPPORT_FILE" "$__VSCL_UVSCAN_DIR"; then
+        if ! cp -f "./$support_file" "$__vscl_uvscan_dir"; then
             # error copying support file to target, error
-            Exit_WithError "Could not copy support file './$SUPPORT_FILE' to '$__VSCL_UVSCAN_DIR/$SUPPORT_FILE'. Aborting installer!"
+            exit_with_error "Could not copy support file './$support_file' to '$__vscl_uvscan_dir/$support_file'. Aborting installer!"
         fi
 
-        if ! chmod +x "$__VSCL_UVSCAN_DIR/$SUPPORT_FILE"; then
+        if ! chmod +x "$__vscl_uvscan_dir/$support_file"; then
             # unable to make target support file executable, error
-            Exit_WithError "File '$SUPPORT_FILE' not available. Aborting installer!"
+            exit_with_error "File '$support_file' not available. Aborting installer!"
         fi
     done
 
-    if ! chmod 646 "$__VSCL_LOG_PATH"; then
-        # unable to make target support file executable, error
-        Exit_WithError "Unable to set permisions on '$__VSCL_LOG_PATH'. Aborting installer!"
+    if ! chmod 646 "$__vscl_log_path"; then
+        # unable to apply permissions to log file, error
+        exit_with_error "Unable to set permisions on '$__vscl_log_path'. Aborting installer!"
     fi
 
     # Clean up global variables and exit cleanly
-    Exit_Script $?
+    exit_script $?
 }
 
 
@@ -112,4 +119,4 @@ function Install_Patch {
 # MAIN: Code execution begins here
 #=============================================================================
 # File is NOT sourced, execute like any other shell file
-Install_Patch "$@"
+install_patch "$*"

@@ -3,14 +3,14 @@
 #=============================================================================
 # NAME:     UVWRAP.SH
 #-----------------------------------------------------------------------------
-# Purpose:  __VSCL_WRAPPER to redirect PPM command line antivirus call to McAfee 
-#           VirusScan Command Line Scanner
+# Purpose:  __vscl_wrapper to redirect PPM command line antivirus call to McAfee 
+#           VirusScan Command line Scanner
 #-----------------------------------------------------------------------------
 # Creator:  Nick Taylor, Pr. Engineer, Broadcom SaaS Ops
 #-----------------------------------------------------------------------------
-# Date:     07-Feb-2020
+# Date:     13-Feb-2020
 #-----------------------------------------------------------------------------
-# Version:  1.2
+# Version:  1.25
 #-----------------------------------------------------------------------------
 # PreReqs:  Linux
 #           CA PPM Application Server
@@ -24,6 +24,8 @@
 # Imports:  none
 #=============================================================================
 # NOTES: Fixed for Commercial to not require the VSCL library
+#        Fixed permissions for log file (chmod 646)
+#=============================================================================
 
 #=============================================================================
 # PREPROCESS: Prevent file from being sourced
@@ -38,21 +40,22 @@ fi
 #  IMPORTS: Import any required libraries/files
 #=============================================================================
 # shellcheck disable=SC1091
-unset INCLUDE_PATH THIS_FILE
-THIS_FILE="${BASH_SOURCE[0]}"
-THIS_FILE=$(while [[ -L "$THIS_FILE" ]]; do THIS_FILE="$(readlink "$THIS_FILE")"; done; echo $THIS_FILE)
-#INCLUDE_PATH="${THIS_FILE%/*}"
-#. "$INCLUDE_PATH/VSCL-lib.sh"
+unset include_path this_file
+declare include_path this_file
+this_file="${BASH_SOURCE[0]}"
+this_file=$(while [[ -L "$this_file" ]]; do this_file="$(readlink "$this_file")"; done; echo $this_file)
+#include_path="${this_file%/*}"
+#. "$include_path/VSCL-lib.sh"
 
 #=============================================================================
 # GLOBALS: Global variables
 #=============================================================================
 # Abbreviation of this script name for logging
 # shellcheck disable=SC2034
-__VSCL_SCRIPT_ABBR="UVWRAP"
+declare -x __vscl_script_abbr="UVWRAP"
 
 # Path to common log file for all VSCL scripts
-__VSCL_LOG_PATH="/var/McAfee/agent/logs/VSCL_mgmt.log"
+declare -x __vscl_log_path="/var/McAfee/agent/logs/VSCL_mgmt.log"
 
 # Options passed to VSCL scanner
 # -c                    clean viruses if found
@@ -66,45 +69,36 @@ __VSCL_LOG_PATH="/var/McAfee/agent/logs/VSCL_mgmt.log"
 # --noexpire            no error for expired files
 # --one-file-system     do not follow mouned directory trees
 # --timeout 10          scan for 10 seconds then abort
-SCAN_OPTIONS="-c -p --afc 512 -e --nocomp --ignore-links --noboot --nodecrypt --noexpire --one-file-system --timeout 10"
+declare -x SCAN_OPTIONS="-c -p --afc 512 -e --nocomp --ignore-links --noboot --nodecrypt --noexpire --one-file-system --timeout 10"
 
 
 #=============================================================================
 # FUNCTIONS: VSCL Library functions
 #=============================================================================
 
-function Log_Print {
+function log_print {
     #----------------------------------------------------------
-    # Print a message to the log defined in $__VSCL_LOG_PATH
+    # Print a message to the log defined in $__vscl_log_path
     # (by default '/var/McAfee/agent/logs/VSCL_mgmt.log')
     #----------------------------------------------------------
     # Params: $1 = error message to print
     #----------------------------------------------------------
 
-    local OUTTEXT #SAVE_OPTS
-    
-    #SAVE_OPTS=$SHELLOPTS
-    #set +x
+    declare out_text 
     
     # Prepend date/time, which script, then the log message
     # i.e.  "11/12/2019 11:14:10 AM:VSCL_UP1:[x]Refreshing agent data with EPO..."
     #        <- date -------------> <script> <+><-- message -->
     #                                         ^-- log mode "I": info, "W": warning, "E": errror
-    OUTTEXT="$(date +'%x %X'):$__VSCL_SCRIPT_ABBR:$*"
+    out_text="$(date +'%x %X'):$__vscl_script_abbr:$*"
 
-    if [[ -w $__VSCL_LOG_PATH ]]; then
+    if [[ -w $__vscl_log_path ]]; then
         # log file exists and is writable, append
-        #echo -e "$OUTTEXT" | tee --append "$__VSCL_LOG_PATH"
-        printf "%s\n" "$OUTTEXT" | tee --append "$__VSCL_LOG_PATH"
+        printf "%s\n" "$out_text" | tee --append "$__vscl_log_path"
     else
         # log file absent, create
-        #echo -e "$OUTPUT" | tee "$__VSCL_LOG_PATH"
-        printf "%s\n" "$OUTTEXT" | tee "$__VSCL_LOG_PATH"
+        printf "%s\n" "$out_text" | tee "$__vscl_log_path"
     fi
-    
-    #if [[ "$SAVE_OPTS" == *"xtrace"* ]]; then
-    #    set -x
-    #fi
     
     return 0
 }
@@ -113,25 +107,25 @@ function Log_Print {
 #=============================================================================
 # MAIN: Code execution begins here
 #=============================================================================
-Log_Print "=============================="
-Log_Print "Beginning command line scan..."
-Log_Print "=============================="
+log_print "=============================="
+log_print "Beginning command line scan..."
+log_print "=============================="
 
 if [[ -z "$*" ]]; then
     # exit if no file specified
-    Log_Print "[E]No command line parameters supplied!"
+    log_print "[E]No command line parameters supplied!"
     exit 1
 else
-    Log_Print "Parameters supplied: '$*'"
+    log_print "Parameters supplied: '$*'"
 fi
 
 # call uvscan
-if ! /usr/local/uvscan/uvscan $SCAN_OPTIONS $*; then
+if ! /usr/local/uvscan/uvscan $scan_options $*; then
     # uvscan returned error, exit and return 1
-    Log_Print "[E]*** Virus found! ***"
+    log_print "[E]*** Virus found! ***"
     exit 1
 fi
 
 # No virus found, exit successfully
-Log_Print "[I]*** No virus found! ***"
+log_print "[I]*** No virus found! ***"
 exit 0

@@ -3,14 +3,14 @@
 #=============================================================================
 # NAME:     UVWRAP.SH
 #-----------------------------------------------------------------------------
-# Purpose:  __VSCL_WRAPPER to redirect PPM command line antivirus call to McAfee 
-#           VirusScan Command Line Scanner
+# Purpose:  __vscl_wrapper to redirect PPM command line antivirus call to McAfee 
+#           VirusScan Command line Scanner
 #-----------------------------------------------------------------------------
 # Creator:  Nick Taylor, Pr. Engineer, Broadcom SaaS Ops
 #-----------------------------------------------------------------------------
-# Date:     19-Dec-2019
+# Date:     13-Feb-2020
 #-----------------------------------------------------------------------------
-# Version:  1.2
+# Version:  1.25
 #-----------------------------------------------------------------------------
 # PreReqs:  Linux
 #           CA PPM Application Server
@@ -21,7 +21,10 @@
 #-----------------------------------------------------------------------------
 # Switches: none
 #-----------------------------------------------------------------------------
-# Imports:  ./VSCL-lib.sh:    library functions
+# Imports:  none
+#=============================================================================
+# NOTES: Fixed for Commercial to not require the VSCL library
+#        Fixed permissions for log file (chmod 646)
 #=============================================================================
 
 #=============================================================================
@@ -37,18 +40,20 @@ fi
 #  IMPORTS: Import any required libraries/files
 #=============================================================================
 # shellcheck disable=SC1091
-unset INCLUDE_PATH THIS_FILE
-THIS_FILE="${BASH_SOURCE[0]}"
-THIS_FILE=$(while [[ -L "$THIS_FILE" ]]; do THIS_FILE="$(readlink "$THIS_FILE")"; done; echo $THIS_FILE)
-INCLUDE_PATH="${THIS_FILE%/*}"
-. "$INCLUDE_PATH/VSCL-lib.sh"
+unset include_path this_file
+declare include_path this_file
+this_file="${BASH_SOURCE[0]}"
+this_file=$(while [[ -L "$this_file" ]]; do this_file="$(readlink "$this_file")"; done; echo $this_file)
 
 #=============================================================================
 # GLOBALS: Global variables
 #=============================================================================
 # Abbreviation of this script name for logging
 # shellcheck disable=SC2034
-__VSCL_SCRIPT_ABBR="UVWRAP"
+declare -x __vscl_script_abbr="UVWRAP"
+
+# Path to common log file for all VSCL scripts
+declare -x __vscl_log_path="/var/McAfee/agent/logs/VSCL_mgmt.log"
 
 # Options passed to VSCL scanner
 # -c                    clean viruses if found
@@ -64,24 +69,64 @@ __VSCL_SCRIPT_ABBR="UVWRAP"
 # --timeout 10          scan for 10 seconds then abort
 SCAN_OPTIONS="-c -p --afc 512 -e --nocomp --ignore-links --noboot --nodecrypt --noexpire --one-file-system --timeout 10"
 
+
+#=============================================================================
+# FUNCTIONS: VSCL Library functions
+#=============================================================================
+
+function log_print {
+    #----------------------------------------------------------
+    # Print a message to the log defined in $__vscl_log_path
+    # (by default '/var/McAfee/agent/logs/VSCL_mgmt.log')
+    #----------------------------------------------------------
+    # Params: $1 = error message to print
+    #----------------------------------------------------------
+
+    declare out_text 
+    
+    
+    # Prepend date/time, which script, then the log message
+    # i.e.  "11/12/2019 11:14:10 AM:VSCL_UP1:[x]Refreshing agent data with EPO..."
+    #        <- date -------------> <script> <+><-- message -->
+    #                                         ^-- log mode "I": info, "W": warning, "E": errror
+    out_text="$(date +'%x %X'):$__vscl_script_abbr:$*"
+
+    if [[ -w $__vscl_log_path ]]; then
+        # log file exists and is writable, append
+        #echo -e "$out_text" | tee --append "$__vscl_log_path"
+        printf "%s\n" "$out_text" | tee --append "$__vscl_log_path"
+    else
+        # log file absent, create
+        #echo -e "$OUTPUT" | tee "$__vscl_log_path"
+        printf "%s\n" "$out_text" | tee "$__vscl_log_path"
+    fi
+    
+    return 0
+}
+
+
 #=============================================================================
 # MAIN: Code execution begins here
 #=============================================================================
-Log_Info "Beginning command line scan..."
+log_print "=============================="
+log_print "Beginning command line scan..."
+log_print "=============================="
 
 if [[ -z "$*" ]]; then
     # exit if no file specified
-    Exit_WithError "No command line parameters supplied!"
+    log_print "[E]No command line parameters supplied!"
+    exit 1
 else
-    Log_Info "Parameters supplied: '$*'"
+    log_print "Parameters supplied: '$*'"
 fi
 
 # call uvscan
-if ! Capture_Command "$__VSCL_UVSCAN_CMD" "$SCAN_OPTIONS $*"; then
+if ! /usr/local/uvscan/uvscan $SCAN_OPTIONS $*; then
     # uvscan returned error, exit and return 1
-    Exit_WithError "*** Virus found! ***"
+    log_print "[E]*** Virus found! ***"
+    exit 1
 fi
 
 # No virus found, exit successfully
-Log_Info "*** No virus found! ***"
-Exit_Script 0
+log_print "[I]*** No virus found! ***"
+exit 0

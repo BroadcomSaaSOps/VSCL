@@ -4,7 +4,7 @@
 # NAME:     update-prop1.sh
 #-----------------------------------------------------------------------------
 # Purpose:  Update the McAfee custom property #1 with the current 
-#           version of the DAT files for the McAfee VirusScan Command Line
+#           version of the DAT files for the McAfee VirusScan Command line
 #           Scanner 6.1.0 on SaaS Linux PPM App servers
 #-----------------------------------------------------------------------------
 # Creator:  Nick Taylor, Pr. Engineer, Broadcom SaaS Ops
@@ -31,10 +31,10 @@
 #=============================================================================
 # PREPROCESS: Bypass inclusion of this file if it is already loaded
 #=============================================================================
-if [[ -z "$__VSCL_UP1_LOADED" ]]; then
+if [[ -z "$__vscl_up1_loaded" ]]; then
     # not already loaded, set flag that it is now
     #echo "not loaded, loading..."
-    __VSCL_UP1_LOADED=1
+    delcare -x __vscl_up1_loaded=1
 else
     # already loaded, exit gracefully
     #echo "loaded already"
@@ -46,9 +46,12 @@ fi
 #  IMPORTS: Import any required libraries/files
 #=============================================================================
 # shellcheck disable=SC1091
-unset INCLUDE_PATH
-INCLUDE_PATH="${BASH_SOURCE%/*}"
-. "$INCLUDE_PATH/VSCL-lib.sh"
+unset include_path this_file
+declare include_path this_file
+this_file="${BASH_SOURCE[0]}"
+this_file=$(while [[ -L "$this_file" ]]; do this_file="$(readlink "$this_file")"; done; echo $this_file)
+include_path="${this_file%/*}"
+. "$include_path/VSCL-lib.sh"
 
 
 #=============================================================================
@@ -56,50 +59,50 @@ INCLUDE_PATH="${BASH_SOURCE%/*}"
 #=============================================================================
 # Abbreviation of this script name for logging
 # shellcheck disable=SC2034
-if [[ -z "$__VSCL_SCRIPT_ABBR" ]]; then
-    __VSCL_SCRIPT_ABBR="VSCL_UP1"
+if [[ -z "$__vscl_script_abbr" ]]; then
+    export -x __vscl_script_abbr="VSCL_UP1"
 fi
 
 
 #=============================================================================
 # MAIN FUNCTION: primary function of this script
 #=============================================================================
-function Update_Prop1 {
-    local CURRENT_DAT
+function update_prop1 {
+    declare current_dat
     
     # sanity checks
     # check for MACONFIG
-    Check_For "$__VSCL_MACONFIG_PATH" "MACONFIG utility"
+    check_for "$__vscl_maconfig_path" "MACONFIG utility"
 
     # check for CMDAGENT
-    Check_For "$__VSCL_CMDAGENT_PATH" "CMDAGENT utility"
+    check_for "$__vscl_cmdagent_path" "CMDAGENT utility"
 
     # check for uvscan
-    if ! Check_For "$__VSCL_UVSCAN_DIR/$__VSCL_UVSCAN_EXE" "uvscan executable" --no-terminate; then
+    if ! check_for "$__vscl_uvscan_dir/$__vscl_uvscan_exe" "uvscan executable" --no-terminate; then
         # uvscan not found
         # set custom property to error value, then exit with error
-        Log_Info "Could not find 'uvscan executable' at '$__VSCL_UVSCAN_DIR/$__VSCL_UVSCAN_EXE'!"
-        CURRENT_DAT="$__VSCL_NOTINST_CODE"
+        log_info "Could not find 'uvscan executable' at '$__vscl_uvscan_dir/$__vscl_uvscan_exe'!"
+        current_dat="$__vscl_notinst_code"
     else
         # Get the version of the installed DATs...
-        Log_Info "Determining the current DAT version..."
-        CURRENT_DAT=$(Get_CurrDATVer)
+        log_info "Determining the current DAT version..."
+        current_dat=$(get_curr_dat_ver)
 
-        if [[ "$CURRENT_DAT" = "$__VSCL_INVALID_CODE" ]]; then
+        if [[ "$current_dat" = "$__vscl_invalid_code" ]]; then
             # Could not determine current value for DAT version from uvscan
             # set custom property to error value, then exit with error
-            Log_Info "Unable to determine currently installed DAT version!"
-            CURRENT_DAT="$__VSCL_INVALID_CODE"
+            log_info "Unable to determine currently installed DAT version!"
+            current_dat="$__vscl_invalid_code"
         else
-            CURRENT_DAT="VSCL:$CURRENT_DAT"
+            current_dat="VSCL:$current_dat"
         fi
         
-        Log_Info "Current DAT Version is '$CURRENT_DAT'"
+        log_info "Current DAT Version is '$current_dat'"
     fi
 
     # Set custom property #1 and push to EPO, then exit cleanly
-    Set_CustomProp 1 "$CURRENT_DAT"
-    Refresh_ToEPO   
+    set_custom_prop 1 "$current_dat"
+    refresh_to_epo   
     return $?
 }
 
@@ -109,12 +112,12 @@ function Update_Prop1 {
 #=============================================================================
 if $(return 0 2>/dev/null); then
     # File is sourced, return to sourcing code
-    #Log_Info "VSCL Update Custom Property functions loaded successfully!"
+    #log_info "VSCL Update Custom Property functions loaded successfully!"
     return 0
 else
     # File is NOT sourced, execute it like it any regular shell file
-    Update_Prop1
+    update_prop1
     
     # Clean up global variables and exit cleanly
-    Exit_Script $?
+    exit_script $?
 fi

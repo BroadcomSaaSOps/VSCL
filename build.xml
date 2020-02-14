@@ -1,73 +1,307 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<Project name="VSCL Project" id="P1">
-    <Source path="E:\Software\McAfee\EEDK\Development\VSCL\" id="S1">
-        <File name="VSCL-EPOInstall.eedk" type="EEDK" targetdir="D1" id="F1"/>
-        <File name="VSCL-Uninstall.eedk" type="EEDK" targetdir="D3" id="F2"/>
-        <File name="VSCL-Update-DAT.eedk" type="EEDK" targetdir="D2" id="F3"/>
-        <File name="VSCL-Update-Prop1.eedk" type="EEDK" targetdir="D4" id="F4"/>
-        <File name="VSCL-Package.eedk" type="EEDK" targetdir="D5" id="F5"/>
-        <File name="VSCL-local.sh" type="Code" id="F6"/>
-        <File name="VSCL-lib.sh" type="Code" id="F7"/>
+<Project id="578F1E34-C8C0-436A-A99F-51DA429C9F7C">
+    <Name>VSCL Project</Name>
+    <SourceTree id="44640609-AFFA-4AB5-A742-3249E4E804CF">
+        <RootDirectory id="265C31EA-2028-46AF-AAAC-A72F2F540287">
+            <Path>E:\Software\McAfee\EEDK\Development\VSCL\</Path>
 
-        <Directory name="VSCL-EPOInstall" id="D1">
-            <File name="VSCL-EPOInstall.sh" type="Code" id="F8"/>
-            <File name="uvwrap.sh" type="Code" id="F9"/>
-        </Directory>
-        <Directory name="VSCL-Update-DAT" id="D2">
-            <File name="VSCL-Update-DAT.sh" type="Code" id="F10"/>
-        </Directory>
-        <Directory name="VSCL-Uninstall" id="D3">
-            <File name="VSCL-Uninstall.sh" type="Code" id="F11"/>
-        </Directory>
-        <Directory name="VSCL-Update-Prop1" id="D4">
-            <File name="VSCL-Update-Prop1.sh" type="Code" id="F12"/>
-        </Directory>
-        <Directory name="VSCL-Package" id="D5">
-            <File name="vsclpackage.ini" type="INI" id="F13"/>
-            <File name="Dummy.sh" type="Code" id="F14"/>
-            <File name="vscl-l64-613-l.tar.gz" type="Tarball" id="F15"/>
-        </Directory>
+            <Files>
+                <File id="39D1CBA0-D4C7-49B3-9E09-B30BD978FAE5">
+                    <Name>VSCL-EPOInstall.eedk</Name>
+                    <Type>EEDK</Type>
+                    <TargetID>8E1B1AAD-C46F-40A0-BB90-29B5105EF387</TargetID>
+                </File>
+                <File id="2D4FAD7A-19B9-4688-B340-089BB27A5158">
+                    <Name>VSCL-EPOPatch.eedk</Name>
+                    <Type>EEDK</Type>
+                    <TargetID>8E1B1AAD-C46F-40A0-BB90-29B5105EF387</TargetID>
+                </File>
+                <File id="B3F124B6-3EA4-4A11-9617-35B892072BE8">
+                    <Name>VSCL-Uninstall.eedk</Name>
+                    <Type>EEDK</Type>
+                    <TargetID>58B16632-0A8D-4ACB-B428-5FA440B94AC8</TargetID>
+                </File>
+                <File id="91093844-85A7-4F59-8694-1AC5C6CA498B">
+                    <Name>VSCL-Update-DAT.eedk</Name>
+                    <Type>EEDK</Type>
+                    <TargetID>B3F124B6-3EA4-4A11-9617-35B892072BE8</TargetID>
+                </File>
+                <File id="8C82263F-E0F6-4CC4-ADA3-5CA5411B430D">
+                    <Name>VSCL-Update-Prop1.eedk</Name>
+                    <Type>EEDK</Type>
+                    <TargetID>B4B9980B-FBC0-431D-BA19-6C9499008A2F</TargetID>
+                </File>
+                <File id="2594B94A-24E1-45B7-8E5C-A4B90371020C">
+                    <Name>VSCL-Package.eedk</Name>
+                    <Type>EEDK</Type>
+                    <TargetID>9A0D264B-BF8B-4A14-AA46-F4E5726F15E9</TargetID>
+                </File>
+                <File id="DDDB690D-1578-4409-BA27-E20040F71529">
+                    <Name>VSCL-local.sh</Name>
+                    <Type>Code</Type>
+                </File>
+                <File id="EA3F5EA5-EF1A-4D7F-A41F-65F30DD1A25B">
+                    <Name>VSCL-lib.sh</Name>
+                    <Type>Code</Type>
+                </File>
+            </Files>
 
-        <Dependency id="P0" parentid="F7" childID="F6"/>
-        <Dependency id="P1" parentid="F8" childID="F6"/>
-        <Dependency id="P2" parentid="F8" childID="F10"/>
-        <Dependency id="P3" parentid="F9" childID="F6"/>
-        <Dependency id="P4" parentid="F10" childID="F7"/>
-        <Dependency id="P5" parentid="F10" childID="F12"/>
-        <Dependency id="P6" parentid="F11" childID="F7"/>
-        <Dependency id="P7" parentid="F11" childID="F12"/>
-        <Dependency id="P8" parentid="F12" childID="F7"/>
-    </Source>
-    <Target path="E:\Software\McAfee\EEDK\Builds" id="P2">
-        <Component name="VSCL-EPOInstall" outputzip="VSCLEPOI1200.zip" id="C1">
-            <OutputFile name="VSCL-EPOInstall.sh" id="O1" targetid="F8"/>
-            <OutputFile name="VSCL-lib.sh" id="O3" targetid="F7"/>
-            <OutputFile name="VSCL-local.sh" id="O3" targetid="F6"/>
-            <OutputFile name="VSCL-Update-DAT.sh" id="O4" targetid="Fl0"/>
-            <OutputFile name="VSCL-Update-Prop1.sh" id="O5" targetid="F9"/>
-            <OutputFile name="uvwrap.sh" id="O6" targetid="F9"/>
-        </Component> 
-        <Component name="VSCL-Update-DAT" outputzip="VSCLUDAT1200.zip" id="C2">
-            <OutputFile name="VSCL-lib.sh" id="O7" targetid="F7"/>
-            <OutputFile name="VSCL-local.sh" id="O8" targetid="F6"/>
-            <OutputFile name="VSCL-Update-DAT.sh" id="O9" targetid="Fl0"/>
-            <OutputFile name="VSCL-Update-Prop1.sh" id="O10" targetid="F12"/>
-        </Component> 
-        <Component name="VSCL-Update-Prop1" outputzip="VSCL_UP11200.zip" id="C3">
-            <OutputFile name="VSCL-Update-Prop1.sh" id="O11" targetid="F12"/>
-            <OutputFile name="VSCL-lib.sh" id="O12" targetid="F7"/>
-            <OutputFile name="VSCL-local.sh" id="O13" targetid="F6"/>
-        </Component> 
-        <Component name="VSCL-Uninstall" outputzip="VSCLUNIN1200.zip" id="C4">
-            <OutputFile name="VSCL-Uninstall.sh" id="O14" targetid="F12"/>
-            <OutputFile name="VSCL-lib.sh" id="O15" targetid="F7"/>
-            <OutputFile name="VSCL-local.sh" id="O16" targetid="F6"/>
-            <OutputFile name="VSCL-Update-DAT.sh" id="O17" targetid="Fl0"/>
-        </Component> 
-        <Component name="VSCL-Package" outputzip="VSCLPACK6130.zip" id="C5">
-            <OutputFile name="vsclpackage.ini" id="O18" targetid="F13"/>
-            <OutputFile name="vscl-l64-613-l.tar.gz" id="O19" targetid="F15"/>
-            <OutputFile name="dummy.sh" id="O20" targetid="F14"/>
-        </Component> 
-    </Target>
+            <Directories>
+                <Directory id="8E1B1AAD-C46F-40A0-BB90-29B5105EF387">
+                    <Name>VSCL-EPOInstall</Name>
+                    <Files>
+                        <File id="FB9379AF-9E71-4F14-A14E-AFED85F4A8FE">
+                            <Name>VSCL-EPOInstall.sh</Name>
+                            <Type>Code</Type>
+                        </File>
+                        <File id="1084A675-EDD3-4368-8574-1FE771169015"> 
+                            <Name>uvwrap.sh</Name>
+                            <Type>Code</Type>
+                        </File>
+                    </Files>
+                </Directory>
+                <Directory id="8E1B1AAD-C46F-40A0-BB90-29B5105EF387">
+                    <Name>VSCL-EPOPatch</Name>
+                    <Files>
+                        <File id="2B8AC995-FF76-4F71-ABD7-693015A3A3D5">
+                            <Name>VSCL-EPOPatch.sh</Name>
+                            <Type>Code</Type>
+                        </File>
+                        <File id="401395E5-38ED-440F-A23D-9502712478C2"> 
+                            <Name>uvwrap.sh</Name>
+                            <Type>Code</Type>
+                        </File>
+                    </Files>
+                </Directory>
+                <Directory id="B58C2CE1-FB2F-4A7E-B272-0DA4F27024C9">
+                    <Name>VSCL-Update-DAT</Name>
+                    <Files>
+                        <File id="28DC12BE-45DF-4CFB-A529-B05AE5F97928">
+                            <Name>VSCL-Update-DAT.sh</Name>
+                            <Type>Code</Type>
+                        </File>
+                    </Files>
+                </Directory>
+                <Directory id="58B16632-0A8D-4ACB-B428-5FA440B94AC8">
+                    <Name>VSCL-Uninstall</Name>
+                    <Files>
+                        <File id="C27631F0-F37C-4905-81CE-CC9DF1939399">
+                            <Name>VSCL-Uninstall.sh</Name>
+                            <Type>Code</Type>
+                        </File>
+                    </Files>
+                </Directory>
+                <Directory id="B4B9980B-FBC0-431D-BA19-6C9499008A2F">
+                    <Name>VSCL-Update-Prop1</Name>
+                    <Files>
+                        <File id="64D9F5C9-D3B8-4814-9257-741450514266">
+                            <Name>VSCL-Update-Prop1.sh</Name>
+                            <Type>Code</Type>
+                        </File>
+                    </Files>
+                </Directory>
+                <Directory id="9A0D264B-BF8B-4A14-AA46-F4E5726F15E9">
+                    <Name>VSCL-Package</Name>
+                    <Files>
+                        <File id="475E0744-254B-49F3-ADC1-9FF9A4F4E76E">
+                            <Name>vsclpackage.ini</Name>
+                            <Type>Configuration</Type>
+                        </File>
+                        <File id="DA39B237-6BE3-4334-9D1C-5E357E6DAB42">
+                            <Name>Dummy.sh</Name>
+                            <Type>Code</Type>
+                        </File>
+                        <File id="D601D20C-65A2-4F97-887C-81E71EF07851">
+                            <Name>vscl-l64-613-l.tar.gz</Name>
+                            <Type>Tarball</Type>
+                        </File>
+                    </Files>
+                </Directory>
+            </Directories>
+        </RootDirectory>
+
+        <Dependencies>
+            <Dependency id="B1363BEA-A6B0-4507-861B-A51F685AD876">
+                <Name>VSCL-EPOInstall.sh - VSCL-Update-DAT.sh</Name>
+                <ParentID>FB9379AF-9E71-4F14-A14E-AFED85F4A8FE</ParentID>
+                <ChildID>28DC12BE-45DF-4CFB-A529-B05AE5F97928</ChildID>
+            </Dependency>
+            <Dependency id="B1363BEA-A6B0-4507-861B-A51F685AD876">
+                <Name>VSCL-EPOPatch.sh - VSCL-lib.sh</Name>
+                <ParentID>2B8AC995-FF76-4F71-ABD7-693015A3A3D5</ParentID>
+                <ChildID>EA3F5EA5-EF1A-4D7F-A41F-65F30DD1A25B</ChildID>
+            </Dependency>
+            <Dependency id="5ABE63DB-B03C-49DA-A421-DDD915597732">
+                <Name>VSCL-Uninstall.sh - VSCL-Update-Prop1.sh</Name>
+                <ParentID>C27631F0-F37C-4905-81CE-CC9DF1939399</ParentID>
+                <ChildID>64D9F5C9-D3B8-4814-9257-741450514266</ChildID>
+            </Dependency>
+            <Dependency id="6BF07397-2E47-4DBE-894F-1AFB8A422FF2">
+                <Name>VSCL-Update-DAT.sh - VSCL-Update-Prop1.sh</Name>
+                <ParentID>28DC12BE-45DF-4CFB-A529-B05AE5F97928</ParentID>
+                <ChildID>64D9F5C9-D3B8-4814-9257-741450514266</ChildID>
+            </Dependency>
+            <Dependency id="E424CC68-23F0-4AFC-9194-C6BEECDA32A5">
+                <Name>VSCL-Update-Prop1.sh - VSCL-lib.sh</Name>
+                <ParentID>64D9F5C9-D3B8-4814-9257-741450514266</ParentID>
+                <ChildID>EA3F5EA5-EF1A-4D7F-A41F-65F30DD1A25B</ChildID>
+            </Dependency>
+            <Dependency id="0C25BED5-FCDA-4D17-BE24-ADA88D01CF86">
+                <Name>VSCL-lib.sh - VSCL-local.sh</Name>
+                <ParentID>EA3F5EA5-EF1A-4D7F-A41F-65F30DD1A25B</ParentID>
+                <ChildID>DDDB690D-1578-4409-BA27-E20040F71529</ChildID>
+            </Dependency>
+        </Dependencies>
+    </SourceTree>
+
+    <BuildTree id="589D037F-2193-4B51-9927-F0D0E4675165">
+        <Path>E:\Software\McAfee\EEDK\Builds</Path>
+
+        <Components>
+            <Component id="A16B333E-0EC4-4F1F-817F-471FAA422F4B">
+                <Name>VSCL-EPOInstall</Name>
+                <ZipFile id="F735067D-8D13-47E9-91F2-68324C290D2E">
+                    <Name>VSCLEPOI1200.zip</Name>
+                    <ZippedFiles>
+                        <File id="7CCB27AF-C608-4C62-9FC1-A67061272BAD">
+                            <Name>VSCL-EPOInstall.sh</Name>
+                            <TargetID>FB9379AF-9E71-4F14-A14E-AFED85F4A8FE</TargetID>
+                        </File>
+                        <File id="97441122-26F2-48A4-AE31-2AA07B499278">
+                            <Name>VSCL-lib.sh</Name>
+                            <TargetID>EA3F5EA5-EF1A-4D7F-A41F-65F30DD1A25B</TargetID>
+                        </File>
+                        <File id="DF9F3BE3-592C-4924-BA2C-DC49C54E575D">
+                            <Name>VSCL-local.sh</Name>
+                            <TargetID>DDDB690D-1578-4409-BA27-E20040F71529</TargetID>
+                        </File>
+                        <File id="9F9F6231-4A57-410C-A2D0-C0959B1F3155">
+                            <Name>VSCL-Update-DAT.sh</Name>
+                            <TargetID>28DC12BE-45DF-4CFB-A529-B05AE5F97928</TargetID>
+                        </File>
+                        <File id="2EE5BC9E-E0AD-4764-8974-D1A967B257E8">
+                            <Name>VSCL-Update-Prop1.sh</Name>
+                            <TargetID>D0BF41D7-26BF-46D6-8241-B0F162426E73</TargetID>
+                        </File>
+                        <File id="1922B8F6-6536-454A-8721-175896997542">
+                            <Name>uvwrap.sh</Name>
+                            <TargetID>1084A675-EDD3-4368-8574-1FE771169015</TargetID>
+                        </File>
+                    </ZippedFiles>
+                </ZipFile>
+            </Component> 
+            <Component id="FB9EDF96-C5FA-4F0D-8D7F-A223A7B3F307">
+                <Name>VSCL-EPOPatch</Name>
+                <Zipfile id="B00A541E-B90F-4859-BC16-47C5F044C8F1">
+                    <Name>VSCLEPAT1200.zip</Name>
+                    <ZippedFiles>
+                        <File id="7CCB27AF-C608-4C62-9FC1-A67061272BAD">
+                            <Name>VSCL-EPOPatch.sh</Name>
+                            <TargetID>2B8AC995-FF76-4F71-ABD7-693015A3A3D5</TargetID>
+                        </File>
+                        <File id="97441122-26F2-48A4-AE31-2AA07B499278">
+                            <Name>VSCL-lib.sh</Name>
+                            <TargetID>EA3F5EA5-EF1A-4D7F-A41F-65F30DD1A25B</TargetID>
+                        </File>
+                        <File id="DF9F3BE3-592C-4924-BA2C-DC49C54E575D">
+                            <Name>VSCL-local.sh</Name>
+                            <TargetID>DDDB690D-1578-4409-BA27-E20040F71529</TargetID>
+                        </File>
+                        <File id="1922B8F6-6536-454A-8721-175896997542">
+                            <Name>uvwrap.sh</Name>
+                            <TargetID>1084A675-EDD3-4368-8574-1FE771169015</TargetID>
+                        </File>
+                    </ZippedFiles>
+                </Zipfile>
+            </Component> 
+            <Component id="FA4F218F-7520-40E7-A98E-7F52D9268E04">
+                <Name>VSCL-Update-DAT</Name>
+                <Zipfile id="6A773341-4368-40AD-ABEE-6D3F03DCF7B4">
+                    <Name>VSCLUDAT1200.zip</Name>
+                    <ZippedFiles>
+                        <ZippedFile id="FAC8B79E-8D4E-4595-B02F-6D0E8BB8D8AF">
+                            <Name>VSCL-lib.sh</Name>
+                            <TargetID>EA3F5EA5-EF1A-4D7F-A41F-65F30DD1A25B</TargetID>
+                        </ZippedFile>
+                        <ZippedFile id="BB75AACE-FCAE-4881-9723-F64BA12B285D">
+                            <Name>VSCL-local.sh</Name>
+                            <TargetID>DDDB690D-1578-4409-BA27-E20040F71529</TargetID>
+                        </ZippedFile>
+                        <ZippedFile id="66210E09-B3D3-49F2-AEA0-129D7DF27429">
+                            <Name>VSCL-Update-DAT.sh</Name>
+                            <TargetID>28DC12BE-45DF-4CFB-A529-B05AE5F97928</TargetID>
+                        </ZippedFile>
+                        <ZippedFile id="E587E636-B161-4DF3-84D7-62756B5863B7">
+                            <Name>VSCL-Update-Prop1.sh</Name>
+                            <TargetID>64D9F5C9-D3B8-4814-9257-741450514266</TargetID>
+                        </ZippedFile>
+                    </ZippedFiles>
+                </Zipfile>
+            </Component> 
+            <Component id="E1F2629A-1063-449F-8F1F-EE69D81835EE">
+                <Name>VSCL-Update-Prop1</Name>
+                <Zipfile id="BA1DFF1B-F9FA-4BA2-A86E-6E35A3B67880">
+                    <Name>VSCL_UP11200.zip</Name>
+                    <ZippedFiles>
+                        <ZippedFile id="7262F316-CE37-41CF-8E86-B2A6FCAEE329">
+                            <Name>VSCL-Update-Prop1.sh</Name>
+                            <TargetID>64D9F5C9-D3B8-4814-9257-741450514266</TargetID>
+                        </ZippedFile>
+                        <ZippedFile id="47C35096-A30C-4B09-B677-955FD7C3D14F">
+                            <Name>VSCL-lib.sh</Name>
+                            <TargetID>EA3F5EA5-EF1A-4D7F-A41F-65F30DD1A25B</TargetID>
+                        </ZippedFile>
+                        <ZippedFile id="FC735A1E-912A-46B9-89BF-8AB8B7F1B396">
+                            <Name>VSCL-local.sh</Name>
+                            <TargetID>DDDB690D-1578-4409-BA27-E20040F71529</TargetID>
+                        </ZippedFile>
+                    </ZippedFiles>
+                </Zipfile>
+            </Component> 
+            <Component id="82DAEB28-3CA9-4D91-920C-B89EBB67F472">
+                <Name>VSCL-Uninstall"</Name>
+                <Zipfile id="D14E8993-A058-4B4A-B851-0B6CBBAE5FFA">
+                    <Name>"VSCLUNIN1200.zip</Name>
+                    <ZippedFiles>
+                        <ZippedFile id="2B1F9E56-0493-4427-9FC9-3C2630F73FBD">
+                            <Name>VSCL-Uninstall.sh</Name>
+							<TargetID></TargetID>
+                        </ZippedFile>
+                        <ZippedFile id="7C34593B-AD9F-4A89-A5B5-26A4294319EA">
+                            <Name>VSCL-lib.sh</Name>
+							<TargetID>EA3F5EA5-EF1A-4D7F-A41F-65F30DD1A25B</TargetID>
+                        </ZippedFile>
+                        <ZippedFile id="2B9F019E-49C4-4D10-BCBE-895D1DE07B4E">
+                            <Name>VSCL-local.sh</Name>
+							<TargetID>DDDB690D-1578-4409-BA27-E20040F71529</TargetID>
+                        </ZippedFile>
+                        <ZippedFile id="46E01637-1DD3-4FAE-94EC-BD81A010B7F8">
+                            <Name>VSCL-Update-DAT.sh</Name>
+							<TargetID>28DC12BE-45DF-4CFB-A529-B05AE5F97928</TargetID>
+                        </ZippedFile>
+                    </ZippedFiles>
+                </Zipfile>
+            </Component> 
+            <Component id="B7817231-2D81-4978-BF14-C1E74E1258FF">
+                <Name>VSCL-Package</Name>
+                <Zipfile id="91369BA0-2C53-4589-8483-A44A5280A480">
+                    <Name>VSCLPACK6130.zip</Name>
+                    <ZippedFiles>
+                        <ZippedFile id="ACD78D84-075A-4F54-BD30-88AABA806A7A">
+                            <Name>vsclpackage.ini</Name>
+							<TargetID>475E0744-254B-49F3-ADC1-9FF9A4F4E76E</TargetID>
+                        </ZippedFile>
+                        <ZippedFile id="969EE1D2-E4C4-4828-8FF0-CB149C426C6E">
+                            <Name>vscl-l64-613-l.tar.gz</Name>
+							<TargetID>D601D20C-65A2-4F97-887C-81E71EF07851</TargetID>
+                        </ZippedFile>
+                        <ZippedFile id="B601DC31-D6A6-43AE-A803-DB0B20591C90">
+                            <Name>dummy.sh</Name>
+							<TargetID>DA39B237-6BE3-4334-9D1C-5E357E6DAB42</TargetID>
+                        </ZippedFile>
+                    </ZippedFiles>
+                </Zipfile>
+            </Component> 
+        </Components>
+    </BuildTree>
 </Project>
