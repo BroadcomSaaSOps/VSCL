@@ -275,7 +275,7 @@ function log_print {
     # i.e.  "11/12/2019 11:14:10 AM:VSCL_UP1:[x]Refreshing agent data with EPO..."
     #        <- date -------------> <script> <+><-- message -->
     #                                         ^-- log mode "I": info, "W": warning, "E": errror
-    out_text="$(date +'%x %X'):$__vscl_script_abbr:$*"
+    out_text="$(date +'%x %X'):$__vscl_script_abbr:${LINENO}:$*"
 
     if [[ -w $__vscl_log_path ]]; then
         # log file exists and is writable, append

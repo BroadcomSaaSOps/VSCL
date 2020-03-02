@@ -191,8 +191,12 @@ function update_dat () {
     declare ini_section
     ini_section=""
     log_info "Finding section for current DAT version in '$local_ver_file'..."
+    log_info "\$__vscl_epo_ver_section = '$__vscl_epo_ver_section'"
+    log_info "\$ini_section = '$ini_section'"
     # shellcheck disable=2154
     ini_section=$(find_ini_section "$__vscl_epo_ver_section" < "$local_ver_file")
+    log_info "After \$__vscl_epo_ver_section = '$__vscl_epo_ver_section'"
+    log_info "After \$ini_section = '$ini_section'"
 
     if [[ -z "$ini_section" ]]; then
         exit_with_error "Unable to find section '$__vscl_epo_ver_section' in '$local_ver_file'!"
@@ -216,28 +220,35 @@ function update_dat () {
         field_name=$(echo "$ini_field" | awk -F'=' ' { print $1 } ')
         field_value=$(echo "$ini_field" | awk -F'=' ' { print $2 } ')
 
-        case $field_name in
-            "DATVersion") avail_major="$field_value"  # available: major
+        case ${field_name,,} in
+            "datversion") avail_major="$field_value"  # available: major
                 ;; 
-            "MinorVersion") avail_minor="$field_value" # available: minor
+            "minorversion") avail_minor="$field_value" # available: minor
                 ;;
-            "FileName") file_name="$field_value" # file to download
+            "filename") file_name="$field_value" # file to download
                 ;;
-            "FilePath") file_path="$field_value" # path on FTP server
+            "filepath") file_path="$field_value" # path on FTP server
                 ;;
-            "Filesize") file_size="$field_value" # file size
+            "filesize") file_size="$field_value" # file size
                 ;;
-            "md5_sum") md5_sum="$field_value" # md5_sum checksum
+            "md5") md5_sum="$field_value" # md5_sum checksum
                 ;;
             *) true  # ignore any other fields
                 ;;
         esac
     done
 
+    log_info "\$avail_major = '$avail_major'"
+    log_info "\$avail_minor = '$avail_minor'"
+    log_info "\$file_name = '$file_name'"
+    log_info "\$file_path = '$file_path'"
+    log_info "\$file_size = '$file_size'"
+    log_info "\$md5_sum = '$md5_sum'"
+
     # sanity check
     # All extracted fields have values?
     if [[ -z "$avail_major" ]] || [[ -z "$avail_minor" ]] || [[ -z "$file_name" ]] || [[ -z "$file_path" ]] || [[ -z "$file_size" ]] || [[ -z "$md5_sum" ]]; then
-        exit_with_error "Section '[$ini_section]' in '$local_ver_file' has incomplete data!"
+        exit_with_error "Section '[$__vscl_epo_ver_section]' in '$local_ver_file' has incomplete data!"
     fi
 
     # shellcheck disable=2154
@@ -292,7 +303,7 @@ function update_dat () {
         # Exit if we only wanted to download
         if [[ -n "$download_only" ]]; then
             # shellcheck disable=2154
-            log_info "DAT downloaded to '$__vscl_dat_zip'.  Exiting.."
+            log_info "DAT downloaded to '$dat_zip'.  Exiting.."
             exit_script 0
         fi
 

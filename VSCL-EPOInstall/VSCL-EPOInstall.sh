@@ -134,7 +134,11 @@ function install_with_epo {
     unset ini_section
     log_info "Finding section for current installer version in '$local_ver_file'..."
     # shellcheck disable=2154
+    log_info "\$__vscl_pkg_ver_section = '$__vscl_pkg_ver_section'"
+    log_info "\$ini_section = '$ini_section'"
     ini_section=$(find_ini_section "$__vscl_pkg_ver_section" < "$local_ver_file")
+    log_info "After \$__vscl_pkg_ver_section = '$__vscl_pkg_ver_section'"
+    log_info "After \$ini_section = '$ini_section'"
 
     if [[ -z "$ini_section" ]]; then
         exit_with_error "Unable to find section '$__vscl_pkg_ver_section' in '$local_ver_file'. Aborting installer!"
@@ -162,7 +166,7 @@ function install_with_epo {
     # sanity check
     # All extracted fields have values?
     if [[ -z "$package_name" ]] || [[ -z "$package_ver" ]] || [[ -z "$install_file" ]]; then
-        exit_with_error "Section '[$ini_section]' in '$local_ver_file' has incomplete data. Aborting installer!"
+        exit_with_error "Section '[$__vscl_pkg_ver_section]' in '$local_ver_file' has incomplete data. Aborting installer!"
     fi
 
     log_info "New Installer Version Available: '$package_ver'"
@@ -183,18 +187,18 @@ function install_with_epo {
     # untar installer archive in-place and install uvscan with default settings
     log_info "Extracting installer '$__vscl_temp_dir/$install_file' to directory '$__vscl_temp_dir'..."
 
-    if ! cd "$__vscl_temp_dir"; then
-        exit_with_error "Unable to change to temp directory '$__vscl_temp_dir'. Aborting installer!"
-    fi
+    # if ! cd "$__vscl_temp_dir"; then
+        # exit_with_error "Unable to change to temp directory '$__vscl_temp_dir'. Aborting installer!"
+    # fi
 
-    if ! capture_command "tar" "-xvzf ./$install_file"; then
+    if ! capture_command "tar" "-xvzf $__vscl_temp_dir/$install_file -C $__vscl_temp_dir"; then
         exit_with_error "error extracting installer '$__vscl_temp_dir/$install_file' to directory '$__vscl_temp_dir'. Aborting installer!"
     fi
 
     log_info "Installing VSCL..."
 
     # shellcheck disable=2154
-    if ! capture_command "./$__vscl_install_cmd" "-y"; then
+    if ! capture_command "$__vscl_temp_dir/$__vscl_install_cmd" "-y"; then
         exit_with_error "error installing VirusScan Command line Scanner. Aborting installer!"
     fi
 
@@ -217,7 +221,7 @@ function install_with_epo {
     fi
 
     # return to original directory
-    cd ..
+    #cd ..
 
     # Copy support files to uvscan directory
     # shellcheck disable=2154
