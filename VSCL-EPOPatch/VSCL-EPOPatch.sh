@@ -49,9 +49,17 @@ fi
 # shellcheck disable=SC1091
 unset include_path this_file
 declare include_path this_file
+
+# get this script's filename from bash
 this_file="${BASH_SOURCE[0]}"
-this_file=$(while [[ -L "$this_file" ]]; do this_file="$(readlink "$this_file")"; done; echo $this_file)
+# bash_source does NOT follow symlinks, traverse them until we get a real file
+this_file=$(while [[ -L "$this_file" ]]; do 
+                this_file="$(readlink "$this_file")";
+                done; 
+                echo "$this_file")
+# extract path to this script
 include_path="${this_file%/*}"
+# shellcheck disable=SC1090
 . "$include_path/VSCL-lib.sh"
 
 
@@ -75,6 +83,7 @@ function install_patch {
     declare support_file target_file
 
     # Copy support files to uvscan directory
+    # shellcheck disable=SC2154
     for support_file in $__vscl_scan_support_files; do
         target_file="$__vscl_uvscan_dir/$support_file"
         log_info "Copying support file '$support_file' to '$target_file'..."
@@ -105,6 +114,7 @@ function install_patch {
         fi
     done
 
+    # shellcheck disable=SC2154
     if ! chmod 646 "$__vscl_log_path"; then
         # unable to apply permissions to log file, error
         exit_with_error "Unable to set permisions on '$__vscl_log_path'. Aborting installer!"

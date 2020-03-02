@@ -30,6 +30,7 @@
 #=============================================================================
 # PREPROCESS: Prevent file from being sourced
 #=============================================================================
+
 if $(return 0 2>/dev/null); then
     # File is  sourced, return error
     echo "VSCL EPO Installer must NOT be sourced.  It must be run standalone!"
@@ -42,10 +43,18 @@ fi
 # shellcheck disable=SC1091
 unset include_path this_file
 declare include_path this_file
+
+# get this script's filename from bash
 this_file="${BASH_SOURCE[0]}"
-this_file=$(while [[ -L "$this_file" ]]; do this_file="$(readlink "$this_file")"; done; echo $this_file)
-#include_path="${this_file%/*}"
-#. "$include_path/VSCL-lib.sh"
+# bash_source does NOT follow symlinks, traverse them until we get a real file
+this_file=$(while [[ -L "$this_file" ]]; do 
+                this_file="$(readlink "$this_file")";
+                done; 
+                echo "$this_file")
+# extract path to this script
+include_path="${this_file%/*}"
+# shellcheck disable=SC1090
+. "$include_path/VSCL-lib.sh"
 
 #=============================================================================
 # GLOBALS: Global variables
@@ -69,7 +78,7 @@ declare -x __vscl_log_path="/var/McAfee/agent/logs/VSCL_mgmt.log"
 # --noexpire            no error for expired files
 # --one-file-system     do not follow mouned directory trees
 # --timeout 10          scan for 10 seconds then abort
-declare -x SCAN_OPTIONS="-c -p --afc 512 -e --nocomp --ignore-links --noboot --nodecrypt --noexpire --one-file-system --timeout 10"
+SCAN_OPTIONS="-c -p --afc 512 -e --nocomp --ignore-links --noboot --nodecrypt --noexpire --one-file-system --timeout 10"
 
 
 #=============================================================================
@@ -86,6 +95,7 @@ function log_print {
 
     declare out_text 
     
+    
     # Prepend date/time, which script, then the log message
     # i.e.  "11/12/2019 11:14:10 AM:VSCL_UP1:[x]Refreshing agent data with EPO..."
     #        <- date -------------> <script> <+><-- message -->
@@ -94,9 +104,11 @@ function log_print {
 
     if [[ -w $__vscl_log_path ]]; then
         # log file exists and is writable, append
+        #echo -e "$out_text" | tee --append "$__vscl_log_path"
         printf "%s\n" "$out_text" | tee --append "$__vscl_log_path"
     else
         # log file absent, create
+        #echo -e "$OUTPUT" | tee "$__vscl_log_path"
         printf "%s\n" "$out_text" | tee "$__vscl_log_path"
     fi
     
@@ -120,7 +132,8 @@ else
 fi
 
 # call uvscan
-if ! /usr/local/uvscan/uvscan $scan_options $*; then
+# shellcheck disable=SC2086
+if ! /usr/local/uvscan/uvscan $SCAN_OPTIONS "$@"; then
     # uvscan returned error, exit and return 1
     log_print "[E]*** Virus found! ***"
     exit 1

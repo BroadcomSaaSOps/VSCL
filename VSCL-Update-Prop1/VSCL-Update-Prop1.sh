@@ -31,10 +31,12 @@
 #=============================================================================
 # PREPROCESS: Bypass inclusion of this file if it is already loaded
 #=============================================================================
+# shellcheck disable=SC2154
 if [[ -z "$__vscl_up1_loaded" ]]; then
     # not already loaded, set flag that it is now
     #echo "not loaded, loading..."
-    delcare -x __vscl_up1_loaded=1
+    declare -x __vscl_up1_loaded
+    __vscl_up1_loaded=1
 else
     # already loaded, exit gracefully
     #echo "loaded already"
@@ -48,9 +50,17 @@ fi
 # shellcheck disable=SC1091
 unset include_path this_file
 declare include_path this_file
+
+# get this script's filename from bash
 this_file="${BASH_SOURCE[0]}"
-this_file=$(while [[ -L "$this_file" ]]; do this_file="$(readlink "$this_file")"; done; echo $this_file)
+# bash_source does NOT follow symlinks, traverse them until we get a real file
+this_file=$(while [[ -L "$this_file" ]]; do 
+                this_file="$(readlink "$this_file")";
+                done; 
+                echo "$this_file")
+# extract path to this script
 include_path="${this_file%/*}"
+# shellcheck disable=SC1090
 . "$include_path/VSCL-lib.sh"
 
 
@@ -110,9 +120,9 @@ function update_prop1 {
 #=============================================================================
 # MAIN: Code execution begins here
 #=============================================================================
+# shellcheck disable=SC2091
 if $(return 0 2>/dev/null); then
     # File is sourced, return to sourcing code
-    #log_info "VSCL Update Custom Property functions loaded successfully!"
     return 0
 else
     # File is NOT sourced, execute it like it any regular shell file

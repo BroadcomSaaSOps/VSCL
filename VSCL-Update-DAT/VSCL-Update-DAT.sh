@@ -4,20 +4,20 @@
 # Name:     VSCL-Update-DAT.sh
 #-----------------------------------------------------------------------------
 # Purpose:  Update the DAT files for the McAfee VirusScan Command line
-#                       Scanner 6.1.3 on SaaS Linux PPM App servers from EPO
+#           Scanner 6.1.3 on SaaS Linux PPM App servers from EPO
 #-----------------------------------------------------------------------------
 # Creator:  Nick Taylor, Pr. Engineer, Broadcom SaaS Ops
 #-----------------------------------------------------------------------------
-# Date:     03-FEB-2020
+# Date:     18-FEB-2020
 #-----------------------------------------------------------------------------
 # Version:  1.2
 #-----------------------------------------------------------------------------
 # PreReqs:  Linux
 #           CA PPM Application Server
-#           VSCL antivirus scanner installed
-#           Latest VSCL DAT .ZIP file
+#           VSCL antivirus already scanner installed to /usr/local/uvscan
+#           Latest VSCL DAT .ZIP file available via EPO
 #           unzip, tar, gunzip, gclib > 2.7 utilities in OS,
-#           awk, echo, cut, ls, printf, wget
+#           awk, echo, cut, ls, printf, wget or curl
 #-----------------------------------------------------------------------------
 # Params:   none
 #-----------------------------------------------------------------------------
@@ -31,9 +31,8 @@
 # PREPROCESS: Bypass inclusion of this file if it is already loaded
 #=============================================================================
 if [[ -z "$__vscl_udd_loaded" ]]; then
-    # not already loaded, set flag that it is now
-    #echo "not loaded, loading..."
-    declare -x __vscl_udd_loaded=1
+    declare -x __vscl_udd_loaded
+    __vscl_udd_loaded=1
 else
     # already loaded, exit gracefully
     #echo "loaded already"
@@ -46,11 +45,17 @@ fi
 # shellcheck disable=SC1091
 unset include_path this_file
 declare include_path this_file
+
+# get this script's filename from bash
 this_file="${BASH_SOURCE[0]}"
-this_file=$(while [[ -L "$this_file" ]]; do this_file="$(readlink "$this_file")"; done; echo $this_file)
+# bash_source does NOT follow symlinks, traverse them until we get a real file
+this_file=$(while [[ -L "$this_file" ]]; do 
+                this_file="$(readlink "$this_file")";
+                done; 
+                echo "$this_file")
+# extract path to this script
 include_path="${this_file%/*}"
-#. "$include_path/VSCL-lib.sh"
-# shellcheck disable=SC1091
+# shellcheck disable=SC1090
 . "$include_path/VSCL-Update-Prop1.sh"
 
 
@@ -60,7 +65,8 @@ include_path="${this_file%/*}"
 # Abbreviation of this script name for logging, NOT set if sourced
 # shellcheck disable=2034
 if [[ -z "$__vscl_script_abbr" ]]; then
-    declare -x __vscl_script_abbr="VCSLUDAT"
+    declare -x __vscl_script_abbr
+    __vscl_script_abbr="VCSLUDAT"
 fi
 
 
@@ -73,12 +79,16 @@ function update_dat () {
     #-----------------------------------------
     # shellcheck disable=2034
     declare option_var download_only
+    declare -x __vscl_leave_files
+    
+    download_only=0
+    __vscl_leave_files=0
 
     while getopts :dl option_var; do
         case "$option_var" in
-            "d") declare download_only=1    # only download most current DAT from EPO and exit
+            "d") download_only=1    # only download most current DAT from EPO and exit
                 ;;
-            "l") declare -x __vscl_leave_files=1      # leave any temp files on exit
+            "l") __vscl_leave_files=1      # leave any temp files on exit
                 ;;
             *) exit_with_error "Unknown option specified!"
                 ;;
@@ -91,15 +101,18 @@ function update_dat () {
     # Local variables
     #-----------------------------------------
     # Name of the file in the repository to extract current DAT version from
-    declare local_ver_file="$__vscl_temp_dir/$__vscl_epo_ver_file"
+    declare local_ver_file
+    # shellcheck disable=2154
+    local_ver_file="$__vscl_temp_dir/$__vscl_epo_ver_file"
 
     # download site
-    # shellcheck disable=SC2153
-    declare download_site="https://${__vscl_site_name}${__vscl_epo_server}:443/Software/Current/VSCANDAT1000/DAT/0000"
+    declare dat_dl_site
+    # shellcheck disable=2154
+    dat_dl_site="https://${__vscl_site_name}${__vscl_epo_server}.${__vscl_epo_domain}:443/Software/Current/VSCANDAT1000/DAT/0000"
 
 
     #-----------------------------------------
-    #  Main code of update function
+    #  Main code of DAT update function
     #-----------------------------------------
     log_info "==========================="
     log_info "Beginning VSCL DAT update"
@@ -107,16 +120,18 @@ function update_dat () {
 
     if [[ -z "$download_only" ]]; then
         # check for MACONFIG
-        check_for "$__vscl_maconfig_path" "MACONFIG utility"
+        # shellcheck disable=2154
+        check_for "$__vscl_maconfig_path" "McAfee EPO Agent MACONFIG utility"
 
         # check for CMDAGENT
-        check_for "$__vscl_cmdagent_path" "CMDAGENT utility"
+        # shellcheck disable=2154
+        check_for "$__vscl_cmdagent_path" "McAfee EPO Agent CMDAGENT utility"
 
         # check for uvscan
-        if ! check_for "$__vscl_uvscan_dir/$__vscl_uvscan_exe" "uvscan executable" --no-terminate; then
+        # shellcheck disable=2154
+        if ! check_for "$__vscl_uvscan_dir/$__vscl_uvscan_exe" "uvscan executable" --no-terminate > /dev/null 2>&1; then
             # uvscan not found
             # set custom property to error value, then exit
-            log_info "Could not find 'uvscan executable' at '$__vscl_uvscan_dir/$__vscl_uvscan_exe'!"
             log_info "Setting McAfee Custom Property #1 to '$__vscl_notinst_code'..."
             set_custom_prop 1 "$__vscl_notinst_code"
             refresh_to_epo
@@ -124,56 +139,59 @@ function update_dat () {
         fi
     fi
 
-    # make temp dir if it doesn't exist
-    log_info "Checking for temporary directory '$__vscl_temp_dir'..."
+    # # make temp dir if it doesn't exist
+    # log_info "Checking for temporary directory '$__vscl_temp_dir'..."
 
-    if [[ ! -d "$__vscl_temp_dir" ]]; then
-        log_info "Creating temporary directory '$__vscl_temp_dir'..."
+    # if [[ ! -d "$__vscl_temp_dir" ]]; then
+        # log_info "Creating temporary directory '$__vscl_temp_dir'..."
 
-        if ! mkdir -p "$__vscl_temp_dir" > /dev/null 2>&1; then
-            exit_with_error "error creating temporary directory '$__vscl_temp_dir'!"
-        fi
-    fi
+        # if ! mkdir -p "$__vscl_temp_dir" > /dev/null 2>&1; then
+            # exit_with_error "error creating temporary directory '$__vscl_temp_dir'!"
+        # fi
+    # fi
 
-    if [[ ! -d "$__vscl_temp_dir" ]]; then
-        exit_with_error "error creating temporary directory '$__vscl_temp_dir'!"
-    fi
+    # if [[ ! -d "$__vscl_temp_dir" ]]; then
+        # exit_with_error "error creating temporary directory '$__vscl_temp_dir'!"
+    # fi
 
     # download current DAT version file from repository, exit if not available
-    log_info "Downloading DAT versioning file '$__vscl_epo_ver_file' from '$download_site'..."
+    log_info "Downloading DAT versioning file '$__vscl_epo_ver_file' from '$dat_dl_site'..."
 
     #download_out="$?"
 
-    if ! download_file "$download_site" "$__vscl_epo_ver_file" "ascii" "$__vscl_temp_dir"; then
-        exit_with_error "error downloading '$__vscl_epo_ver_file' from '$download_site'!"
+    if ! download_file "$dat_dl_site" "$__vscl_epo_ver_file" "ascii" "$__vscl_temp_dir"; then
+        exit_with_error "Error downloading '$__vscl_epo_ver_file' from '$dat_dl_site'!"
     fi
 
     # Did we get the version file?
     if [[ ! -r "$local_ver_file" ]]; then
-        exit_with_error "***error downloading '$__vscl_epo_ver_file' from '$download_site'!"
+        exit_with_error "Error downloading '$__vscl_epo_ver_file' from '$dat_dl_site'!"
     fi
 
     if [[ -z "$download_only" ]]; then
         # Get the version of the installed DATs...
         log_info "Determining the currently installed DAT version..."
 
-        unset curr_dat
-        declare curr_dat=$(get_curr_dat_ver)
+        unset curr_dat curr_major curr_minor
+        declare curr_dat curr_major curr_minor
+        curr_dat=$(get_curr_dat_ver)
 
         if [[ -z "$curr_dat" ]] ; then
             log_info "Unable to determine currently installed DAT version!"
             curr_dat="0000.0"
         else
-            unset curr_major curr_minor
-            declare curr_major=$(get_curr_dat_ver "DATMAJ")
-            curr_minor=$(get_curr_dat_ver "DATMIN")
+            # extract major version, minor is always "0" for current engine/DATs
+            curr_major="$(echo "$curr_dat" | cut -d. -f-1)"
+            curr_minor="0"
         fi
     fi
     
     # extract DAT info from avvdat.ini
     log_info "Determining the available DAT version..."
     declare ini_section
+    ini_section=""
     log_info "Finding section for current DAT version in '$local_ver_file'..."
+    # shellcheck disable=2154
     ini_section=$(find_ini_section "$__vscl_epo_ver_section" < "$local_ver_file")
 
     if [[ -z "$ini_section" ]]; then
@@ -187,6 +205,11 @@ function update_dat () {
     # Some INI sections have the MinorVersion field missing.
     # To work around this, we will initialise it to 0.
     avail_minor=0
+    avail_major=0
+    file_name=""
+    file_path=""
+    file_size=0
+    md5_sum=""
 
     # Parse the section and keep what we are interested in.
     for ini_field in $ini_section; do
@@ -217,10 +240,17 @@ function update_dat () {
         exit_with_error "Section '[$ini_section]' in '$local_ver_file' has incomplete data!"
     fi
 
-    log_info "Current DAT Version: '$curr_major.$curr_minor'"
+    # shellcheck disable=2154
+    if [[ "$curr_dat" = "$__vscl_invalid_code" ]]; then
+        log_info "Current DAT Version not available/invalid"
+    else
+        log_info "Current DAT Version: '$curr_major.$curr_minor'"
+    fi
+    
     log_info "New DAT Version Available: '$avail_major.$avail_minor'"
 
     if [[ -z "$download_only" ]]; then
+        # shellcheck disable=2154
         if [[ "$curr_major" = "$__vscl_invalid_code" ]]; then
             perform_update="yes";
         # Installed version is less than current DAT version?
@@ -236,13 +266,13 @@ function update_dat () {
         fi
 
         # Download the dat files...
-        log_info "Downloading the current DAT '$file_name' from '$download_site'..."
+        log_info "Downloading the current DAT '$file_name' from '$dat_dl_site'..."
 
-        download_file "$download_site" "$file_name" "bin" "$__vscl_temp_dir"
+        download_file "$dat_dl_site" "$file_name" "bin" "$__vscl_temp_dir"
         download_out="$?"
 
         if [[ "$download_out" != "0" ]]; then
-            exit_with_error "error downloading '$file_name' from '$download_site'!"
+            exit_with_error "error downloading '$file_name' from '$dat_dl_site'!"
         fi
 
         dat_zip="$__vscl_temp_dir/$file_name"
@@ -261,10 +291,12 @@ function update_dat () {
 
         # Exit if we only wanted to download
         if [[ -n "$download_only" ]]; then
+            # shellcheck disable=2154
             log_info "DAT downloaded to '$__vscl_dat_zip'.  Exiting.."
             exit_script 0
         fi
 
+        # shellcheck disable=2154
         update_from_zip "$__vscl_uvscan_dir" "$dat_zip" "$__vscl_epo_file_list"
         update_out="$?"
 
@@ -311,6 +343,7 @@ function update_dat () {
 #=============================================================================
 # MAIN: Code execution begins here
 #=============================================================================
+# shellcheck disable=2091
 if $(return 0 2>/dev/null); then
     # File is sourced, return to sourcing code
     log_info "VSCL Update DAT functions loaded successfully!"

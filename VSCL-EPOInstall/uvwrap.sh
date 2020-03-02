@@ -30,6 +30,7 @@
 #=============================================================================
 # PREPROCESS: Prevent file from being sourced
 #=============================================================================
+# shellcheck disable=SC2091
 if $(return 0 2>/dev/null); then
     # File is  sourced, return error
     echo "VSCL EPO Installer must NOT be sourced.  It must be run standalone!"
@@ -39,17 +40,27 @@ fi
 #=============================================================================
 #  IMPORTS: Import any required libraries/files
 #=============================================================================
-# shellcheck disable=SC1091
+
 unset include_path this_file
 declare include_path this_file
+
+# get this script's filename from bash
 this_file="${BASH_SOURCE[0]}"
-this_file=$(while [[ -L "$this_file" ]]; do this_file="$(readlink "$this_file")"; done; echo $this_file)
+# bash_source does NOT follow symlinks, traverse them until we get a real file
+this_file=$(while [[ -L "$this_file" ]]; do 
+                this_file="$(readlink "$this_file")";
+                done; 
+                echo "$this_file")
+# extract path to this script
+include_path="${this_file%/*}"
+# shellcheck source=./VSCL-lib.sh
+. "$include_path/VSCL-lib.sh"
 
 #=============================================================================
 # GLOBALS: Global variables
 #=============================================================================
 # Abbreviation of this script name for logging
-# shellcheck disable=SC2034
+
 declare -x __vscl_script_abbr="UVWRAP"
 
 # Path to common log file for all VSCL scripts
@@ -121,7 +132,8 @@ else
 fi
 
 # call uvscan
-if ! /usr/local/uvscan/uvscan $SCAN_OPTIONS $*; then
+# shellcheck disable=2086
+if ! /usr/local/uvscan/uvscan $SCAN_OPTIONS "$@"; then
     # uvscan returned error, exit and return 1
     log_print "[E]*** Virus found! ***"
     exit 1

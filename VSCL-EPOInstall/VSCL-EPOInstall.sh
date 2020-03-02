@@ -8,7 +8,7 @@
 #-----------------------------------------------------------------------------
 # Creator:  Nick Taylor, Pr. Engineer, Broadcom SaaS Ops
 #-----------------------------------------------------------------------------
-# Date:     03-FEB-2020
+# Date:     18-FEB-2020
 #-----------------------------------------------------------------------------
 # Version:  1.2
 #-----------------------------------------------------------------------------
@@ -46,11 +46,17 @@ fi
 # shellcheck disable=SC1091
 unset include_path this_file
 declare include_path this_file
+
+# get this script's filename from bash
 this_file="${BASH_SOURCE[0]}"
-this_file=$(while [[ -L "$this_file" ]]; do this_file="$(readlink "$this_file")"; done; echo $this_file)
+# bash_source does NOT follow symlinks, traverse them until we get a real file
+this_file=$(while [[ -L "$this_file" ]]; do 
+                this_file="$(readlink "$this_file")";
+                done; 
+                echo "$this_file")
+# extract path to this script
 include_path="${this_file%/*}"
-#. "$include_path/VSCL-lib.sh"
-# shellcheck disable=SC1091
+# shellcheck disable=SC1090
 . "$include_path/VSCL-Update-DAT.sh"
 
 
@@ -83,14 +89,16 @@ function install_with_epo {
 
     # Default filler for Custom Property #1
     # shellcheck disable=SC2034
+    # shellcheck disable=SC2154
     new_ver="$__vscl_invalid_code"
 
     # full path of downloaded versioning file
+    # shellcheck disable=SC2154
     local_ver_file="$__vscl_temp_dir/$__vscl_pkg_ver_file"
 
     # download site
-    # shellcheck disable=SC2153
-    download_site="https://${__vscl_site_name}${__vscl_epo_server}:443/Software/Current/$__vscl_install_pkg$__vscl_install_ver/Install/0000"
+    # shellcheck disable=SC2154
+    download_site="https://${__vscl_site_name}${__vscl_epo_server}.${__vscl_epo_domain}:443/Software/Current/$__vscl_install_pkg$__vscl_install_ver/Install/0000"
 
     #-----------------------------------------
     # Process command line options
@@ -125,14 +133,14 @@ function install_with_epo {
     log_info "Determining the available installer version..."
     unset ini_section
     log_info "Finding section for current installer version in '$local_ver_file'..."
-    #echo "pwd = '`pwd`'"
+    # shellcheck disable=2154
     ini_section=$(find_ini_section "$__vscl_pkg_ver_section" < "$local_ver_file")
 
     if [[ -z "$ini_section" ]]; then
         exit_with_error "Unable to find section '$__vscl_pkg_ver_section' in '$local_ver_file'. Aborting installer!"
     fi
 
-    decalre ini_field package_name package_ver install_file
+    declare ini_field package_name package_ver install_file
 
     # Parse the section and keep what we are interested in.
     for ini_field in $ini_section; do
@@ -185,6 +193,7 @@ function install_with_epo {
 
     log_info "Installing VSCL..."
 
+    # shellcheck disable=2154
     if ! capture_command "./$__vscl_install_cmd" "-y"; then
         exit_with_error "error installing VirusScan Command line Scanner. Aborting installer!"
     fi
@@ -211,6 +220,7 @@ function install_with_epo {
     cd ..
 
     # Copy support files to uvscan directory
+    # shellcheck disable=2154
     for support_file in $__vscl_scan_support_files; do
         target_file="$__vscl_uvscan_dir/$support_file"
         log_info "Copying support file '$support_file' to '$target_file'..."

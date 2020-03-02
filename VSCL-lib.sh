@@ -7,7 +7,7 @@
 #-----------------------------------------------------------------------------
 # Creator:      Nick Taylor, Pr. Engineer, Broadcom SaaS Ops
 #-----------------------------------------------------------------------------
-# Date:         03-FEB-2020
+# Date:         18-FEB-2020
 #-----------------------------------------------------------------------------
 # Version:      1.2
 #-----------------------------------------------------------------------------
@@ -23,6 +23,7 @@
 # PREPROCESS: Bypass inclusion of this file if it is already loaded
 #=============================================================================
 # If this file is NOT sourced, return error
+# shellcheck disable=2091
 if ! $(return 0 2>/dev/null); then
     echo ">> errOR! VSCL Library must be sourced.  It cannot be run standalone!"
     exit 1
@@ -46,9 +47,17 @@ fi
 # shellcheck disable=SC1091
 unset include_path this_file
 declare include_path this_file
+
+# get this script's filename from bash
 this_file="${BASH_SOURCE[0]}"
-this_file=$(while [[ -L "$this_file" ]]; do this_file="$(readlink "$this_file")"; done; echo $this_file)
+# bash_source does NOT follow symlinks, traverse them until we get a real file
+this_file=$(while [[ -L "$this_file" ]]; do 
+                this_file="$(readlink "$this_file")";
+                done; 
+                echo "$this_file")
+# extract path to this script
 include_path="${this_file%/*}"
+# shellcheck disable=SC1090
 . "$include_path/VSCL-local.sh"
 
 
@@ -62,20 +71,29 @@ unset __vscl_wrapper __vscl_library __vscl_localize __vscl_maconfig_path
 unset __vscl_cmdagent_path __vscl_install_pkg __vscl_install_ver __vscl_pkg_ver_file 
 unset __vscl_pkg_ver_section __vscl_epo_ver_file __vscl_epo_ver_section 
 unset __vscl_epo_file_list __vscl_scan_support_files __vscl_mask_regexp 
-unset __vscl_notinst_code __vscl_invalid_code __vscl_install_cmd
+unset __vscl_notinst_code __vscl_invalid_code __vscl_temp_dir __vscl_temp_file
+
+declare -x  __vscl_script_abbr __vscl_script_name __vscl_script_path __vscl_debug_it
+declare -x  __vscl_leave_files __vscl_log_path __vscl_uvscan_exe __vscl_uninstall_exe 
+declare -x  __vscl_uvscan_dir __vscl_uvscan_cmd __vscl_install_cmd __vscl_uninstall_cmd 
+declare -x  __vscl_wrapper __vscl_library __vscl_localize __vscl_maconfig_path 
+declare -x  __vscl_cmdagent_path __vscl_install_pkg __vscl_install_ver __vscl_pkg_ver_file 
+declare -x  __vscl_pkg_ver_section __vscl_epo_ver_file __vscl_epo_ver_section 
+declare -x  __vscl_epo_file_list __vscl_scan_support_files __vscl_mask_regexp 
+declare -x  __vscl_notinst_code __vscl_invalid_code __vscl_temp_dir __vscl_temp_file
 
 # name of script file (the one that dotsourced this library, not the library itself)
 # shellcheck disable=SC2034
-__vscl_script_name=$(basename "${BASH_SOURCE%/*}/")
+__vscl_script_name="$this_file"
 
 # path to script file (the one that dotsourced this library, not the library itself)
-__vscl_script_path=$(dirname "${BASH_SOURCE%/*}/")
+__vscl_script_path="$include_path"
 
 # show debug messages (set to non-empty to enable)
-#__vscl_debug_it=
+__vscl_debug_it=""
 
 # flag to erase any temp files on exit (set to non-empty to enable)
-#__vscl_leave_files=
+__vscl_leave_files=""
 
 # Path to common log file for all VSCL scripts
 __vscl_log_path="/var/McAfee/agent/logs/VSCL_mgmt.log"
@@ -170,6 +188,7 @@ function do_cleanup {
     # before exiting
     #------------------------------------------------------------
 
+    # shellcheck disable=2154
     if [[ -z "$__vscl_leave_files" ]]; then
         if [[ -d "$__vscl_temp_dir" ]]; then
             # log_info "Removing temp dir '$__vscl_temp_dir'..."
@@ -201,17 +220,10 @@ function exit_script {
     #----------------------------------------------------------
 
     declare out_code
-
-    if [[ -z "$1" ]]; then
-        out_code="0"
-    else
-        if [ "$1" != "0" ]; then
-            out_code="$1"
-        fi
-    fi
+    out_code="${1:-0}"
     
     log_info "==========================="
-    log_info "Ending with exit code: $1"
+    log_info "Ending with exit code '$1'"
     log_info "==========================="
 
     # Clean up temp files
@@ -219,10 +231,10 @@ function exit_script {
 
     case "$-" in
         # do a simple RETURN if invoked from the command line
-        *i*) return $out_code
+        *i*) return "$out_code"
             ;;
         # otherwise exit the script
-        *) exit  $out_code
+        *) exit  "$out_code"
             ;;
     esac
 }
@@ -255,6 +267,7 @@ function log_print {
 
     declare out_text save_opts
     
+    # turn off logging for this function, if it is on
     save_opts=$SHELLOPTS
     set +x
     
@@ -274,6 +287,7 @@ function log_print {
         printf "%s\n" "$out_text" | tee "$__vscl_log_path"
     fi
     
+    # turn off logging back on this function, if it was on before
     if [[ "$save_opts" == *"xtrace"* ]]; then
         set -x
     fi
@@ -339,35 +353,44 @@ function capture_command {
     # Returns: 0/ok if command ran
     #          error code if command failed
     #------------------------------------------------------------
-    declare err out_text capture_cmd capture_arg var_empty pre_cmd
-    declare out_array
+    declare capture_err out_text capture_cmd capture_arg var_empty
+    declare out_array pre_cmd
     
+    # massage inputs
     var_empty=""
     capture_cmd="${1:-$var_empty}"
     capture_arg="${2:-$var_empty}"
     pre_cmd="${3:-$var_empty}"
 
+    # Error if not capture command supplied
     if [[ -z "$capture_cmd" ]]; then
         exit_with_error "Command to capture empty!"
     fi
 
     if [[ -n "$pre_cmd" ]]; then
-        log_info ">> cmd = '$pre_cmd | $capture_cmd $capture_arg'"
+        # "Pre" command supplied, log it
+        log_info ">> cmd = '$pre_cmd | $capture_cmd $capture_arg > $__vscl_temp_file 2>&1'"
     else
-        log_info ">> cmd = '$capture_cmd $capture_arg'"
+        # Log command to capture
+        log_info ">> cmd = '$capture_cmd $capture_arg > $__vscl_temp_file 2>&1'"
     fi
     
+    #log_info "\$__vscl_temp_file = '$__vscl_temp_file'"
+    
+    # capture command (and any "pre" command) to a temp file
     # shellcheck disable=SC2086
     if [[ -n "$pre_cmd" ]]; then
+        # "Pre" command supplied, pipe it into the command to capture
         $pre_cmd | $capture_cmd $capture_arg > "$__vscl_temp_file" 2>&1
     else
         $capture_cmd $capture_arg > "$__vscl_temp_file" 2>&1
     fi
     
-    err=$?
+    capture_err=$?
     IFS=$__vscl_save_ifs
     out_array=()
     
+    # get output from temp file, split lines into an array
     IFS=$'\n' read -r -d '' -a out_array < <( cat "$__vscl_temp_file" && printf '\0' )
 
     for out_text in "${out_array[@]}"; do
@@ -380,13 +403,10 @@ function capture_command {
         
         log_info ">> $out_text"
     done
-
-    
-    
-    if [ $err -ne 0 ]; then
+   
+    if [ $capture_err -ne 0 ]; then
         # error running command, return error code
-        #exit_with_error "error running command '$capture_cmd ${capture_arg[@]} $REDIRECT_CMD'"
-        return $err
+        return $capture_err
     fi
     
     return 0
@@ -433,12 +453,11 @@ function find_ini_section {
 
     declare in_section section_found section_name line
 
-    section_name="[$1]"
-    #echo "\$section_name = '$section_name'" 2>&1
+    # massasge the section name to look for, default to "[default]"
+    section_name="[${1:-default}]"
 
     # Read each line of the file
     while read -rs line; do
-        #echo "\$line = '$line'" 2>&1
         if [[ "$line" = "$section_name" ]]; then
             # Section header found, go to next line
             section_found=1
@@ -459,9 +478,11 @@ function find_ini_section {
     done
     
     if [[ -n "$section_found" ]]; then
+        # section found, return ok, contents of INI section on stdout
         return 0
     else
-        log_error "Section '$1' not found"
+        # section not found, return error, stdout blank
+        log_error "Section '$1' not found in INI file!"
         return 1
     fi
 }
@@ -502,8 +523,9 @@ function set_custom_prop {
     # Params: $1 = number of property to set (1-8) 
     #         $2 = value to set property
     #------------------------------------------------------------
-    declare err new_label ma_options
+    declare new_label ma_options
     
+    # replace any spaces in input with "_"
     new_label="${2/ /_}"
     
     ma_options=("-custom"  "-prop$1" "$new_label")
@@ -530,31 +552,38 @@ function get_curr_dat_ver {
     #              DATMIN:  DAT file minor version # (always zero)
     #              ENGMAJ:  Engine major version #
     #              ENGMIN:  Engine minor version #
+    #              EXEVER:  Executable version string
     #------------------------------------------------------------
     # Output: null if error, otherwise number according to
     #         value of $1 (see above), default entire DAT and 
     #         engine string
     #----------------------------------------------------------
 
-    declare uvscan_status local_dat_ver local_eng_ver out_text result 
-    #echo "c"
-    #ls -lAh $local_ver_file
+    declare uvscan_status local_dat_ver local_eng_ver out_text
+    declare cmd_result local_exe_ver
 
+    # uvscan command not available/not installed exit with error
     if ! check_for "$__vscl_uvscan_cmd" "uvscan executable" > /dev/null 2>&1 ; then
         printf "%s\n" "$__vscl_invalid_code"
         return 1
     fi
-    #echo "d"
-    #ls -lAh $local_ver_file
     
-    result=$("$__vscl_uvscan_cmd" --VERSION 2> /dev/null)
-    
-    #echo "e"
-    #ls -lAh $local_ver_file
+    # capture "uvscan --version" output, should look like this example:
+    #
+    #     McAfee VirusScan Command Line for Linux64 Version: 6.1.3.242
+    #     Copyright (C) 2019 McAfee, Inc.
+    #     (408) 988-3832 LICENSED COPY - February 06 2020
+    #     
+    #     AV Engine version: 6010.8670 for Linux64.
+    #     Dat set version: 9523 created Feb 6 2020
+    #     Scanning for 668685 viruses, trojans and variants.
+    #
 
+    cmd_result=$("$__vscl_uvscan_cmd" --VERSION 2> /dev/null)
+    
     # shellcheck disable=SC2181
     if [[ "$?" == "0" ]]; then
-        uvscan_status=$result
+        uvscan_status=$cmd_result
     else
         printf "%s\n" "$__vscl_invalid_code"
         return 1
@@ -566,6 +595,9 @@ function get_curr_dat_ver {
     # parse engine version
     local_eng_ver=$(printf "%s\n" "$uvscan_status" | grep -i "av engine version:" | cut -d' ' -f4)
     
+    # parse executable version
+    local_exe_ver=$(printf "%s\n" "$uvscan_status" | grep -i "Command Line for Linux64 Version:" | cut -d' ' -f8)
+    
     # default to printing entire DAT and engine string, i.e. "9999.0 (9999.9999)"
     out_text=$(printf "%s.0 (%s)\n" "$local_dat_ver" "$local_eng_ver")
 
@@ -574,7 +606,7 @@ function get_curr_dat_ver {
             # Extract everything up to first '.'
             "DATMAJ") out_text="$(echo "$local_dat_ver" | cut -d. -f-1)"
                 ;; 
-            # Always retruns zero
+            # Always returns "0" with current engine/DATs
             "DATMIN") out_text="0"
                 ;;
             # Extract everything up to first '.'
@@ -582,6 +614,9 @@ function get_curr_dat_ver {
                 ;;
             # Extract everything after first '.'
             "ENGMIN") out_text="$(echo "$local_eng_ver" | cut -d' ' -f1 | cut -d. -f2-)"
+                ;;
+            # Extract everything after first '.'
+            "EXEVER") out_text="$local_exe_ver"
                 ;;
             *) true  # ignore any other fields
                 ;;
@@ -725,7 +760,7 @@ function copy_files_with_modes {
         echo "\$files_to_copy = '$files_to_copy'"
     done
 
-    if ! /usr/bin/cp "$files_to_copy $2"; then
+    if ! /usr/bin/cp "$files_to_copy" "$2"; then
         exit_with_error "error copying '$files_to_copy' to '$2'!"
     fi
 
@@ -767,7 +802,7 @@ function update_from_zip {
     unzip_options="-o -d $1 $2 $files_to_download"
 
     # shellcheck disable=SC2086
-    if ! unzip $unzip_options > /dev/null 2>1&; then
+    if ! unzip $unzip_options > /dev/null 2>&1; then
         exit_with_error "error unzipping '$2' to '$1'!"
     fi
 
@@ -814,26 +849,29 @@ function init_library {
     #-----------------------------------------
     # VSCL Library initialization code
     #-----------------------------------------
-    #echo "\$__vscl_temp_dir = '$__vscl_temp_dir'"
-    declare -x __vscl_script_abbr="VSCLLIB"
+    __vscl_script_abbr="VSCLLIB"
 
     if [[ -z "$__vscl_temp_dir" ]]; then
         # no current temp directory specified in environment
         # __vscl_temp_dir must be a directory and writable
-        declare -x __vscl_temp_dir=$(mktemp -d -p "$__vscl_script_path" 2> /dev/null)
+        __vscl_temp_dir=$( mktemp -d -p "$__vscl_script_path" 2> /dev/null )
     fi
 
-    if [[ ! -d "$__vscl_temp_dir" ]]; then
+    if [[ -d "$__vscl_temp_dir" ]]; then
+        log_info "Temp dir = '$__vscl_temp_dir'"
+    else
         exit_with_error "Unable to use temporary directory '$__vscl_temp_dir'"
     fi
 
     if [[ -z "$__vscl_temp_file" ]]; then
         # no current temp file specified in environment
         # __vscl_temp_file must be a file and writable
-        declare -x __vscl_temp_file=$(mktemp -p "$__vscl_script_path" > /dev/null 2>&1 )
+        __vscl_temp_file=$( mktemp -p "$__vscl_temp_dir" 2> /dev/null )
     fi
 
-    if [[ ! -f "$__vscl_temp_file" ]]; then
+    if [[ -f "$__vscl_temp_file" ]]; then
+        log_info "Temp file = '$__vscl_temp_file'"
+    else
         exit_with_error "Unable to use temporary file '$__vscl_temp_file'"
     fi
 

@@ -8,7 +8,7 @@
 #-----------------------------------------------------------------------------
 # Creator:  Nick Taylor, Pr. Engineer, Broadcom SaaS Ops
 #-----------------------------------------------------------------------------
-# Date:     03-FEB-2020
+# Date:     18-FEB-2020
 #-----------------------------------------------------------------------------
 # Version:  1.2
 #-----------------------------------------------------------------------------
@@ -29,6 +29,7 @@
 #=============================================================================
 # PREPROCESS: Prevent file from being sourced
 #=============================================================================
+# shellcheck disable=2091
 if $(return 0 2>/dev/null); then
     # File is  sourced, return error
     echo "VSCL EPO Uninstaller must NOT be sourced.  It must be run standalone!"
@@ -41,10 +42,18 @@ fi
 #=============================================================================
 # shellcheck disable=SC1091
 unset include_path this_file
+declare include_path this_file
+
+# get this script's filename from bash
 this_file="${BASH_SOURCE[0]}"
-this_file=$(while [[ -L "$this_file" ]]; do this_file="$(readlink "$this_file")"; done; echo $this_file)
+# bash_source does NOT follow symlinks, traverse them until we get a real file
+this_file=$(while [[ -L "$this_file" ]]; do 
+                this_file="$(readlink "$this_file")";
+                done; 
+                echo "$this_file")
+# extract path to this script
 include_path="${this_file%/*}"
-# shellcheck disable=SC1091
+# shellcheck disable=SC1090
 . "$include_path/VSCL-Update-Prop1.sh"
 
 
@@ -67,12 +76,14 @@ function uninstall_vscl {
     #echo "\$__vscl_uvscan_dir = '$__vscl_uvscan_dir'"
 
     # uninstall the uvscan product and remove the uninstaller
+    # shellcheck disable=2154
     if [ ! -d "$__vscl_uvscan_dir" ]; then
         exit_with_error "VSCL software directory not found in '$__vscl_uvscan_dir'!"
     fi
 
     log_info "Running VSCL uninstaller..."
 
+    # shellcheck disable=2154
     if capture_command "$__vscl_uninstall_cmd" "" "/usr/bin/yes"; then
         #echo "\$__vscl_uvscan_dir = '$__vscl_uvscan_dir'"
         if ! rm -rf "$__vscl_uvscan_dir" &> /dev/null; then
