@@ -81,14 +81,14 @@ function update_dat () {
     declare option_var download_only
     declare -x __vscl_leave_files
     
-    download_only=0
-    __vscl_leave_files=0
+    download_only=""
+    __vscl_leave_files=""
 
     while getopts :dl option_var; do
         case "$option_var" in
-            "d") download_only=1    # only download most current DAT from EPO and exit
+            "d") download_only="1"    # only download most current DAT from EPO and exit
                 ;;
-            "l") __vscl_leave_files=1      # leave any temp files on exit
+            "l") __vscl_leave_files="1"      # leave any temp files on exit
                 ;;
             *) exit_with_error "Unknown option specified!"
                 ;;
