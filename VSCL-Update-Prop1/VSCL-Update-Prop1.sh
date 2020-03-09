@@ -36,7 +36,7 @@ if [[ -z "$__vscl_up1_loaded" ]]; then
     # not already loaded, set flag that it is now
     #echo "not loaded, loading..."
     declare -x __vscl_up1_loaded
-    __vscl_up1_loaded=1
+    __vscl_up1_loaded="1"
 else
     # already loaded, exit gracefully
     #echo "loaded already"

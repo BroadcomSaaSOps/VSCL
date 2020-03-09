@@ -32,7 +32,7 @@
 #=============================================================================
 if [[ -z "$__vscl_udd_loaded" ]]; then
     declare -x __vscl_udd_loaded
-    __vscl_udd_loaded=1
+    __vscl_udd_loaded="1"
 else
     # already loaded, exit gracefully
     #echo "loaded already"

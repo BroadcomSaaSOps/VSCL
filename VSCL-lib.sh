@@ -25,7 +25,7 @@
 # If this file is NOT sourced, return error
 # shellcheck disable=2091
 if ! $(return 0 2>/dev/null); then
-    echo ">> errOR! VSCL Library must be sourced.  It cannot be run standalone!"
+    echo ">> ERROR! VSCL Library must be sourced.  It cannot be run standalone!"
     exit 1
 fi
 
@@ -33,7 +33,8 @@ fi
 if [[ -z "$__vscl_lib_loaded" ]]; then
     # not already loaded, set flag that it is now
     #echo "not loaded, loading..."
-    declare -x __vscl_lib_loaded=1
+    declare -x __vscl_lib_loaded
+    __vscl_lib_loaded="1"
 else
     # already loaded, exit gracefully
     #echo "loaded already"
@@ -274,7 +275,7 @@ function log_print {
     # Prepend date/time, which script, then the log message
     # i.e.  "11/12/2019 11:14:10 AM:VSCL_UP1:[x]Refreshing agent data with EPO..."
     #        <- date -------------> <script> <+><-- message -->
-    #                                         ^-- log mode "I": info, "W": warning, "E": errror
+    #                                         ^-- log mode "I": info, "W": warning, "E": error
     out_text="$(date +'%x %X'):$__vscl_script_abbr:${LINENO}:$*"
 
     if [[ -w $__vscl_log_path ]]; then
@@ -283,7 +284,7 @@ function log_print {
         printf "%s\n" "$out_text" | tee --append "$__vscl_log_path"
     else
         # log file absent, create
-        #echo -e "$OUTPUT" | tee "$__vscl_log_path"
+        #echo -e "$out_text" | tee "$__vscl_log_path"
         printf "%s\n" "$out_text" | tee "$__vscl_log_path"
     fi
     
@@ -329,7 +330,7 @@ function log_warning {
 
 function log_error {
     #----------------------------------------------------------
-    # Print an errOR to the log defined in $__vscl_log_path
+    # Print an error to the log defined in $__vscl_log_path
     # (by default '/var/McAfee/agent/logs/VSCL_mgmt.log')
     #----------------------------------------------------------
     # Params: $1 = error message to print
@@ -428,7 +429,7 @@ function refresh_to_epo {
     # (CMDAGENT can't handle more than one)
     for flag_name in $cmdagent_flags; do
         if ! capture_command "$__vscl_cmdagent_path" "$flag_name"; then
-            log_error "error running EPO refresh command '$__vscl_cmdagent_path $flag_name'\!"
+            log_error "Unable to run EPO refresh command '$__vscl_cmdagent_path $flag_name'\!"
         fi
     done
     
@@ -704,7 +705,7 @@ function validate_file {
     local size md5_sum_csum md5_sum_checker
         
     # Optional: Program for calculating the md5_sum for a file
-    md5_sum_checker="md5_sumsum"
+    md5_sum_checker="md5_sum"
 
     # Check the file size matches what we expect...
     size=$(stat "$1" --printf "%s")
@@ -761,7 +762,7 @@ function copy_files_with_modes {
     done
 
     if ! /usr/bin/cp "$files_to_copy" "$2"; then
-        exit_with_error "error copying '$files_to_copy' to '$2'!"
+        exit_with_error "Unable to copy '$files_to_copy' to '$2'!"
     fi
 
     # apply chmod permissions from list
@@ -770,7 +771,7 @@ function copy_files_with_modes {
         file_mode=$(printf "%s\n" "$fname_modes" | awk -F':' ' { print $NF } ')
         
         if ! chmod "$file_mode $2/${file_name##*/}"; then
-            exit_with_error "error setting mode '$file_mode' on '$2/${file_name##*/}'!"
+            exit_with_error "Unable to set mode '$file_mode' on '$2/${file_name##*/}'!"
         fi
     done
 
@@ -803,7 +804,7 @@ function update_from_zip {
 
     # shellcheck disable=SC2086
     if ! unzip $unzip_options > /dev/null 2>&1; then
-        exit_with_error "error unzipping '$2' to '$1'!"
+        exit_with_error "Unable to unzip '$2' to '$1'!"
     fi
 
     # apply chmod permissions from list
