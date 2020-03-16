@@ -217,10 +217,10 @@ function update_dat () {
 
     # Parse the section and keep what we are interested in.
     for ini_field in $ini_section; do
-        field_name=$(echo "$ini_field" | awk -F'=' ' { print $1 } ')
+        field_name=$(echo "$ini_field" | awk -F'=' ' { print tolower($1) } ')
         field_value=$(echo "$ini_field" | awk -F'=' ' { print $2 } ')
 
-        case ${field_name,,} in
+        case $field_name in
             "datversion") avail_major="$field_value"  # available: major
                 ;; 
             "minorversion") avail_minor="$field_value" # available: minor

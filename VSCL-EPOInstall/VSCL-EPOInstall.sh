@@ -148,15 +148,15 @@ function install_with_epo {
 
     # Parse the section and keep what we are interested in.
     for ini_field in $ini_section; do
-        field_name=$(echo "$ini_field" | awk -F'=' ' { print $1 } ')
+        field_name=$(echo "$ini_field" | awk -F'=' ' { print tolower($1) } ')
         field_value=$(echo "$ini_field" | awk -F'=' ' { print $2 } ')
 
         case $field_name in
-            "Name") package_name="$field_value"  # name of installer
+            "name") package_name="$field_value"  # name of installer
                 ;; 
-            "InstallVersion") package_ver="$field_value" # version of installer
+            "installversion") package_ver="$field_value" # version of installer
                 ;;
-            "FileName") install_file="$field_value" # file to download
+            "filename") install_file="$field_value" # file to download
                 ;;
             *) true  # ignore any other fields
                 ;;
