@@ -78,36 +78,40 @@ fi
 # MAIN FUNCTION: primary function of this script
 #=============================================================================
 function update_prop1 {
-    declare current_dat
+    declare current_dat empty_val
+    empty_val=""
+    current_dat=${1:-$empty_val}
     
-    # sanity checks
-    # check for MACONFIG
-    check_for "$__vscl_maconfig_path" "MACONFIG utility"
+    if [[ -z "$current_dat" ]]; then
+        # sanity checks
+        # check for MACONFIG
+        check_for "$__vscl_maconfig_path" "MACONFIG utility"
 
-    # check for CMDAGENT
-    check_for "$__vscl_cmdagent_path" "CMDAGENT utility"
+        # check for CMDAGENT
+        check_for "$__vscl_cmdagent_path" "CMDAGENT utility"
 
-    # check for uvscan
-    if ! check_for "$__vscl_uvscan_dir/$__vscl_uvscan_exe" "uvscan executable" --no-terminate; then
-        # uvscan not found
-        # set custom property to error value, then exit with error
-        log_info "Could not find 'uvscan executable' at '$__vscl_uvscan_dir/$__vscl_uvscan_exe'!"
-        current_dat="$__vscl_notinst_code"
-    else
-        # Get the version of the installed DATs...
-        log_info "Determining the current DAT version..."
-        current_dat=$(get_curr_dat_ver)
-
-        if [[ "$current_dat" = "$__vscl_invalid_code" ]]; then
-            # Could not determine current value for DAT version from uvscan
+        # check for uvscan
+        if ! check_for "$__vscl_uvscan_dir/$__vscl_uvscan_exe" "uvscan executable" --no-terminate; then
+            # uvscan not found
             # set custom property to error value, then exit with error
-            log_info "Unable to determine currently installed DAT version!"
-            current_dat="$__vscl_invalid_code"
+            log_info "Could not find 'uvscan executable' at '$__vscl_uvscan_dir/$__vscl_uvscan_exe'!"
+            current_dat="$__vscl_notinst_code"
         else
-            current_dat="VSCL:$current_dat"
+            # Get the version of the installed DATs...
+            log_info "Determining the current DAT version..."
+            current_dat=$(get_curr_dat_ver)
+
+            if [[ "$current_dat" = "$__vscl_invalid_code" ]]; then
+                # Could not determine current value for DAT version from uvscan
+                # set custom property to error value, then exit with error
+                log_info "Unable to determine currently installed DAT version!"
+                current_dat="$__vscl_invalid_code"
+            else
+                current_dat="VSCL:$current_dat"
+            fi
+            
+            log_info "Current DAT Version is '$current_dat'"
         fi
-        
-        log_info "Current DAT Version is '$current_dat'"
     fi
 
     # Set custom property #1 and push to EPO, then exit cleanly
