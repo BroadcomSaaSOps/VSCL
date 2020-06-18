@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
-Generated: 10/21/2019 10:41:07 AM
+Generated: 6/18/2020 4:39:22 PM
 EEDK.exe
 -Build:"E:\Software\McAfee\EEDK\Builds" -Folder:"E:\Software\McAfee\EEDK\Development\VSCL\VSCL-Update-Prop1" -ProdName:"VSCL_UP1" -ProdID:"1200" -ProdVer:"1.2.0.0" -ProdDesc:"VSCL - Update Custom Property 1 (VSCL_UP1)" -Install:"./VSCL-Update-Prop1.sh" -Reboot:"3010" -Platform:"LINUX" 
 -->

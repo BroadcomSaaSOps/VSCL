@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
-Generated: 2/6/2020 3:46:21 PM
+Generated: 6/18/2020 4:37:35 PM
 EEDK.exe
 -Build:"E:\Software\McAfee\EEDK\Builds" -Folder:"E:\Software\McAfee\EEDK\Development\VSCL\VSCL-EPOPatch" -ProdName:"VSCLEPAT" -ProdID:"1200" -ProdVer:"1.2.0.0" -ProdDesc:"VSCL - Install VSCL Patch from EPO (VSCLEPAT)" -Install:"./VSCL-EPOPatch.sh" -Reboot:"3010" -Platform:"LINUX" 
 -->

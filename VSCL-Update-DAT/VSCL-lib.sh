@@ -1,1 +1,1 @@
-../VSCL-lib.sh
+../VSCL-Common/VSCL-lib.sh

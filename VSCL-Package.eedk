@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
-Generated: 10/22/2019 3:44:17 AM
+Generated: 6/18/2020 4:38:21 PM
 EEDK.exe
 -Build:"E:\Software\McAfee\EEDK\Builds" -Folder:"E:\Software\McAfee\EEDK\Development\VSCL\VSCL-Package" -ProdName:"VSCLPACK" -ProdID:"6130" -ProdVer:"6.1.3.9388" -ProdDesc:"VSCL - Installer Package (VSCLPACK)" -Install:"./dummy.sh" -Reboot:"3010" -Platform:"LINUX" 
 -->
