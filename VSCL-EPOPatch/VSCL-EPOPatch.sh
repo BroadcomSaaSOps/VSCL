@@ -112,7 +112,7 @@ function install_patch {
             # unable to make target support file executable, error
             exit_with_error "File '$support_file' not available. Aborting installer!"
         fi
-    done
+    done 
 
     # shellcheck disable=SC2154
     if ! chmod 646 "$__vscl_log_path"; then

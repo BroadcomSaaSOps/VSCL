@@ -128,3 +128,4 @@ fi
 # No virus found, exit successfully
 log_print "[I]*** No virus found! ***"
 exit 0
+ 
