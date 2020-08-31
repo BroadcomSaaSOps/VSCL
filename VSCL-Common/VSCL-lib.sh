@@ -140,7 +140,7 @@ __vscl_install_pkg="VSCLPACK"
 
 # Version of EPO package name of uploaded VSCL installer
 # shellcheck disable=SC2034
-__vscl_install_ver="6130"
+__vscl_install_ver="6140"
 
 # Name of versioning file in EPO installer package
 # shellcheck disable=SC2034

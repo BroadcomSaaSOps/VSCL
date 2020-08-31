@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
-Generated: 6/18/2020 4:38:21 PM
+Generated: 7/22/2020 9:11:18 AM
 EEDK.exe
--Build:"E:\Software\McAfee\EEDK\Builds" -Folder:"E:\Software\McAfee\EEDK\Development\VSCL\VSCL-Package" -ProdName:"VSCLPACK" -ProdID:"6130" -ProdVer:"6.1.3.9388" -ProdDesc:"VSCL - Installer Package (VSCLPACK)" -Install:"./dummy.sh" -Reboot:"3010" -Platform:"LINUX" 
+-Build:"E:\Software\McAfee\EEDK\Builds" -Folder:"E:\Software\McAfee\EEDK\Development\VSCL\VSCL-Package" -ProdName:"VSCLPACK" -ProdID:"6140" -ProdVer:"6.1.4.0" -ProdDesc:"VSCL - Installer Package (VSCLPACK)" -Install:"./dummy.sh" -Reboot:"3010" -Platform:"LINUX" 
 -->
 <ePO.Endpoint.Deployment.Kit.Settings>
   <File>false</File>
@@ -10,9 +10,9 @@ EEDK.exe
   <SourcePackages>E:\Software\McAfee\EEDK\Development\VSCL\VSCL-Package</SourcePackages>
   <BuildFolder>E:\Software\McAfee\EEDK\Builds</BuildFolder>
   <ProductName>VSCLPACK</ProductName>
-  <ProductID>6130</ProductID>
+  <ProductID>6140</ProductID>
   <ProductDescription>VSCL - Installer Package (VSCLPACK)</ProductDescription>
-  <ProductVersion>6.1.3.9388</ProductVersion>
+  <ProductVersion>6.1.4.0</ProductVersion>
   <InstallCommand>./dummy.sh</InstallCommand>
   <DetectionKey />
   <DetectionValue />

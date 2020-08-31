@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
-Generated: 6/18/2020 4:36:58 PM
+Generated: 7/22/2020 9:49:13 AM
 EEDK.exe
 -Build:"E:\Software\McAfee\EEDK\Builds" -Folder:"E:\Software\McAfee\EEDK\Development\VSCL\VSCL-EPOInstall" -ProdName:"VSCLEPOI" -ProdID:"1200" -ProdVer:"1.2.0.0" -ProdDesc:"VSCL - Install VirusScan Command Line from EPO (VSCLEPOI)" -Install:"./VSCL-EPOInstall.sh" -Reboot:"3010" -Platform:"LINUX" 
 -->
