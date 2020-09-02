@@ -1,1 +1,1 @@
-../VSCL-Common/VSCL-lib.sh
+E:/Software/McAfee/EEDK/Development/VSCL/VSCL-Common/VSCL-lib.sh
