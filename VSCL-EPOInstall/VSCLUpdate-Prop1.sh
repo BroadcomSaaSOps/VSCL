@@ -1,1 +1,1 @@
-../VSCL-Update-Prop1/VSCL-Update-Prop1.sh
+E:/Software/McAfee/EEDK/Development/VSCL/VSCL-Update-Prop1/VSCL-Update-Prop1.sh
