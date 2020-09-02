@@ -1,1 +1,1 @@
-E:/Software/McAfee/EEDK/Development/VSCL/VSCL-Update-DAT/VSCL-Update-DAT.sh
+../VSCL-Update-DAT/VSCL-Update-DAT.sh
